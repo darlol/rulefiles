@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "week": "2026-W41",
+  "start": "2026-10-05",
+  "end": "2026-10-11",
+  "status": "published",
+  "verifiedOn": "2026-10-15",
+  "title": "Digest for 5 to 11 October 2026",
+  "summary": "Selected changes from the Cursor changelog, Claude Code and Codex release notes, and the GitHub changelog. Each item quotes the source wording and links to it.",
+  "items": [
+    {
+      "id": "cursor-2026-10-06-remote-control",
+      "date": "2026-10-06",
+      "tool": "cursor",
+      "title": "Remote control for local agents",
+      "text": "You can now see and reply to the local agents running on your computer from the Cursor iOS app.",
+      "quote": true,
+      "sourceUrl": "https://cursor.com/changelog/remote-control-local-agents",
+      "sourceLabel": "Cursor changelog"
+    },
+    {
+      "id": "claude-code-2026-10-06-v2.1.292",
+      "date": "2026-10-06",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.292",
+      "text": "Added an `effort` parameter to the Agent tool, so Claude runs a sub-agent at the effort level you ask for",
+      "quote": true,
+      "version": "2.1.292",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.292",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-07-v2.1.293",
+      "date": "2026-10-07",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.293",
+      "text": "Added Claude Haiku 5.5 (`claude-haiku-5-5`), now the default Haiku model on the Anthropic API — 1M context, $0.10/$0.50 per Mtok ($0.50/$2.50 for prompts over 100K)",
+      "quote": true,
+      "version": "2.1.293",
+      "figure": "1M context; $0.10/$0.50 per Mtok",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.293",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-08-v2.1.295",
+      "date": "2026-10-08",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.295",
+      "text": "Added `onFailure: \"block\"` for command and HTTP hooks: a hook that can't start, times out, or exits with an unexpected code blocks the action instead of letting it through",
+      "quote": true,
+      "version": "2.1.295",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.295",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-09-v2.1.296",
+      "date": "2026-10-09",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.296",
+      "text": "Added an `allow_large` option to the Read tool so Claude can read a text file past the usual size limits in one call when it needs the whole file and the context has room",
+      "quote": true,
+      "version": "2.1.296",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.296",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "codex-2026-10-07-0.161.0",
+      "date": "2026-10-07",
+      "tool": "codex",
+      "title": "Codex 0.161.0",
+      "text": "GPT-6.1 Sol is now the default model in the bundled and Amazon Bedrock catalogs.",
+      "quote": true,
+      "version": "0.161.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.161.0",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "codex-2026-10-08-0.162.0",
+      "date": "2026-10-08",
+      "tool": "codex",
+      "title": "Codex 0.162.0",
+      "text": "Add tools for creating and listing managed Git worktrees from trusted local projects when the worktrees feature is enabled.",
+      "quote": true,
+      "version": "0.162.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.162.0",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "codex-2026-10-09-0.162.1",
+      "date": "2026-10-09",
+      "tool": "codex",
+      "title": "Codex 0.162.1",
+      "text": "Fixed a TUI crash when asynchronous questions contain multiple lines, preserving line breaks and complete hyperlink destinations.",
+      "quote": true,
+      "version": "0.162.1",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.162.1",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "github-copilot-2026-10-07-claude-haiku-5-5",
+      "date": "2026-10-07",
+      "tool": "github-copilot",
+      "title": "Claude Haiku 5.5 in GitHub Copilot",
+      "text": "Claude Haiku 5.5, Anthropic’s newest lightweight model, is now generally available in GitHub Copilot.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-07-claude-haiku-5-5-in-github-copilot",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-08-code-review-billing",
+      "date": "2026-10-08",
+      "tool": "github-copilot",
+      "title": "Copilot code review: New organization billing options and controls",
+      "text": "This release adds new billing and license controls for Copilot code review admins",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-08-copilot-code-review-new-organization-billing-options-and-controls",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-10-jetbrains",
+      "date": "2026-10-10",
+      "tool": "github-copilot",
+      "title": "New controls and chat improvements in Copilot for JetBrains",
+      "text": "This update brings more control over default models and MCP server in GitHub Copilot for JetBrains.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-10-new-controls-and-chat-improvements-in-copilot-for-jetbrains",
+      "sourceLabel": "GitHub changelog"
+    }
+  ]
+}

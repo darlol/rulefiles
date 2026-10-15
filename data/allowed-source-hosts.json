@@ -1,0 +1,15 @@
+{
+  "_comment": "Hosts that count as an official source. Every sourceUrl in matrix.json and digest files must be https and use one of these hosts (or a subdomain of one).",
+  "hosts": [
+    "cursor.com",
+    "code.claude.com",
+    "docs.anthropic.com",
+    "anthropic.com",
+    "developers.openai.com",
+    "openai.com",
+    "docs.github.com",
+    "github.blog",
+    "github.com",
+    "agents.md"
+  ]
+}

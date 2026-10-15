@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "lastReviewed": "2026-10-15",
+  "tools": [
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "docsUrl": "https://cursor.com/docs/context/rules"
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "docsUrl": "https://code.claude.com/docs/en/memory"
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "docsUrl": "https://developers.openai.com/codex/guides/agents-md"
+    },
+    {
+      "id": "github-copilot",
+      "name": "GitHub Copilot",
+      "docsUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "scope": "Repository custom instructions on GitHub.com (cloud agent, code review)"
+    }
+  ],
+  "files": [
+    {
+      "id": "agents-md",
+      "path": "AGENTS.md",
+      "description": "Open format for agent instructions. May sit in the repository root or in subdirectories."
+    },
+    {
+      "id": "agents-override-md",
+      "path": "AGENTS.override.md",
+      "description": "Override file used by Codex in place of AGENTS.md in the same directory."
+    },
+    {
+      "id": "claude-md",
+      "path": "CLAUDE.md",
+      "description": "Claude Code project instructions file."
+    },
+    {
+      "id": "gemini-md",
+      "path": "GEMINI.md",
+      "description": "Gemini CLI instructions file."
+    },
+    {
+      "id": "cursorrules",
+      "path": ".cursorrules",
+      "description": "Single-file rules format used by early Cursor versions."
+    },
+    {
+      "id": "cursor-rules-mdc",
+      "path": ".cursor/rules/*.mdc",
+      "description": "Cursor project rules with frontmatter (description, globs, alwaysApply)."
+    },
+    {
+      "id": "claude-rules",
+      "path": ".claude/rules/*.md",
+      "description": "Claude Code topic and path-scoped rules."
+    },
+    {
+      "id": "copilot-instructions-md",
+      "path": ".github/copilot-instructions.md",
+      "description": "Repository-wide GitHub Copilot instructions."
+    },
+    {
+      "id": "copilot-path-instructions",
+      "path": ".github/instructions/*.instructions.md",
+      "description": "Path-specific GitHub Copilot instructions with an applyTo glob."
+    }
+  ],
+  "cells": [
+    {
+      "tool": "cursor",
+      "file": "agents-md",
+      "status": "reads",
+      "note": "The page documents AGENTS.md in the project root and in subdirectories; nested files are combined, with more specific instructions taking precedence.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "agents-override-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "claude-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "gemini-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "cursorrules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "cursor-rules-mdc",
+      "status": "reads",
+      "note": "Project rules live in .cursor/rules as .mdc files. A plain .md file in that folder is ignored.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "copilot-instructions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "cursor",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "agents-md",
+      "status": "reads-conditionally",
+      "note": "Reads AGENTS.md only when there is no CLAUDE.md or CLAUDE.local.md in the working directory or above. Reading AGENTS.md directly needs v2.1.277 or later.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15",
+      "version": "2.1.277"
+    },
+    {
+      "tool": "claude-code",
+      "file": "agents-override-md",
+      "status": "not-read",
+      "note": "The page lists AGENTS.local.md, AGENTS.override.md and anything under a .agents/ directory as not read.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "claude-md",
+      "status": "reads",
+      "note": "Reads ./CLAUDE.md or ./.claude/CLAUDE.md, plus user, managed and local (CLAUDE.local.md) scopes.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "gemini-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "cursorrules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "claude-rules",
+      "status": "reads",
+      "note": "The page documents .claude/rules/ for topic-specific and path-scoped rules.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "copilot-instructions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "claude-code",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "agents-md",
+      "status": "reads",
+      "note": "Reads AGENTS.md from the global Codex home and from the project root down to the working directory, at most one file per directory, up to 32 KiB combined by default.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "agents-override-md",
+      "status": "reads",
+      "note": "Checked before AGENTS.md in each directory. In the Codex home, AGENTS.override.md replaces AGENTS.md when it exists.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "claude-md",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "gemini-md",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "cursorrules",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "copilot-instructions-md",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "codex",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "agents-md",
+      "status": "reads",
+      "note": "Agent instructions: one or more AGENTS.md files anywhere in the repository; the nearest file in the directory tree takes precedence.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "agents-override-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "claude-md",
+      "status": "reads",
+      "note": "Alternative to AGENTS.md: a single CLAUDE.md in the repository root.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "gemini-md",
+      "status": "reads",
+      "note": "Alternative to AGENTS.md: a single GEMINI.md in the repository root.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "cursorrules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "copilot-instructions-md",
+      "status": "reads",
+      "note": "Repository-wide instructions in .github/copilot-instructions.md.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "copilot-path-instructions",
+      "status": "reads",
+      "note": "NAME.instructions.md files under .github/instructions with an applyTo glob. On GitHub.com, supported for the cloud agent and code review only.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-10-15"
+    }
+  ]
+}

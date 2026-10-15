@@ -1,0 +1,17 @@
+{
+  "name": "Agent Diffs",
+  "tagline": "What changed in AI coding tools, and which instruction file each agent reads.",
+  "description": "A weekly digest of dated, sourced changes in Cursor, Claude Code, Codex and GitHub Copilot, plus a matrix of which agent reads which instruction file.",
+  "baseUrl": "https://agentdiffs.dev",
+  "language": "en",
+  "repoUrl": "",
+  "newsletter": {
+    "provider": "",
+    "formAction": "",
+    "method": "post",
+    "emailFieldName": "email",
+    "hiddenFields": {}
+  },
+  "sponsorContact": "",
+  "staleAfterDays": 30
+}

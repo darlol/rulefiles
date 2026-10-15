@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "week": "2026-W42",
+  "start": "2026-10-12",
+  "end": "2026-10-18",
+  "status": "published",
+  "verifiedOn": "2026-10-15",
+  "title": "Digest for 12 to 18 October 2026 (through 15 October)",
+  "summary": "The week is still running: this issue lists changes published up to 15 October 2026. Each item quotes the source wording and links to it.",
+  "items": [
+    {
+      "id": "cursor-2026-10-13-origin-app-marketplace",
+      "date": "2026-10-13",
+      "tool": "cursor",
+      "title": "Origin App Marketplace",
+      "text": "Origin now integrates with over 20 apps for deployments, CI, code review, security, monitoring, and project management, from partners including Cloudflare, Linear, Sentry, and Socket Security.",
+      "quote": true,
+      "figure": "over 20 apps",
+      "sourceUrl": "https://cursor.com/changelog/origin-app-marketplace",
+      "sourceLabel": "Cursor changelog"
+    },
+    {
+      "id": "claude-code-2026-10-14-v2.1.299",
+      "date": "2026-10-14",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.299",
+      "text": "Added `CLAUDE_CODE_DISABLE_FILE_MENTIONS` environment variable: Claude gets the paths of `@` file mentions to read with its file tools, not the files' contents",
+      "quote": true,
+      "version": "2.1.299",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.299",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-15-v2.1.301",
+      "date": "2026-10-15",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.301",
+      "text": "Added the `%` motion to vim mode: jump to the matching bracket, alone or with d/c/y",
+      "quote": true,
+      "version": "2.1.301",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.301",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "codex-2026-10-15-0.163.0",
+      "date": "2026-10-15",
+      "tool": "codex",
+      "title": "Codex 0.163.0",
+      "text": "Open `/config` to search preferences across categories, change supported settings immediately, and see which changes require a restart.",
+      "quote": true,
+      "version": "0.163.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.163.0",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "github-copilot-2026-10-13-gemini-4-argon",
+      "date": "2026-10-13",
+      "tool": "github-copilot",
+      "title": "Gemini 4 Argon in GitHub Copilot",
+      "text": "Gemini 4 Argon, Google’s newest frontier model, is now generally available in GitHub Copilot.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-13-gemini-4-argon-in-github-copilot",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-15-model-deprecation",
+      "date": "2026-10-15",
+      "tool": "github-copilot",
+      "title": "Upcoming deprecation of selected GitHub Copilot models in mid-November",
+      "text": "We will deprecate the following models across all GitHub Copilot experiences (including Copilot Chat, inline edits, ask and agent modes, and code completions) on November 16th, 2026",
+      "quote": true,
+      "figure": "2026-11-16",
+      "sourceUrl": "https://github.blog/changelog/2026-10-15-upcoming-deprecation-of-selected-github-copilot-models-in-mid-november",
+      "sourceLabel": "GitHub changelog"
+    }
+  ]
+}

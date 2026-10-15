@@ -1,0 +1,15 @@
+{
+  "_comment": "Official change feeds (redirects are followed by hand, with a robots.txt check on every host) read by scripts/watch.mjs. Types: rss (RSS 2.0), github-releases (GitHub REST API, not the .atom feed, because github.com/robots.txt disallows *.atom), docs-page (hash only, opt-in with --docs).",
+  "sources": [
+    { "id": "cursor-changelog", "tool": "cursor", "type": "rss", "url": "https://cursor.com/changelog/rss.xml", "humanUrl": "https://cursor.com/changelog", "label": "Cursor changelog" },
+    { "id": "claude-code-releases", "tool": "claude-code", "type": "github-releases", "repo": "anthropics/claude-code", "url": "https://api.github.com/repos/anthropics/claude-code/releases?per_page=30", "humanUrl": "https://github.com/anthropics/claude-code/releases", "label": "Claude Code releases", "titleFormat": "Claude Code v{version}" },
+    { "id": "codex-changelog", "tool": "codex", "type": "rss", "url": "https://developers.openai.com/codex/changelog/rss.xml", "humanUrl": "https://developers.openai.com/codex/changelog", "label": "Codex changelog", "lineFrom": "content" },
+    { "id": "copilot-changelog", "tool": "github-copilot", "type": "rss", "url": "https://github.blog/changelog/label/copilot/feed/", "humanUrl": "https://github.blog/changelog/label/copilot/", "label": "GitHub changelog (Copilot label)" }
+  ],
+  "docsPages": [
+    { "id": "cursor-rules-doc", "tool": "cursor", "url": "https://cursor.com/docs/context/rules", "label": "Cursor rules documentation" },
+    { "id": "claude-memory-doc", "tool": "claude-code", "url": "https://code.claude.com/docs/en/memory", "label": "Claude Code memory documentation" },
+    { "id": "codex-agents-md-doc", "tool": "codex", "url": "https://developers.openai.com/codex/guides/agents-md", "label": "Codex AGENTS.md guide" },
+    { "id": "copilot-instructions-doc", "tool": "github-copilot", "url": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions", "label": "GitHub Copilot repository instructions" }
+  ]
+}
