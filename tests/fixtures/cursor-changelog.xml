@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Cursor Changelog</title>
+    <description>The latest product updates, release notes, and improvements from Cursor.</description>
+    <link>https://cursor.com/changelog</link>
+    <language>en-US</language>
+    <lastBuildDate>Thu, 15 Oct 2026 21:37:06 GMT</lastBuildDate>
+    <atom:link href="https://cursor.com/changelog/rss.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Origin App Marketplace</title>
+      <link>https://cursor.com/changelog/origin-app-marketplace</link>
+      <guid isPermaLink="true">https://cursor.com/changelog/origin-app-marketplace</guid>
+      <pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate>
+      <description>Origin integrates with over 20 apps for deployments, CI, code review, security, monitoring, and project management, and the marketplace is now open to public submissions.</description>
+
+      
+    </item>
+<item>
+      <title>Remote control for local agents</title>
+      <link>https://cursor.com/changelog/remote-control-local-agents</link>
+      <guid isPermaLink="true">https://cursor.com/changelog/remote-control-local-agents</guid>
+      <pubDate>Tue, 06 Oct 2026 00:00:00 GMT</pubDate>
+      <description>See and reply to the local agents running on your computer from the Cursor iOS app.</description>
+
+      
+    </item>
+<item>
+      <title>Rollouts and Security Review</title>
+      <link>https://cursor.com/changelog/rollouts-and-security-reviewer</link>
+      <guid isPermaLink="true">https://cursor.com/changelog/rollouts-and-security-reviewer</guid>
+      <pubDate>Wed, 23 Sep 2026 00:00:00 GMT</pubDate>
+      <description>Two bots for the last mile of shipping code: Rollouts watches every change as it deploys, and Security Review reports exploitable bugs on every pull request.</description>
+
+      
+    </item>
+  </channel>
+</rss>

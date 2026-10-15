@@ -1,0 +1,47 @@
+name: Weekly watch
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: weekly-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+      - name: List changes from the official feeds
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/watch.mjs
+      - name: Validate drafts
+        run: npm run validate
+      - name: Open a pull request with the draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$(git status --porcelain data/)" ]; then
+            echo "No new changes detected."
+            exit 0
+          fi
+          branch="watch/$(date -u +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add data/drafts data/watch-state.json
+          git commit -m "Add watch draft for $(date -u +%Y-%m-%d)"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Watch draft $(date -u +%Y-%m-%d)" \
+            --body "Changes listed by scripts/watch.mjs from the official feeds. Each item quotes its source. Review each item against its link, then move kept items into data/digest/ with status published. This pull request does not publish anything."

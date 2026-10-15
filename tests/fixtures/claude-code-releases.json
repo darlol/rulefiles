@@ -1,0 +1,29 @@
+[
+ {
+  "tag_name": "v2.1.301",
+  "name": "v2.1.301",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-15T19:22:06Z",
+  "html_url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.301",
+  "body": "## What's changed\n\n- Added `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS` so unattended retry mode (`CLAUDE_CODE_RETRY_WATCHDOG`) ends a request at a usage limit that resets too far away instead of waiting\n- Added OpenTelemetry tracing guidance to the `claude-api` skill, including setting up trace destinations with the `ant` CLI\n- Added the `%` motion to vim mode: jump to the matching bracket, alone or with d/c/y\n- Added `rows` to a mod's `Input`: a text field of several lines in the terminal, where Enter submits and Shift+Enter or a backslash before Enter starts a new line"
+ },
+ {
+  "tag_name": "v2.1.296",
+  "name": "v2.1.296",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-09T19:28:59Z",
+  "html_url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.296",
+  "body": "## What's changed\n\n- Added a `code` key to the Claude apps gateway's `managed.policies[]`: the same settings as `cli`, also applied in Claude Desktop's Code tab; beside `desktop`, it turns on Claude Desktop's gateway mode\n- Added `autoCompactWindow` to subagent frontmatter and `--agents` definitions, so a subagent can auto-compact earlier than the main conversation's window\n- Added `CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL` to run every workflow agent on one model while other subagents keep theirs\n- Added `CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS` environment variable to set a longer maximum delay for the backoff when retrying an overloaded (529) request"
+ },
+ {
+  "tag_name": "v2.1.293",
+  "name": "v2.1.293",
+  "draft": false,
+  "prerelease": false,
+  "published_at": "2026-10-07T18:10:20Z",
+  "html_url": "https://github.com/anthropics/claude-code/releases/tag/v2.1.293",
+  "body": "## What's changed\n\n- Added Claude Haiku 5.5 (`claude-haiku-5-5`), now the default Haiku model on the Anthropic API \u2014 1M context, $0.10/$0.50 per Mtok ($0.50/$2.50 for prompts over 100K)\n- Added `agentType` to the `subagentStatusLine` payload, so scripts can tell custom subagent types apart\n- Added `isDeferred` to `$.tool.register` for mods: `false` lists the tool's schema in the prompt from the start instead of behind tool search\n- Fixed Claude sometimes treating its own last actions before a context compaction as done after it, and retracting or redoing finished work"
+ }
+]
