@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { parseRss, parseGithubReleases, firstSentence, contentLines, groupDrafts } from '../scripts/lib/parsers.mjs';
+import { parseRss, parseGithubReleases, firstSentence, contentLines, entryDate, groupDrafts } from '../scripts/lib/parsers.mjs';
 import { createFetcher, RobotsError } from '../scripts/lib/fetcher.mjs';
 import { run } from '../scripts/watch.mjs';
 import { validateDigest } from '../scripts/lib/validate.mjs';
@@ -55,6 +55,68 @@ test('codex changelog RSS: release entries get a version and the first list item
   assert.doesNotMatch(rel.firstLine, /#\d+/);
   assert.equal(rel.url, 'https://developers.openai.com/codex/changelog/#github-release-414286110');
   assert.deepEqual(contentLines('<ul><li>One. (<a href="x">#1</a>, <a href="y">#2</a>)</li><li>Two</li></ul>'), ['One.', 'Two']);
+});
+
+test('codex changelog RSS in Markdown: lines come from list items, or from paragraphs, with no heading, link syntax or code marks', () => {
+  // tests/fixtures/codex-changelog-markdown.xml holds four entries copied unchanged from the live feed on 2026-10-16.
+  const e = parseRss(fx('codex-changelog-markdown.xml'), src('codex-changelog'));
+  assert.equal(e.length, 4);
+  const app = e.find((x) => x.title === 'Codex app');
+  assert.equal(app.date, '2026-10-08');
+  assert.equal(app.lines.length, 3);
+  assert.equal(app.firstLine, 'Fixed queued messages getting stuck on Sending and restored Steer in secondary app windows.');
+  assert.match(app.lines[2], /^Added clearer recovery guidance when a tool call needs approval but the chat's permissions prevent approval requests/);
+  const retire = e.find((x) => /retirement/.test(x.title));
+  assert.match(retire.firstLine, /^Effective October 14, 2026, at noon PDT \(19:00 UTC\), GPT-5\.5 retires from Codex/);
+  assert.equal(retire.lines[1].startsWith('Use GPT-6.1 Sol (gpt-6.1-sol) when available'), true);
+  const comp = e.find((x) => /Composer/.test(x.title));
+  assert.match(comp.lines[2], /^Learn more about composer predictions\.$/);
+  for (const x of e) for (const l of x.lines) assert.doesNotMatch(l, /[#`*\]\[]|\]\(/);
+});
+
+test('contentLines reads Markdown: nested and numbered items, wrapped lines, fences, PR references, and text in angle brackets', () => {
+  const md = '# Title\n\nIntro paragraph.\n\n```\n- not a line\n```\n\n### New features\n\n- Added `/side <prompt>` to start a\n  side conversation. ([#1](https://x/1), [#2](https://x/2))\n  - Nested **bold** detail\n2. Second [link](https://x) item\n- Third\n- Fourth';
+  assert.deepEqual(contentLines(md), ['Added /side <prompt> to start a side conversation.', 'Nested bold detail', 'Second link item']);
+  assert.deepEqual(contentLines('# Only a heading'), []);
+  assert.deepEqual(contentLines(''), []);
+  assert.deepEqual(contentLines('First para.\nstill first.\n\nSecond para.'), ['First para. still first.', 'Second para.']);
+});
+
+test('contentLines still reads HTML, including text that mentions Markdown marks', () => {
+  assert.deepEqual(contentLines('<ul><li>Use <code>a_b</code> and **x**.</li></ul>'), ['Use a_b and **x**.']);
+  assert.deepEqual(contentLines('<p>One.</p><p>Two.</p>'), ['One.', 'Two.']);
+});
+
+test('codex releases from the GitHub API: the rust- prefix goes, prereleases are skipped, the title matches the digests', () => {
+  const e = parseGithubReleases(fx('codex-releases.json'), src('codex-releases'));
+  assert.equal(e.length, 1);
+  assert.equal(e[0].title, 'Codex 0.162.1');
+  assert.equal(e[0].version, '0.162.1');
+  assert.equal(e[0].date, '2026-10-09');
+  assert.equal(e[0].url, 'https://github.com/openai/codex/releases/tag/rust-v0.162.1');
+  assert.match(e[0].firstLine, /^Fixed a TUI crash/);
+  assert.doesNotMatch(e[0].firstLine, /#\d+/);
+});
+
+test('codex releases source follows the rules of the other GitHub sources: REST API, one request, humanUrl, allowed hosts', () => {
+  const s = src('codex-releases');
+  assert.equal(s.type, 'github-releases');
+  assert.equal(s.url, 'https://api.github.com/repos/openai/codex/releases?per_page=30');
+  assert.equal(s.humanUrl, 'https://github.com/openai/codex/releases');
+  assert.doesNotMatch(s.url, /\.atom/);
+  const { hosts } = loadData();
+  assert.ok(hosts.includes('github.com'));
+});
+
+test('entry dates: the date in the link wins within one day of the UTC date, otherwise the UTC date stays', () => {
+  // The link dates of github.blog match Pacific time (not stated by the site): 02:16 UTC on 16 October is 19:16 on 15 October there.
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates'), '2026-10-15');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates/'), '2026-10-15');
+  assert.equal(entryDate(new Date('Thu, 15 Oct 2026 19:35:00 GMT'), 'https://github.blog/changelog/2026-10-15-deprecation'), '2026-10-15');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-01-old-slug'), '2026-10-16');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-02-31-not-a-date'), '2026-10-16');
+  assert.equal(entryDate(new Date('Wed, 14 Oct 2026 00:00:00 GMT'), 'https://developers.openai.com/codex/changelog/#codex-2026-10-12-x'), '2026-10-14');
+  assert.equal(entryDate(new Date('Tue, 13 Oct 2026 00:00:00 GMT'), 'https://cursor.com/changelog/origin-app-marketplace'), '2026-10-13');
 });
 
 test('draft grouping makes one valid digest-shaped draft per ISO week', () => {

@@ -68,6 +68,12 @@ Rules:
 
 `watch-sources.json` lists the feeds (`rss` or `github-releases`). `watch-state.json` holds `seen`, which maps an entry id to the date it was listed. The watch script updates it. A reviewer does not need to edit it. Documentation pages are not fetched by the script.
 
+What the parsers read, and which date they keep:
+
+- `rss`: `content:encoded` can hold HTML (list items, or paragraphs when there are none) or Markdown (the Codex changelog feed moved to Markdown). Both give at most three candidate lines. Markdown headings and code fences are skipped, and links, bold and code marks lose their syntax.
+- `github-releases`: the lines are the first three bullet points of the release notes. `tagPrefix` removes a prefix such as `rust-v` from the tag to get the version, and `titleFormat` builds the title. Prereleases and drafts are skipped.
+- Date of an `rss` entry: the feed date, read in UTC. When the link holds a date (`/2026-10-15-slug`) that is at most one day away from the UTC date, the date in the link is kept, because it is the date the publisher shows on the page. github.blog does not state its zone. Its link dates matched Pacific time on all ten entries of the Copilot feed read on 2026-10-16, so an entry published at 02:16 UTC on 16 October reads 15 October on the page and in its link. Other feeds, and a link date further than one day away, keep the UTC date. GitHub release dates stay in UTC (`published_at`).
+
 ## Published JSON
 
 The build copies the matrix to `/data/matrix.json` and all published digests to `/data/digests.json`, so readers and crawlers can use the data without scraping HTML.
