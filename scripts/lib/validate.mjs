@@ -48,6 +48,10 @@ export function validateConfig(config) {
   const nl = config.newsletter;
   if (!nl || typeof nl !== 'object') errors.push('site.config.json: newsletter object is missing');
   else if (nl.formAction && !/^https:\/\//.test(nl.formAction)) errors.push('site.config.json: newsletter.formAction must be an https URL or empty');
+  if (config.pageUpdated !== undefined) {
+    if (!config.pageUpdated || typeof config.pageUpdated !== 'object' || Array.isArray(config.pageUpdated)) errors.push('site.config.json: pageUpdated must be an object that maps a page path to a date');
+    else for (const [k, v] of Object.entries(config.pageUpdated)) if (!/^\/[a-z0-9/-]*\/$/.test(k) || !isIsoDate(v)) errors.push(`site.config.json: pageUpdated["${k}"] must map a path such as /generator/ to a YYYY-MM-DD date`);
+  }
   return errors;
 }
 

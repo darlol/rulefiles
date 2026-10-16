@@ -107,13 +107,14 @@ test('JSON-LD blocks parse and carry the expected types', () => {
 test('sitemap lists every indexable page and not the 404', () => {
   const xml = read('sitemap.xml');
   const locs = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
-  assert.equal(locs.length, PAGES.length - 1);
+  assert.equal(locs.length, PAGES.length - 1 + 3, 'the pages plus matrix.json, digests.json and the feed');
   assert.ok(locs.includes('https://rulefiles.dev/matrix/'));
   assert.ok(!locs.some((l) => l.includes('404')));
   assert.match(xml, /<lastmod>2026-10-15<\/lastmod>/);
   for (const l of locs) {
     const p = new URL(l).pathname;
-    assert.ok(fs.existsSync(path.join(out, p === '/' ? 'index.html' : path.join(p, 'index.html'))), l);
+    const file = /\.(json|xml)$/.test(p) ? p.slice(1) : p === '/' ? 'index.html' : path.join(p, 'index.html');
+    assert.ok(fs.existsSync(path.join(out, file)), l);
   }
 });
 
@@ -203,7 +204,7 @@ test('Content-Security-Policy meta tag locks scripts, styles and connections to 
   assert.match(read('_headers'), /Content-Security-Policy: default-src 'none'/);
   // Assets keep stable names, so browsers must revalidate them: a cached old stylesheet under new HTML renders unstyled.
   assert.match(read('_headers'), /\/assets\/\*\n\s+Cache-Control: public, max-age=0, must-revalidate/);
-  assert.doesNotMatch(read('_headers'), /max-age=(?!0\b)\d+/);
+  assert.doesNotMatch(read('_headers'), /Cache-Control:[^\n]*max-age=(?!0\b)\d+/);
   assert.match(cspFor({ newsletter: { formAction: 'https://buttondown.com/api/emails/embed-subscribe/x' } }), /form-action 'self' https:\/\/buttondown\.com/);
 });
 

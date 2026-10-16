@@ -7,6 +7,7 @@ import { validateConfig, validateMatrix, validateDigest } from './lib/validate.m
 import * as r from './lib/render.mjs';
 import { launchWarnings, releaseProblems } from './lib/placeholders.mjs';
 import { renderOgImage } from './lib/ogimage.mjs';
+import { parseFrontmatter } from './lib/markdown.mjs';
 
 /**
  * @param {{root?: string, outDir?: string, quiet?: boolean, strict?: boolean}} options
@@ -34,20 +35,27 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   };
 
   const latest = ctx.digests[0];
+  // lastmod is the date the content changed, never the build date: the digest check date, the matrix review date, the `updated` date
+  // in the front matter of a content page, or the date set in `pageUpdated` of site.config.json for the pages made by code.
+  const pageUpdated = ctx.config.pageUpdated || {};
+  const contentDate = (file, p) => parseFrontmatter(fs.readFileSync(path.join(root, 'content', file), 'utf8')).meta.updated || pageUpdated[p];
   page('/', r.homePage(ctx), latest ? latest.verifiedOn : undefined);
   page('/matrix/', r.matrixPage(ctx), ctx.matrix.lastReviewed);
-  page('/generator/', r.generatorPage(ctx));
+  page('/generator/', r.generatorPage(ctx), pageUpdated['/generator/']);
   page('/digest/', r.digestIndexPage(ctx), latest ? latest.verifiedOn : undefined);
   for (const d of ctx.digests) page(`/digest/${d.week}/`, r.digestWeekPage(ctx, d), d.verifiedOn);
-  page('/newsletter/', r.newsletterPage(ctx));
-  page('/about/', r.contentPage(ctx, path.join(root, 'content', 'about.md'), '/about/'));
-  page('/sponsors/', r.contentPage(ctx, path.join(root, 'content', 'sponsors.md'), '/sponsors/'));
-  page('/privacy/', r.contentPage(ctx, path.join(root, 'content', 'privacy.md'), '/privacy/'));
-  page('/legal/', r.contentPage(ctx, path.join(root, 'content', 'legal.md'), '/legal/'));
+  page('/newsletter/', r.newsletterPage(ctx), pageUpdated['/newsletter/']);
+  page('/about/', r.contentPage(ctx, path.join(root, 'content', 'about.md'), '/about/'), contentDate('about.md', '/about/'));
+  page('/sponsors/', r.contentPage(ctx, path.join(root, 'content', 'sponsors.md'), '/sponsors/'), contentDate('sponsors.md', '/sponsors/'));
+  page('/privacy/', r.contentPage(ctx, path.join(root, 'content', 'privacy.md'), '/privacy/'), contentDate('privacy.md', '/privacy/'));
+  page('/legal/', r.contentPage(ctx, path.join(root, 'content', 'legal.md'), '/legal/'), contentDate('legal.md', '/legal/'));
   put('404.html', r.notFoundPage(ctx));
 
   put('digest/feed.xml', r.renderFeed(ctx));
-  put('sitemap.xml', r.renderSitemap(ctx.config, pages));
+  // The data files and the feed are listed too, with the date of the data they hold.
+  const latestDate = latest ? latest.verifiedOn : undefined;
+  const sitemapEntries = [...pages, { path: '/data/matrix.json', lastmod: ctx.matrix.lastReviewed }, { path: '/data/digests.json', lastmod: latestDate }, { path: '/digest/feed.xml', lastmod: latestDate }];
+  put('sitemap.xml', r.renderSitemap(ctx.config, sitemapEntries));
   put('robots.txt', r.renderRobots(ctx.config));
   put('llms.txt', r.renderLlmsTxt(ctx));
   put('llms-full.txt', r.renderLlmsFull(ctx));

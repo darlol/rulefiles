@@ -4,6 +4,7 @@ import { escapeHtml as h, escapeXml as x, daysBetween } from './util.mjs';
 import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
+import { RELEASE_URL } from './placeholders.mjs';
 
 export const STATUS_LABEL = {
   reads: 'Reads',
@@ -106,6 +107,8 @@ ${page.noindex ? '' : `<meta property="og:url" content="${h(canonical)}">\n`}<me
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="${h(`${config.name}: ${HERO_TITLE}`)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${h(title)}">
+<meta name="twitter:description" content="${h(page.description)}">
 <meta name="theme-color" content="${THEME_COLOR.light}" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="${THEME_COLOR.dark}" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -158,7 +161,8 @@ function breadcrumb(config, trail) {
   };
 }
 
-const publisher = (config) => ({ '@type': 'Organization', name: config.name, url: config.baseUrl });
+// The logo is the site mark (favicon.svg), the only logo-like file the project has. It is the same file the header and the share image draw.
+const publisher = (config) => ({ '@type': 'Organization', name: config.name, url: config.baseUrl, logo: url(config, '/favicon.svg') });
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -275,6 +279,10 @@ ${rows}
 <ul class="legend">${legend}</ul>
 <h2>Data</h2>
 <p>The same data is published as <a href="/data/matrix.json">matrix.json</a>. Need a starting file? Use the <a href="/generator/">generator</a>.</p>
+<h2 id="cite">How to cite</h2>
+<p>The data and the text are under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>. Credit the project, link the license, and say what you changed. A cell is a dated reading of an official page, so give the date of the cell, which is shown on it, or the date the matrix was last reviewed.</p>
+<p>Suggested credit: "${h(config.name)} data by ${h(DATA_ATTRIBUTION)}, ${h(config.baseUrl)}/matrix/, last reviewed ${h(matrix.lastReviewed)}, licensed under CC BY 4.0 (${h(DATA_LICENSE_URL)})."</p>
+<p class="muted">Quoted excerpts of the sources belong to their authors. Link the official page of the cell when you rely on it.</p>
 <p class="muted">GitHub Copilot cells describe repository custom instructions on GitHub.com. Editor-specific behavior can differ and is not covered here.</p>`;
   const sources = [...new Set(matrix.tools.map((t) => t.docsUrl))];
   return layout(config, {
@@ -377,6 +385,7 @@ export function digestIndexPage(ctx) {
   return layout(config, {
     path: '/digest/', title: 'Digest archive', description: 'Weekly digest of dated changes in Cursor, Claude Code, Codex and GitHub Copilot, each linked to its official source.', body,
     jsonLd: [
+      ...(digests.length ? [{ '@type': 'Dataset', name: 'Weekly digest of changes in AI coding tools', description: `${digests.reduce((n, d) => n + d.items.length, 0)} dated changes in Cursor, Claude Code, Codex and GitHub Copilot over ${digests.length} weeks, each with a source URL, a date and a short quote of the source.`, url: url(config, '/digest/'), dateModified: digests[0].verifiedOn, temporalCoverage: `${digests[digests.length - 1].start}/${digests[0].end}`, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: [...new Set(digests.flatMap((d) => d.items.map((i) => i.sourceUrl)))], distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/digests.json') }], creator: publisher(config) }] : []),
       { '@type': 'CollectionPage', name: `${config.name} digest archive`, url: url(config, '/digest/'), mainEntity: { '@type': 'ItemList', itemListElement: digests.map((d, i) => ({ '@type': 'ListItem', position: i + 1, url: url(config, `/digest/${d.week}/`), name: d.title })) } },
       breadcrumb(config, [['Home', '/'], ['Digest', '/digest/']])
     ]
@@ -501,6 +510,7 @@ export function renderFeed(ctx) {
     <title>${x(d.title)}</title>
     <id>tag:${new URL(config.baseUrl).hostname},2026:digest/${x(d.week)}</id>
     <link rel="alternate" type="text/html" href="${x(url(config, `/digest/${d.week}/`))}"/>
+    <published>${d.verifiedOn}T00:00:00Z</published>
     <updated>${d.verifiedOn}T00:00:00Z</updated>
     <author><name>${x(config.name)}</name></author>
     <summary>${x(d.summary)}</summary>
@@ -600,7 +610,12 @@ export function renderLlmsFull(ctx) {
   return out.join('\n');
 }
 
+/** HSTS lasts 180 days, with no includeSubDomains and no preload, and is sent only by the release host (see docs/OPERATIONS.md). */
+export const HSTS = 'max-age=15552000';
+
 export function renderHeaders(config) {
+  // An absolute https rule matches that host only (Cloudflare Pages `_headers`), so www.rulefiles.dev and any preview host never get the header.
+  const hsts = config.baseUrl === RELEASE_URL ? `${config.baseUrl}/*\n  Strict-Transport-Security: ${HSTS}\n` : '';
   return `/*
   Content-Security-Policy: ${csp(config)}
   X-Content-Type-Options: nosniff
@@ -608,7 +623,7 @@ export function renderHeaders(config) {
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
-`;
+${hsts}`;
 }
 
 export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#3a3fd8}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5aaff}.l{fill:#0d1018}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
