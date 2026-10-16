@@ -412,7 +412,12 @@ export function contentPage(ctx, file, pagePath) {
     siteUrl: config.baseUrl,
     licenseUrl: DATA_LICENSE_URL,
     attribution: DATA_ATTRIBUTION,
-    sponsorContact: config.sponsorContact ? `Contact: ${config.sponsorContact}` : 'Contact: [[TODO-OWNER: sponsorship contact address]]'
+    contactEmail: config.contactEmail,
+    privacyEmail: config.privacyEmail,
+    sponsorContact: config.sponsorContact,
+    hostName: config.host.name,
+    hostAddress: config.host.address,
+    hostPhone: config.host.phone
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
   return layout(config, {
@@ -449,6 +454,7 @@ ${form}
 <ul>
 <li>One email per week with the digest. No other mailings.</li>
 <li>Double opt-in and a one-click unsubscribe link in every email.</li>
+<li>No tracking of opens or clicks.</li>
 <li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for your data.</li>
 </ul>
 </div>`;

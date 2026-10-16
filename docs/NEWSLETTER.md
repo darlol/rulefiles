@@ -37,7 +37,9 @@ Buttondown, read on 2026-10-16:
 - Double opt-in is required by default, and Buttondown refuses to disable it for plain signup forms without upstream verification (https://docs.buttondown.com/double-opt-in).
 - In the agreement, the customer is the data controller and Buttondown the processor. So the site owner is the responsable de traitement.
 
-Not verified: whether Buttondown is certified under the EU-US Data Privacy Framework, whether its hosted pages (the subscribe and confirmation pages) set cookies, which AWS region is used, and how long it keeps an address after an unsubscription.
+Not verified: whether Buttondown is certified under the EU-US Data Privacy Framework, whether its hosted pages (the subscribe and confirmation pages) set cookies, and which AWS region is used.
+
+Retention, read on 2026-10-16 at https://docs.buttondown.com/deleting-and-recovering-data and https://docs.buttondown.com/subscriber-cleanup: deleting a subscriber from the dashboard or by automatic cleanup removes them from the list but keeps a hidden record, so that an unsubscribed address is not added back by an import. A permanent deletion goes through the API (`DELETE /v1/subscribers/{id_or_email}`, API version 2024-09-30 or later). Permanently deleted data stays in the provider's backups for up to two days. The privacy page promises deletion within 30 days, so the routine has to use the permanent deletion.
 
 MailerLite states that its data centre is in the European Union and that it has GDPR controls (https://www.mailerlite.com/pricing). For Kit and the other tools, hosting location and data processing agreements were not checked.
 
@@ -68,12 +70,12 @@ Not executed. Each step needs the owner, and the form stays disabled until the l
 1. Create the Buttondown account with the owner's own address, and pick the newsletter username. This creates the account, so it is the owner's act.
 2. In the newsletter settings, set the name, the description, the sender name and a reply-to address. Use the address that will go in the `privacy contact address` marker. Check what Buttondown adds to the footer of each email (sender identity and unsubscribe link), since French law requires the sender to be identifiable and to offer a way to stop receiving messages (code des postes et des communications électroniques, article L34-5).
 3. Leave double opt-in on, which is the default. Do not ask for an exception.
-4. Decide whether opens and clicks are tracked. Without the analytics add-on, assume nothing is tracked, and confirm it in the account. Fill the marker in `content/privacy.md` with the result.
+4. Opens and clicks are not tracked (decided on 2026-10-16, and stated on the privacy page). In the email settings, check that click tracking and open tracking are both off, and that the UTM add-on is off. Check that the web analytics add-on of the archive settings is off too. See `docs/LAUNCH.md` for the sources.
 5. Check the data processing terms and the sub-processor list in the account, then record the date. Check whether the hosted subscribe and confirmation pages set cookies, since the site claims none for itself and the privacy page says the confirmation page is Buttondown's.
 6. Send a test: subscribe an address the owner controls, confirm it, read the confirmation email, unsubscribe, export the list to CSV, then delete the test subscriber.
 7. If the sending domain is custom, add the DNS records Buttondown asks for (SPF, DKIM, DMARC) once the domain exists.
 8. Optional: create an API key under the API section of the settings and store it as a repository secret. Check on the account that the API works on the free plan before relying on it. The weekly draft script does not exist yet.
-9. Fill the remaining newsletter markers in `content/privacy.md` (data controller, retention after unsubscription, tracking), listed in `docs/LAUNCH-BLOCKERS.md`.
+9. Fill the last newsletter marker in `content/privacy.md` (the data controller's name), listed in `docs/LAUNCH-BLOCKERS.md`. Retention is decided: 30 days. Set up the deletion routine in `docs/LAUNCH.md`.
 10. Last, enable the form (next section) and build with `npm run build:strict`.
 
 ## Enabling the form on the site
@@ -96,7 +98,7 @@ The `embed` field and the exact endpoint come from a search summary of Buttondow
 
 - Buttondown price beyond 100 subscribers.
 - Whether the API works on the free plan (the features page and a docs tag disagree).
-- Buttondown cookies on its hosted pages, Data Privacy Framework status, AWS region, and retention after an unsubscription.
+- Buttondown cookies on its hosted pages, Data Privacy Framework status and AWS region.
 - The exact form fields above.
 - Kit: double opt-in, export, data processing terms, and prices.
 - Everything marked "Not verified" in the comparison table.

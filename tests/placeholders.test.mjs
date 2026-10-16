@@ -86,7 +86,7 @@ test('strict build fails and leaves no dist while markers remain, the normal bui
     assert.ok(fs.existsSync(path.join(outDir, 'index.html')));
     assert.throws(() => build({ root: dir, outDir, quiet: true, strict: true }), (e) => {
       assert.match(e.message, /Strict build failed: \d+ launch placeholder\(s\) remain/);
-      assert.match(e.message, /TODO-OWNER: host name, address and phone number/);
+      assert.match(e.message, /TODO-OWNER: data controller name/);
       assert.match(e.message, /placeholder https:\/\/rulefiles\.dev/);
       return true;
     });
@@ -146,6 +146,6 @@ test('every marker in the sources is listed in docs/LAUNCH-BLOCKERS.md, and ever
   const inSources = new Set(sources.flatMap((f) => markerFields(fs.readFileSync(path.join(root, f), 'utf8'))));
   const doc = fs.readFileSync(path.join(root, 'docs', 'LAUNCH-BLOCKERS.md'), 'utf8');
   const listed = new Set([...doc.matchAll(/^- `\[\[TODO-OWNER: ([^\]]+)\]\]`/gm)].map((m) => m[1]));
-  assert.ok(inSources.size >= 6);
+  assert.ok(inSources.size >= 1);
   assert.deepEqual([...inSources].sort(), [...listed].sort());
 });

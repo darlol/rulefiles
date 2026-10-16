@@ -32,4 +32,4 @@ The license covers what this project adds: the selection, the dates, the statuse
 
 ## Corrections
 
-To report a mistake, write to [[TODO-OWNER: correction channel]].
+To report a mistake, or to ask for an excerpt to be removed, write to [{{contactEmail}}](mailto:{{contactEmail}}). Say which page, which line and which official page shows the difference.

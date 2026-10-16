@@ -24,7 +24,7 @@ npm run ci            # validate, build, test and check links in one go
 ```
 LICENSE                     MIT license for the code
 LICENSE-DATA.md             CC BY 4.0 for the data and the text, scope and suggested credit
-site.config.json            name, base URL, newsletter form settings
+site.config.json            name, base URL, newsletter form settings, contact aliases, host details
 data/matrix.json            instruction file matrix, one cell per tool and file
 data/digest/YYYY-Www.json   one published digest per ISO week
 data/drafts/                drafts written by the watch script (not built)

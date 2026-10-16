@@ -1,6 +1,6 @@
 # Launch blockers
 
-The site must not go public until each item below has an answer from the owner. None of them has been decided, and nothing in the repository decides them in the owner's place. This is a list of open decisions. It is not legal advice, and items 1 and 2 should be confirmed with a legal adviser.
+The site must not go public until each item below is settled. Several were decided on 2026-10-16 and are recorded under their item, with what is still open. Nothing in the repository decides an open item in the owner's place. This is a list of decisions. It is not legal advice, and items 1, 2 and 3 should be confirmed with a legal adviser.
 
 Every field that only the owner can supply is marked in the copy as `[[TODO-OWNER: field]]`. `npm run build` prints a `LAUNCH WARNING` line for every marker still on a page, for older placeholder sentences such as "will be named here", and for the placeholder domain. The warnings do not stop that build. `npm run build:strict` (or `RULEFILES_STRICT=1`) makes the build fail, and removes `dist/`, while any of them remains. The release build uses strict mode. The list of markers is under "Fields to fill in" below, and a test keeps it in step with the files.
 
@@ -15,37 +15,43 @@ Still open:
 
 ## 2. Publisher identity, legal notice and GDPR (France)
 
-Open: who publishes the site. The pages `content/legal.md` (legal notice, mentions légales) and `content/privacy.md` are written, and every fact only the owner has is a marker, listed under "Fields to fill in". Nothing about the owner was invented. None of this is legal advice, and a legal adviser should confirm it.
+Decided on 2026-10-16: version 1 is a non-professional publication, with no income at opening. The publisher stays anonymous, as article 1-1, II of loi n° 2004-575 du 21 juin 2004 allows. The legal notice (`content/legal.md`) names no person and gives the host's name, address and phone number (item 3). The full text of the article, the duty to give the host the publisher's real identity, and the steps for a switch to a professional status are in `docs/LAUNCH.md`.
+
+About the numbering: the rule was article 6, III, 2 of the same law until the law of 21 May 2024 (n° 2024-449) moved it to article 1-1, II, in force since 23 May 2024. The consolidated text on Légifrance, "en vigueur au 16/10/2026", has it at article 1-1. The pages cite article 1-1.
 
 What the texts rest on, read on 2026-10-16:
 
-- Article 1-1 of loi n° 2004-575 du 21 juin 2004 (https://librejustice.fr/norm/fr/loi-n-2004-575-du-21-juin-2004-pour-la-confiance-dans-l-economie-numerique/1-1, in force since 23 May 2024). A person who publishes a site must make available: for an individual, name, first names, home address and phone number, plus the registration number if registered at the RCS or the RNE; for a company, name, head office, phone number, registration number and share capital; the name of the director of publication; and the name, address and phone number of the host. The same article gives a right of reply, to be requested within three months, and sends it to the director of publication.
-- The same article, II: a person who publishes on a non-professional basis may show only the host's name and address, if the host holds that person's identity details. The host then keeps them under professional secrecy, except toward the courts. If the owner chooses this, replace the "Publisher", "Director of publication" and "Contact" sections of `content/legal.md` with a sentence such as: "The publisher of this site has chosen to remain anonymous, as the law allows for a non-professional publisher. The host is X. Send any request, including a right of reply, to the host, which passes it on." The owner must then give the host the identity details first. Whether a site with a sponsorship plan and a newsletter counts as non-professional is a question for the adviser.
+- Article 1-1 of the law, on Légifrance (https://www.legifrance.gouv.fr/loda/id/LEGITEXT000005789847). I lists what a publisher whose activity is publishing must make available. II lets a non-professional publisher give only the host's name and address, provided the host holds the publisher's identification details. III gives the right of reply, which goes to the host when the publisher stays anonymous, within three months.
 - Article L34-5 of the code des postes et des communications électroniques (https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000042155961/): sending a message that promotes goods, services or the image of a seller to an individual's email address needs that person's prior consent, which must be free, specific and informed. Each message must show valid contact details to ask for the messages to stop, and the sender's identity cannot be hidden. The page read also notes a Constitutional Council decision of 25 June 2026 that finds the sixth, eighth and next-to-last paragraphs unconstitutional, with repeal postponed to 31 October 2027. By their position these are the paragraphs on the CNIL's oversight and on the fine, not the consent rule in the first paragraphs. To confirm.
-- GDPR: the privacy page names the controller (responsable de traitement), the purpose, the legal basis (consent, article 6(1)(a)), the provider and its transfer to the United States, the retention, and the rights, with the right to complain to the CNIL. The CNIL says the retention period has to be set by the controller in line with the purpose (https://www.cnil.fr/fr/les-durees-de-conservation-des-donnees). No fixed period exists for a newsletter list, so the owner has to choose one.
+- GDPR: the privacy page names the controller (responsable de traitement), the purpose, the legal basis (consent, article 6(1)(a)), the provider and its transfer to the United States, the retention, and the rights, with the right to complain to the CNIL (https://www.cnil.fr/fr/plaintes). The CNIL says the retention period has to be set by the controller in line with the purpose (https://www.cnil.fr/fr/les-durees-de-conservation-des-donnees). The period chosen is 30 days after an unsubscription or a request.
 - Not covered here: whether a record of processing (registre des traitements) is needed, whether a data protection officer is needed, the consent evidence the provider keeps, and any duty of an EU representative. To confirm with the adviser.
 
-Information the owner has to supply: the publisher's name or pseudonym policy, status, address (or the address of a domiciliation service, which a business can use, to confirm), phone number, registration data if any, director of publication, contact email, host details, data controller, retention after unsubscription, and the tracking decision.
+Still open:
+
+- The name of the data controller, marker `[[TODO-OWNER: data controller name]]` in `content/privacy.md`. The GDPR asks for the controller's identity and contact details in the information given to subscribers. A named controller and an anonymous publisher do not sit well together, so the adviser should say how to do both.
+- Whether a site with a newsletter and a sponsorship plan counts as non-professional. The sponsorship page says it is not open, and nothing is sold at opening.
 
 ## 3. Host
 
-Open: where the site is served from. `docs/OPERATIONS.md` compares GitHub Pages, Cloudflare Pages and Netlify. No account exists with any of them. The legal notice has to give the host's name, address and phone number, and the privacy page names the host too. One marker, `host name, address and phone number`, serves both pages.
+Decided on 2026-10-16: Cloudflare, Inc. The details come from Cloudflare's own pages and are held in `site.config.json` under `host`, with the source and the date they were read: https://www.cloudflare.com/website-terms/ (section 15, "Cloudflare, Inc., located at 101 Townsend St., San Francisco, California 94107", and the phone line +1 (650) 319-8930 at the foot of the page), read on 2026-10-16. https://www.cloudflare.com/privacypolicy/ gives the same address and phone number. The legal notice and the privacy page read the values from the configuration.
+
+Still open: Cloudflare's website terms say its network services are "pass-through network services ... not hosting provider services". The site would be served by Cloudflare Pages, which stores the files. Whether Cloudflare is the "fournisseur de services d'hébergement" of article 1-1 for that service is for the adviser. No Cloudflare account for the production site exists yet.
 
 ## 4. Name, domain and trademark
 
 Open: the domain and the trademark checks. The owner chose "Rulefiles" on 2026-10-16, after the first candidate, "Agent Diffs", turned out to collide with existing projects (see `docs/BRAND-CLEARANCE.md`). The clearance of "Rulefiles" is in the same document. The INPI database could not be searched automatically, so the manual INPI search there is still to do, and an industrial property attorney should run a similarity search before any filing. Nothing is bought, filed or reserved. The domain `rulefiles.dev` in `site.config.json` is a provisional value: it is not bought and is not known to be buyable. After the choice, set `baseUrl` in `site.config.json` (or `SITE_URL` at build time). The placeholder `https://rulefiles.dev` triggers a build warning.
 
-## 5. Contact address and correction channel
+## 5. Contact addresses
 
-Open: one or more addresses for privacy requests, general contact, corrections to the data, and sponsorship questions, and where corrections are handled (an inbox, an issue tracker, or both). Markers wait for them in `content/about.md` (corrections), `content/privacy.md` (privacy contact), `content/legal.md` (contact email) and `scripts/lib/render.mjs` (sponsorship, until `sponsorContact` is set in `site.config.json`).
+Decided on 2026-10-16: three public role addresses on the provisional domain, set in `site.config.json`: `contact@rulefiles.dev` (general contact, corrections, right of reply), `privacy@rulefiles.dev` (personal data) and `sponsors@rulefiles.dev` (sponsorship). They are aliases that do not exist yet. They are to be set up with Cloudflare Email Routing after the domain is bought, see `docs/LAUNCH.md`. If the domain changes, the three values change with it.
 
 ## 6. Newsletter list
 
-Decided on 2026-10-16: Buttondown, with Kit as the fallback, and the form stays disabled. `docs/NEWSLETTER.md` has the setup steps for the day the owner gives the publication go, none of them executed. Still open: the data controller and the retention period after unsubscription (markers in `content/privacy.md`), the decision on tracking opens and clicks (a marker), the data processing terms accepted in the account, and then the form address (`NEWSLETTER_FORM_ACTION`). If the provider changes, `content/privacy.md` has to change with it, since it names Buttondown. Until the form is on, the site sends nothing.
+Decided on 2026-10-16: Buttondown, with Kit as the fallback, and the form stays disabled. No tracking of opens or clicks. Subscriber data is deleted within 30 days of an unsubscription or a request, unless the law requires otherwise. `docs/NEWSLETTER.md` has the setup steps for the day the owner gives the publication go, none of them executed, and `docs/LAUNCH.md` lists the Buttondown settings to check before opening. Still open: the data controller's name (a marker in `content/privacy.md`), the data processing terms accepted in the account, and then the form address (`NEWSLETTER_FORM_ACTION`). If the provider changes, `content/privacy.md` has to change with it, since it names Buttondown. Until the form is on, the site sends nothing.
 
 ## 7. Sponsorship
 
-Open: whether sponsorship opens at all, and under which terms. `content/sponsors.md` states the editorial rules that would apply. No rates are published.
+Decided on 2026-10-16: not open at launch, no rates and no figure published. `content/sponsors.md` states the editorial rules that would apply and the alias for questions.
 
 ## 8. Repository settings
 
@@ -59,19 +65,6 @@ Before launch: re-read the cited official pages for every matrix cell, update `v
 
 Each line is one marker, the file that holds it, and the item above it belongs to. Replace the whole `[[TODO-OWNER: ...]]` text with the real value. A test compares this list with the markers in `content/`, `scripts/lib/render.mjs` and `site.config.json`.
 
-- `[[TODO-OWNER: correction channel]]` in `content/about.md`, item 5.
-- `[[TODO-OWNER: publisher name]]` in `content/legal.md`, item 2.
-- `[[TODO-OWNER: publisher status]]` in `content/legal.md`, item 2. Individual not acting professionally, sole trader, or company.
-- `[[TODO-OWNER: publisher address]]` in `content/legal.md`, item 2. Home address, or the registered office or domiciliation address for a business.
-- `[[TODO-OWNER: publisher phone number]]` in `content/legal.md`, item 2.
-- `[[TODO-OWNER: publisher registration number and share capital]]` in `content/legal.md`, item 2. Only if the publisher is registered. Otherwise write that there is none.
-- `[[TODO-OWNER: director of publication]]` in `content/legal.md`, item 2.
-- `[[TODO-OWNER: contact email address]]` in `content/legal.md`, item 5.
-- `[[TODO-OWNER: host name, address and phone number]]` in `content/legal.md` and `content/privacy.md`, item 3.
-- `[[TODO-OWNER: data controller]]` in `content/privacy.md`, item 2.
-- `[[TODO-OWNER: privacy contact address]]` in `content/privacy.md`, item 5.
-- `[[TODO-OWNER: email open and click tracking]]` in `content/privacy.md`, item 6. Say whether opens and clicks are tracked.
-- `[[TODO-OWNER: retention period after unsubscription]]` in `content/privacy.md`, item 6.
-- `[[TODO-OWNER: sponsorship contact address]]` in `scripts/lib/render.mjs`. The Sponsors page shows it until `sponsorContact` is set in `site.config.json`, item 5.
+- `[[TODO-OWNER: data controller name]]` in `content/privacy.md`, item 2.
 
 The placeholder domain is not a marker. The build reports `baseUrl` while it is still `https://rulefiles.dev`, the provisional domain that is not bought, item 4.

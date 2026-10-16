@@ -10,6 +10,7 @@ import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineH
 import { matrixStats } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
+import { markerFields } from '../scripts/lib/placeholders.mjs';
 
 process.env.BUILD_DATE = '2026-10-16';
 delete process.env.SITE_URL;
@@ -313,15 +314,13 @@ test('built digest pages show source backticks as code and contain no raw backti
   assert.match(read('digest/feed.xml'), /&lt;code&gt;/);
 });
 
-test('the build warns, without failing, about every TODO marker and the placeholder domain', () => {
+test('the build warns, without failing, about the marker that remains and the placeholder domain', () => {
   const warnings = result.warnings;
   assert.ok(Array.isArray(warnings));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: host name, address and phone number]]')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/about/:') && w.includes('[[TODO-OWNER: correction channel]]')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/sponsors/:') && w.includes('[[TODO-OWNER: sponsorship contact address]]')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: data controller]]')), warnings.join('\n'));
-  assert.ok(!warnings.some((w) => w.startsWith('/newsletter/:')), 'the newsletter page carries no marker');
+  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: data controller name]]')), warnings.join('\n'));
   assert.ok(warnings.some((w) => w.includes('placeholder https://rulefiles.dev')));
+  for (const page of ['/about/', '/sponsors/', '/legal/', '/newsletter/']) assert.ok(!warnings.some((w) => w.startsWith(`${page}:`)), `${page} carries no marker`);
+  assert.equal(warnings.length, 2, warnings.join('\n'));
 });
 
 test('about page names both licenses and the suggested credit, and the JSON-LD names the data license', () => {
@@ -347,36 +346,65 @@ test('the generator page names AGENTS.md as the main file and cites the matrix f
 
 const textOf = (rel) => read(rel).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/\s+/g, ' ');
 
-test('the legal notice has the publisher, director, contact, host and right of reply sections, and every owner fact is a marker', () => {
+const ALLOWED_EMAILS = ['contact@rulefiles.dev', 'privacy@rulefiles.dev', 'sponsors@rulefiles.dev'];
+const emailsIn = (t) => [...new Set(t.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])].sort();
+
+test('the legal notice states the anonymous non-professional publisher and the host, with the contact alias and the right of reply', () => {
   const html = read('legal/index.html');
-  for (const h of ['Publisher', 'Director of publication', 'Contact', 'Host', 'Names, quotations and independence', 'Personal data and cookies']) {
+  for (const h of ['Publisher', 'Host', 'Contact and right of reply', 'Names, quotations and independence', 'Personal data and cookies']) {
     assert.match(html, new RegExp(`<h2>${h}</h2>`), h);
   }
+  assert.doesNotMatch(html, /<h2>Director of publication<\/h2>/);
   const text = textOf('legal/index.html');
   assert.match(text, /loi n° 2004-575 du 21 juin 2004, article 1-1/);
-  assert.match(text, /right of reply/);
+  assert.match(text, /published by a private individual, on a non-professional basis/);
+  assert.match(text, /Article 1-1, II of the law allows a person who publishes on a non-professional basis to stay anonymous and to give only the name and address of the host\. The publisher has chosen to remain anonymous\./);
+  assert.match(text, /Name: Cloudflare, Inc\./);
+  assert.match(text, /Address: 101 Townsend St, San Francisco, CA 94107, USA/);
+  assert.match(text, /Phone: \+1 \(650\) 319-8930/);
+  assert.match(text, /right of reply \(article 1-1, III\)/);
+  assert.match(text, /the request is sent to the host, which passes it on to the director of publication without delay/);
   assert.match(text, /within three months/);
-  for (const f of ['publisher name', 'publisher status', 'publisher address', 'publisher phone number', 'publisher registration number and share capital', 'director of publication', 'contact email address', 'host name, address and phone number']) {
-    assert.ok(text.includes(`[[TODO-OWNER: ${f}]]`), f);
-  }
-  // No personal data was invented: no email address and no phone number outside the markers.
-  const bare = text.replace(/\[\[TODO-OWNER:[^\]]*\]\]/g, '');
-  assert.doesNotMatch(bare, /@/);
-  assert.doesNotMatch(bare, /\+?\d[\d .-]{8,}\d/);
+  assert.match(html, /<a href="mailto:contact@rulefiles\.dev">contact@rulefiles\.dev<\/a>/);
+  // No publisher identity on the page: no name, address, phone, registration number or share capital.
+  assert.doesNotMatch(text, /\[\[TODO/);
+  assert.doesNotMatch(text, /SIRET|SIREN|RCS|share capital|Phone: (?!\+1 \(650\) 319-8930)/);
+  assert.deepEqual(emailsIn(text), ['contact@rulefiles.dev']);
 });
 
-test('the privacy page covers controller, basis, provider, retention, rights and the CNIL, with no invented data', () => {
+test('the privacy page covers controller, basis, provider, tracking, retention, rights and the CNIL', () => {
   const text = textOf('privacy/index.html');
-  for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies']) {
+  for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies', 'The host is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.']) {
     assert.ok(text.includes(needle), needle);
   }
-  for (const f of ['data controller', 'privacy contact address', 'email open and click tracking', 'retention period after unsubscription', 'host name, address and phone number']) {
-    assert.ok(text.includes(`[[TODO-OWNER: ${f}]]`), f);
-  }
+  assert.ok(text.includes('We do not track them. Our emails carry no tracking pixel, and the links in them are not rewritten.'));
+  assert.ok(text.includes('we delete your data within 30 days, unless the law requires us to keep it'));
+  // The one field left is the name of the controller.
+  assert.deepEqual(markerFields(text), ['data controller name']);
   const html = read('privacy/index.html');
   assert.match(html, /href="https:\/\/buttondown\.com\/legal\/data-processing-agreement"/);
+  assert.match(html, /href="https:\/\/buttondown\.com\/legal\/subprocessors"/);
+  assert.match(html, /href="https:\/\/docs\.buttondown\.com\/deleting-and-recovering-data"/);
   assert.match(html, /href="https:\/\/www\.cnil\.fr\/fr\/plaintes"/);
-  assert.doesNotMatch(text.replace(/\[\[TODO-OWNER:[^\]]*\]\]/g, ''), /@/);
+  assert.match(html, /<a href="mailto:privacy@rulefiles\.dev">privacy@rulefiles\.dev<\/a>/);
+  assert.deepEqual(emailsIn(text), ['privacy@rulefiles.dev']);
+});
+
+test('the sponsors page says sponsorship is not open, promises no figure and shows the sponsors alias', () => {
+  const html = read('sponsors/index.html');
+  const text = textOf('sponsors/index.html');
+  assert.match(text, /Sponsorship is not open yet\. No rates are published and no sponsor is booked\./);
+  assert.match(html, /<a href="mailto:sponsors@rulefiles\.dev">sponsors@rulefiles\.dev<\/a>/);
+  assert.match(text, /Writing there does not book anything\./);
+  assert.doesNotMatch(text, /[$€£]\s?\d|\d\s?(EUR|USD|euros?|dollars?)\b|per (month|week|issue)|\d+\s?%/i);
+  assert.deepEqual(emailsIn(text), ['sponsors@rulefiles.dev']);
+});
+
+test('the only email addresses on the built site are the three role aliases', () => {
+  const seen = new Set();
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (/\.(html|txt|xml|json|svg)$/.test(e.name)) emailsIn(fs.readFileSync(f, 'utf8')).forEach((m) => seen.add(m)); } };
+  walk(out);
+  assert.deepEqual([...seen].sort(), ALLOWED_EMAILS);
 });
 
 test('every page links the legal notice and the privacy page, and the sitemap and llms.txt list the legal notice', () => {

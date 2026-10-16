@@ -14,4 +14,4 @@ Sponsorship is not open yet. No rates are published and no sponsor is booked.
 - The site sets no cookies and uses no ad network or tracker. Sponsor lines are plain text with a link.
 - Sponsor links will not be presented as editorial picks.
 
-{{sponsorContact}}
+Questions about sponsorship go to [{{sponsorContact}}](mailto:{{sponsorContact}}). Writing there does not book anything.

@@ -13,6 +13,15 @@
     "emailFieldName": "email",
     "hiddenFields": {}
   },
-  "sponsorContact": "",
+  "contactEmail": "contact@rulefiles.dev",
+  "privacyEmail": "privacy@rulefiles.dev",
+  "sponsorContact": "sponsors@rulefiles.dev",
+  "host": {
+    "name": "Cloudflare, Inc.",
+    "address": "101 Townsend St, San Francisco, CA 94107, USA",
+    "phone": "+1 (650) 319-8930",
+    "sourceUrl": "https://www.cloudflare.com/website-terms/",
+    "readOn": "2026-10-16"
+  },
   "staleAfterDays": 30
 }

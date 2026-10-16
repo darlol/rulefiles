@@ -22,6 +22,8 @@ function hostAllowed(url, hosts) {
   return null;
 }
 
+const EMAIL_RE = /^[a-z0-9._-]+@[a-z0-9-]+(\.[a-z0-9-]+)+$/;
+
 export function validateConfig(config) {
   const errors = [];
   for (const key of ['name', 'tagline', 'description', 'baseUrl', 'language']) {
@@ -32,6 +34,16 @@ export function validateConfig(config) {
   }
   if (config.homeTitle !== undefined && (typeof config.homeTitle !== 'string' || !config.homeTitle || config.homeTitle.length > 60)) errors.push('site.config.json: homeTitle must be a non-empty string of at most 60 characters');
   if (config.description && config.description.length > 200) errors.push('site.config.json: description should stay under 200 characters');
+  for (const key of ['contactEmail', 'privacyEmail', 'sponsorContact']) {
+    if (typeof config[key] !== 'string' || !EMAIL_RE.test(config[key])) errors.push(`site.config.json: "${key}" must be an email address`);
+  }
+  const host = config.host;
+  if (!host || typeof host !== 'object') errors.push('site.config.json: host object is missing (name, address, phone, sourceUrl, readOn)');
+  else {
+    for (const key of ['name', 'address', 'phone']) if (typeof host[key] !== 'string' || !host[key].trim()) errors.push(`site.config.json: host.${key} must be a non-empty string`);
+    if (typeof host.sourceUrl !== 'string' || !/^https:\/\//.test(host.sourceUrl)) errors.push('site.config.json: host.sourceUrl must be the https page the host details were read on');
+    if (!isIsoDate(host.readOn)) errors.push('site.config.json: host.readOn must be YYYY-MM-DD');
+  }
   const nl = config.newsletter;
   if (!nl || typeof nl !== 'object') errors.push('site.config.json: newsletter object is missing');
   else if (nl.formAction && !/^https:\/\//.test(nl.formAction)) errors.push('site.config.json: newsletter.formAction must be an https URL or empty');
