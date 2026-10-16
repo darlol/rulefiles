@@ -52,6 +52,8 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   put('llms.txt', r.renderLlmsTxt(ctx));
   put('llms-full.txt', r.renderLlmsFull(ctx));
   put('_headers', r.renderHeaders(ctx.config));
+  // IndexNow ownership file: https://<host>/<key>.txt holds the key. The key is public by design.
+  if (ctx.config.indexNowKey) put(`${ctx.config.indexNowKey}.txt`, ctx.config.indexNowKey);
   put('favicon.svg', r.FAVICON);
   put('og.png', renderOgImage({ name: ctx.config.name, title: r.HERO_TITLE, caption: `${ctx.matrix.cells.length} cells, each with an official source and a check date.`, matrix: ctx.matrix }));
   put('data/matrix.json', JSON.stringify(ctx.matrix, null, 2) + '\n');

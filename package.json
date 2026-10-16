@@ -15,6 +15,7 @@
     "test": "node --test tests/*.test.mjs",
     "check-links": "node scripts/check-links.mjs",
     "check-links:external": "node scripts/check-links.mjs --external",
+    "indexnow": "node scripts/indexnow.mjs",
     "watch": "node scripts/watch.mjs",
     "watch:offline": "node scripts/watch.mjs --offline tests/fixtures --out /tmp/rulefiles-drafts",
     "preview": "node scripts/preview.mjs",
