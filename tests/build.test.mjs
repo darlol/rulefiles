@@ -384,9 +384,14 @@ test('every page links the legal notice and the privacy page, and the sitemap an
 });
 
 test('the old name does not appear anywhere in the built site', () => {
-  const old = /agent(?:\s|&nbsp;|&#160;|&#xa0;|[_\-.·])*diffs?/i;
+  const old = /agent(?:\s|&nbsp;|&#0*160;|&#x0*a0;|[_\-.·\/])*diffs?\b/i;
   const names = ['site.config.json', 'package.json'];
-  assert.match('Agent&nbsp;Diffs Agent  Diffs Agent·Diffs agent_diff AgentDiffs', old);
+  for (const v of ['Agent Diffs', 'Agent&nbsp;Diffs', 'Agent&#160;Diffs', 'Agent&#x00A0;Diffs', 'Agent&#0160;Diffs', 'Agent  Diffs', 'Agent·Diffs', 'Agent/Diffs', 'agent_diff', 'agent-diffs', 'AgentDiffs']) {
+    assert.match(v, old, `${v} should be flagged`);
+  }
+  for (const v of ['agent differences', 'Agent Difference', 'agent diffusion', 'agent differs']) {
+    assert.doesNotMatch(v, old, `${v} should not be flagged`);
+  }
   for (const n of names) assert.doesNotMatch(fs.readFileSync(new URL(`../${n}`, import.meta.url), 'utf8'), old, n);
   for (const f of listFiles(out)) {
     if (/\.(html|xml|txt|json|js|css|svg)$/.test(f)) assert.doesNotMatch(fs.readFileSync(f, 'utf8'), old, `${path.relative(out, f)} carries the former name`);
