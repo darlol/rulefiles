@@ -70,9 +70,9 @@ Floors that follow from the table:
 | `color-scheme` | native controls and scrollbars in dark mode | 81 | 96 | 13 | Controls stay light. |
 | `prefers-color-scheme` | dark theme | 76 / 79 | 67 | 12.1 | Light theme only. |
 | `prefers-reduced-motion` | motion overrides | 74 / 79 | 63 | 10.1 | Motion is not reduced. |
-| `accent-color` | checkbox and radio color | 93 | 92 | 15.4 | Browser default color. |
+| `accent-color` | checkbox and radio color | 93 | 92 | 26.2 (15.4 to 26.1 partial) | Browser default color. |
 | `scrollbar-color` | page scrollbars | 121 | 64 | 26.2 | Default scrollbars. |
-| `overscroll-behavior` | matrix table scrolling | 63 / 18 | 59 | 16 | Scrolling can chain to the page. |
+| `overscroll-behavior` | matrix table scrolling | 144 (63 to 143 partial) / 18 | 150 (59 to 149 partial) | 16 (partial) | Scrolling can chain to the page. |
 | `text-underline-offset`, `text-decoration-thickness` | link underlines | 87 / 87, 89 / 89 | 70 | 12.1 | Default underline. |
 | `::marker` | list bullets | 86 | 68 | 11.1 (color and font size only) | Default bullets. |
 | `content` with alternative text | the dash in empty matrix cells | 77 / 79 | 128 | 17.4 | A plain `content: "–"` comes first, so the dash is read out. |
@@ -92,6 +92,11 @@ Floors that follow from the table:
 | `URL.createObjectURL()` and `<a download>` | Download button | 19 / 12 and 14 / 18 | 19 and 20 | 6 and 10.1 | No download. |
 | `FormData.entries()` | generator form values | 50 / 18 | 44 | 11.1 | Generator does not run. |
 | `Element.append()` | generator output | 54 / 17 | 49 | 10 | Generator does not run. |
+
+Partial support, from the same MDN data (version 8.1.6, `css.properties.accent-color` and `css.properties.overscroll-behavior`):
+
+- `accent-color`: Safari 15.4 to 26.1 (and Safari on iOS) support it partially, because Safari does not keep the minimum contrast of the control for legibility (WebKit bug 244233). It is complete from Safari 26.2. MDN also marks Chrome for Android partial for the same kind of contrast issue (Chromium bug 343503163); Chrome desktop, Edge and Firefox have no partial flag.
+- `overscroll-behavior`: partial in Chrome from 63 to 143 and in Firefox from 59 to 149, because the property has no effect on a scroll container that has no scrollable overflow. Complete from Chrome 144 and Firefox 150. Safari has it from 16 and MDN still marks it partial for the same reason, with no complete version yet. MDN gives Edge one number, 18, with no partial flag, so the row keeps it. The matrix table does have overflow when it scrolls, so the partial case does not change the behavior the site relies on. That last sentence is our reading, not an MDN statement.
 
 ### Not used, and kept out
 

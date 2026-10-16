@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from '../scripts/build.mjs';
 import { listFiles } from '../scripts/lib/util.mjs';
+import { itemHtml } from '../scripts/lib/render.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const css = fs.readFileSync(path.join(root, 'src', 'static', 'style.css'), 'utf8');
@@ -418,16 +419,23 @@ const NEWER_THAN_FLOOR = [
   [/^\s*static\s*\{/m, 'class static blocks', 'Chrome 94, Firefox 93, Safari 16.4'],
   [/\s#[a-z_]\w*\s*[=;(]/i, 'private class members', 'Chrome 74, Firefox 90, Safari 14.1']
 ];
+// Known limit: comments are removed with a regular expression, not a parser, so a `//` inside a string or
+// a regex literal hides the rest of its line. `const a = 'x // y'; b ?? c` passes unflagged. Keep one
+// statement per line and avoid `//` inside literals in the browser scripts; a parser would be a dependency.
 function scriptSyntaxProblems(name, source) {
   const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
   return NEWER_THAN_FLOOR.filter(([re]) => re.test(code)).map(([, what, versions]) => `${name}: ${what} (${versions})`);
 }
-const scriptFiles = ['src/static/generator.js', 'src/static/matrix.js', 'src/js/generator-core.js', 'src/js/matrix-filter.js'];
+// Every .js file in the two folders is scanned, so a new script is covered without editing this list.
+const scriptFiles = ['src/static', 'src/js'].flatMap((dir) => fs.readdirSync(path.join(root, dir)).filter((f) => f.endsWith('.js')).map((f) => `${dir}/${f}`)).sort();
 
 test('the browser scripts avoid syntax and APIs that older engines cannot parse', () => {
+  assert.ok(scriptFiles.length >= 4, `found ${scriptFiles.join(', ')}`);
   for (const f of scriptFiles) assert.deepEqual(scriptSyntaxProblems(f, fs.readFileSync(path.join(root, f), 'utf8')), []);
-  // The built copies are the same files.
-  for (const f of ['generator.js', 'generator-core.js', 'matrix.js', 'matrix-filter.js']) assert.ok(fs.existsSync(path.join(out, 'assets', f)), f);
+  // The built copies are the same files, and the built folder holds no script that was not scanned.
+  for (const f of scriptFiles) assert.ok(fs.existsSync(path.join(out, 'assets', path.basename(f))), f);
+  const built = fs.readdirSync(path.join(out, 'assets')).filter((f) => f.endsWith('.js')).sort();
+  assert.deepEqual(built, scriptFiles.map((f) => path.basename(f)).sort(), 'every built script comes from a scanned folder');
 });
 
 test('the script check flags each newer feature', () => {
@@ -500,10 +508,26 @@ test('every Source link on the digest cards has a unique accessible name that st
   const latest = weeks[weeks.length - 1];
   const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
   assert.deepEqual(digestSourceLinkProblems(home, digestOf(latest).items.slice(0, 4), 'home'), []);
-  assert.equal(digestOf(latest).items.length, 6, 'the latest week has the six items the review counted');
+  // The count comes from the week's own data file, so a week with another number of items still passes.
+  const latestItems = digestOf(latest).items;
+  assert.ok(latestItems.length > 0, 'the latest week has items');
+  const latestHtml = fs.readFileSync(path.join(out, 'digest', latest, 'index.html'), 'utf8');
+  assert.equal((latestHtml.match(/<p class="item-foot">/g) || []).length, latestItems.length, 'one item card per item in the data');
+  assert.equal((latestHtml.match(/<a class="src"/g) || []).length, latestItems.length, 'one Source link per item in the data');
   const rule = parseRules(css).find((r) => !r.reduce && r.selectors.includes('.item-foot .src'));
   assert.ok(rule, 'a rule sizes .item-foot .src');
   for (const prop of ['min-width', 'min-height']) assert.ok(parseFloat(rule.props[prop]) >= 24 && /px$/.test(rule.props[prop]), `${prop} is at least 24px`);
+});
+
+test('the digest link check follows the number of items in the data, whether 3 or 8', () => {
+  const base = digestOf('2026-W42').items;
+  for (const count of [3, 8]) {
+    const items = Array.from({ length: count }, (_, i) => ({ ...base[i % base.length], id: `item-${i}`, title: `${base[i % base.length].title} ${i}` }));
+    const html = `<ul class="items">${items.map(itemHtml).join('\n')}</ul>`;
+    assert.deepEqual(digestSourceLinkProblems(html, items, `${count} items`), [], `${count} items must pass`);
+    assert.ok(digestSourceLinkProblems(html, items.slice(1), `${count} items`).length > 0, `${count} items against one item fewer in the data must fail`);
+    assert.ok(digestSourceLinkProblems(html.replace('<li class="item" id="item-0">', '<li class="item" id="item-0" hidden>').replace(/<p class="item-foot">[\s\S]*?<\/p>/, ''), items, `${count} items`).length > 0, 'a card without its Source link must fail');
+  }
 });
 
 test('the digest link check fails on a missing, shared or mismatched name and on a small target', () => {
