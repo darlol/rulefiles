@@ -7,7 +7,7 @@
   "start": "2026-10-05",
   "end": "2026-10-11",
   "status": "published",
-  "verifiedOn": "2026-10-15",
+  "verifiedOn": "2026-10-16",
   "title": "Digest for 5 to 11 October 2026",
   "summary": "Selected changes from the Cursor changelog, Claude Code and Codex release notes, and the GitHub changelog. Each item quotes the source wording and links to it.",
   "items": [
@@ -43,6 +43,17 @@
       "figure": "1M context; $0.10/$0.50 per Mtok",
       "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.293",
       "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-08-v2.1.294",
+      "date": "2026-10-08",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.294",
+      "text": "Fixed `prompt` and `agent` hooks written as instructions (such as \"Block commands that...\") allowing what they should block",
+      "quote": true,
+      "version": "2.1.294",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.294",
+      "sourceLabel": "Anthropic, Claude Code release notes"
     },
     {
       "id": "claude-code-2026-10-08-v2.1.295",
@@ -89,6 +100,16 @@
       "sourceLabel": "Codex release notes"
     },
     {
+      "id": "codex-2026-10-08-gpt-6-1-sol-ultrafast",
+      "date": "2026-10-08",
+      "tool": "codex",
+      "title": "GPT-6.1 Sol Ultrafast in Codex and ChatGPT Work",
+      "text": "Ultrafast mode speeds up token generation with GPT-6.1 Sol in Codex and ChatGPT Work. Ultrafast is available on Pro $500 and eligible Enterprise and Edu plans.",
+      "quote": true,
+      "sourceUrl": "https://learn.chatgpt.com/docs/changelog#codex-2026-10-08-gpt-61-sol-ultrafast",
+      "sourceLabel": "OpenAI, Codex changelog"
+    },
+    {
       "id": "codex-2026-10-09-0.162.1",
       "date": "2026-10-09",
       "tool": "codex",
@@ -117,6 +138,16 @@
       "text": "This release adds new billing and license controls for Copilot code review admins",
       "quote": true,
       "sourceUrl": "https://github.blog/changelog/2026-10-08-copilot-code-review-new-organization-billing-options-and-controls",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-09-weekly-releases-october-5",
+      "date": "2026-10-09",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot weekly releases: October 5",
+      "text": "Limit agents’ access to files, networks, and credentials with local sandboxing, now generally available in Copilot CLI, the Copilot app, and VS Code sessions using Agent Host.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-09-github-copilot-weekly-releases-october-5/",
       "sourceLabel": "GitHub changelog"
     },
     {

@@ -110,7 +110,7 @@ test('sitemap lists every indexable page and not the 404', () => {
   assert.equal(locs.length, PAGES.length - 1 + 3, 'the pages plus matrix.json, digests.json and the feed');
   assert.ok(locs.includes('https://rulefiles.dev/matrix/'));
   assert.ok(!locs.some((l) => l.includes('404')));
-  assert.match(xml, /<lastmod>2026-10-15<\/lastmod>/);
+  for (const loc of ['/', '/digest/', '/digest/2026-W41/', '/digest/2026-W42/', '/data/digests.json', '/digest/feed.xml']) assert.ok(xml.includes(`<loc>https://rulefiles.dev${loc}</loc><lastmod>2026-10-16</lastmod>`), `${loc} lastmod follows the latest verifiedOn`);
   for (const l of locs) {
     const p = new URL(l).pathname;
     const file = /\.(json|xml)$/.test(p) ? p.slice(1) : p === '/' ? 'index.html' : path.join(p, 'index.html');
@@ -155,7 +155,7 @@ test('Atom feed is well formed and has one entry per issue', () => {
   assert.match(xml, /^<\?xml version="1.0" encoding="utf-8"\?>\n<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom"/);
   assert.equal((xml.match(/<entry>/g) || []).length, 2);
   assert.equal((xml.match(/<entry>/g) || []).length, (xml.match(/<\/entry>/g) || []).length);
-  assert.match(xml, /<updated>2026-10-15T00:00:00Z<\/updated>/);
+  assert.match(xml, /<updated>2026-10-16T00:00:00Z<\/updated>/);
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
   assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');
@@ -181,10 +181,10 @@ test('matrix page shows every cell with its source link and date', () => {
 
 test('digest pages show sourced items', () => {
   const html = read('digest/2026-W41/index.html');
-  assert.equal((html.match(/class="item"/g) || []).length, 11);
-  assert.equal((html.match(/<a class="src" href="https:\/\/[^"]+" rel="noopener" aria-label="Source: [^"]+">Source: /g) || []).length, 11);
-  assert.equal((html.match(/<time datetime="\d{4}-\d\d-\d\d">\d{1,2} [A-Z][a-z]{2} \d{4}<\/time><span class="tag">/g) || []).length, 11, 'every item shows a date and a tool badge');
-  assert.match(html, /<h2 id="t-claude-code">Claude Code <span class="count">4<\/span><\/h2>/);
+  assert.equal((html.match(/class="item"/g) || []).length, 14);
+  assert.equal((html.match(/<a class="src" href="https:\/\/[^"]+" rel="noopener" aria-label="Source: [^"]+">Source: /g) || []).length, 14);
+  assert.equal((html.match(/<time datetime="\d{4}-\d\d-\d\d">\d{1,2} [A-Z][a-z]{2} \d{4}<\/time><span class="tag">/g) || []).length, 14, 'every item shows a date and a tool badge');
+  assert.match(html, /<h2 id="t-claude-code">Claude Code <span class="count">5<\/span><\/h2>/);
 });
 
 test('no cookies, no external scripts, fonts, images or trackers anywhere in the output', () => {
