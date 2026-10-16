@@ -43,7 +43,8 @@ test('github releases: prereleases and drafts are skipped, version and bullet li
   assert.equal(e[0].title, 'Claude Code v2.1.301');
   assert.equal(e[0].version, '2.1.301');
   assert.equal(e[0].date, '2026-10-15');
-  assert.match(e[0].firstLine, /^Added `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS`/);
+  assert.match(e[0].firstLine, /^Added CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS so unattended retry mode \(CLAUDE_CODE_RETRY_WATCHDOG\) ends/);
+  for (const x of e) for (const l of x.lines) assert.doesNotMatch(l, /`/);
   assert.ok(e[0].lines.length <= 3);
 });
 
@@ -477,4 +478,34 @@ test('watch-sources: maxBytes must be a whole number from 1 to the hard limit', 
 
 test('watch: the summary of skipped sources names each source and its reason', () => {
   assert.equal(skippedSummary([{ id: 'a', reason: 'too big' }, { id: 'b', reason: 'HTTP 500' }], 5), 'WARNING: 2 of 5 source(s) skipped: a (too big); b (HTTP 500)');
+});
+
+test('contentLines: an unclosed bracket or link in a huge line does not make the cleaning slow', () => {
+  const started = Date.now();
+  for (const piece of ['[', '[a(', '![a(', '![', '[a](', '[a](((', '<a ', '`', '**a ']) {
+    const lines = contentLines(`- ${piece.repeat(Math.ceil(100_000 / piece.length))}`);
+    assert.ok(lines.length <= 3);
+    assert.ok(lines.every((l) => l.length <= 2000), `${piece}: a line is cut at 2000 characters`);
+  }
+  // Nine inputs of 100 KB: each took 2 to 8 seconds before the line was cut and the patterns were bounded.
+  assert.ok(Date.now() - started < 2000, `took ${Date.now() - started} ms`);
+});
+
+test('contentLines: a literal <p> or <li> in Markdown code does not turn the text into HTML', () => {
+  assert.deepEqual(contentLines('- Added `<p>` tag support\n- Fixed `<li>` nesting'), ['Added <p> tag support', 'Fixed <li> nesting']);
+  assert.deepEqual(contentLines('Intro.\n\n```html\n<p>x</p>\n```\n\n- Item one'), ['Item one']);
+  // Real HTML, even with backticks in the text, is still read as HTML.
+  assert.deepEqual(contentLines('<ul><li>Use `a` here</li><li>Two</li></ul>'), ['Use `a` here', 'Two']);
+});
+
+test('contentLines: links with nested parentheses, javascript: links and inline HTML leave no residue', () => {
+  assert.deepEqual(contentLines('- See [the docs](https://x.example/a_(b)) now\n- Click [x](javascript:alert(1)) ok\n- ![shot](https://x/i.png) Clip <video src="https://x/v.mp4" controls></video> done\n- Line<br/>break and <https://x.example> and 1 < 2 and `<b>`'), ['See the docs now', 'Click x ok', 'shot Clip done']);
+  assert.deepEqual(contentLines('- Line<br/>break and <https://x.example> and 1 < 2 and `<b>`'), ['Linebreak and <https://x.example> and 1 < 2 and <b>']);
+});
+
+test('github releases: lines lose Markdown marks, links and PR references like the Codex feed lines do', () => {
+  const rel = [{ tag_name: 'rust-v0.160.1', draft: false, prerelease: false, published_at: '2026-10-05T18:29:00Z', html_url: 'https://github.com/openai/codex/releases/tag/rust-v0.160.1',
+    body: '## Fixes\n\n- Fixed `/model` crash with **long** names. ([#51121](https://github.com/openai/codex/pull/51121))\n* Updated [the guide](https://x.example/a_(b)) (#1, #2).\n- ' }];
+  const e = parseGithubReleases(rel, src('codex-releases'));
+  assert.deepEqual(e[0].lines, ['Fixed /model crash with long names.', 'Updated the guide.']);
 });

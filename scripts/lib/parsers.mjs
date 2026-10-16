@@ -35,15 +35,32 @@ const cleanLine = (t) => stripTags(t).replace(PR_REFS, (_, dot) => dot).trim();
 
 const MD_LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+(\S.*)$/;
 
-/** Plain text of one Markdown line or paragraph: links keep their text, emphasis and code marks go, PR references go. */
+// A line longer than this is cut before any pattern runs on it. The feed is third-party text, and a long
+// run of "[" or "![a(" with no closing bracket would otherwise make the link patterns quadratic.
+const MAX_MARKDOWN_TEXT = 2000;
+const MD_IMAGE = /!\[([^\]\n]{0,300})\]\((?:[^()\n]|\([^()\n]{0,200}\)){0,500}\)/g;
+const MD_LINK = /\[([^\]\n]{1,300})\]\((?:[^()\n]|\([^()\n]{0,200}\)){0,500}\)/g;
+const INLINE_HTML_TAG = /<\/?[a-zA-Z][\w-]{0,30}(?:\s[^<>]{0,300})?\/?>/g;
+const CODE_SPAN = /`([^`\n]+)`/g;
+
+/**
+ * Plain text of one Markdown line or paragraph: links keep their text (one level of nested parentheses in
+ * the address is understood), emphasis and code marks go, inline HTML tags go, PR references go. Text in
+ * code spans is kept as written, so `<prompt>` stays.
+ */
 function cleanMarkdown(t) {
+  const codes = [];
   return t
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .slice(0, MAX_MARKDOWN_TEXT)
+    .replace(/[\uE000\uE001]/g, '')
+    .replace(CODE_SPAN, (_, c) => `\uE000${codes.push(c) - 1}\uE001`)
+    .replace(MD_IMAGE, '$1')
+    .replace(MD_LINK, '$1')
+    .replace(INLINE_HTML_TAG, '')
     .replace(/(\*\*|__)(.+?)\1/g, '$2')
-    .replace(/`([^`]+)`/g, '$1')
     .replace(/\s+/g, ' ')
     .replace(PR_REFS, (_, dot) => dot)
+    .replace(/\uE000(\d+)\uE001/g, (_, i) => codes[Number(i)])
     .trim();
 }
 
@@ -75,7 +92,9 @@ function markdownLines(md) {
  */
 export function contentLines(content) {
   const text = content || '';
-  if (!/<(li|p)>/.test(text)) return markdownLines(text);
+  // Code in Markdown can mention <p> or <li> (``- Added `<p>` tag support``), so code is set aside before looking for HTML.
+  const outsideCode = text.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]{0,200}`/g, ' ');
+  if (!/<(li|p)>/.test(outsideCode)) return markdownLines(text);
   let parts = [...text.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
   if (!parts.length) parts = [...text.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => m[1]);
   return parts.map(cleanLine).filter(Boolean).slice(0, 3);
@@ -130,7 +149,8 @@ export function parseGithubReleases(json, source) {
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter((l) => /^[-*]\s+\S/.test(l))
-      .map((l) => l.replace(/^[-*]\s+/, '').replace(/\s*\((?:#\d+(?:,\s*#\d+)*)\)\.?$/, (m) => (m.endsWith('.') ? '.' : '')))
+      .map((l) => cleanMarkdown(l.replace(/^[-*]\s+/, '')))
+      .filter(Boolean)
       .slice(0, 3);
     const title = (source.titleFormat || '{tag}').replace('{version}', version).replace('{tag}', tagName);
     out.push({ id: `${source.id}:${tagName}`, tool: source.tool, sourceId: source.id, sourceLabel: source.label, title, version, date: r.published_at.slice(0, 10), url: r.html_url, firstLine: lines[0] || '', lines });
