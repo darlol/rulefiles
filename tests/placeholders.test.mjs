@@ -86,7 +86,7 @@ test('strict build fails and leaves no dist while markers remain, the normal bui
     assert.ok(fs.existsSync(path.join(outDir, 'index.html')));
     assert.throws(() => build({ root: dir, outDir, quiet: true, strict: true }), (e) => {
       assert.match(e.message, /Strict build failed: \d+ launch placeholder\(s\) remain/);
-      assert.match(e.message, /TODO-OWNER: host name and address/);
+      assert.match(e.message, /TODO-OWNER: host name, address and phone number/);
       assert.match(e.message, /placeholder https:\/\/agentdiffs\.dev/);
       return true;
     });

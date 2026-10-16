@@ -43,6 +43,7 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   page('/about/', r.contentPage(ctx, path.join(root, 'content', 'about.md'), '/about/'));
   page('/sponsors/', r.contentPage(ctx, path.join(root, 'content', 'sponsors.md'), '/sponsors/'));
   page('/privacy/', r.contentPage(ctx, path.join(root, 'content', 'privacy.md'), '/privacy/'));
+  page('/legal/', r.contentPage(ctx, path.join(root, 'content', 'legal.md'), '/legal/'));
   put('404.html', r.notFoundPage(ctx));
 
   put('digest/feed.xml', r.renderFeed(ctx));

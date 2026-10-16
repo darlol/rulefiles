@@ -85,7 +85,7 @@ ${page.body}
 </main>
 <footer class="site-footer"><div class="wrap">
 <p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies, no trackers.</p>
-<p><a href="/digest/feed.xml">Atom feed</a> · <a href="/llms.txt">llms.txt</a> · <a href="/data/matrix.json">matrix.json</a> · <a href="/sponsors/">Sponsors</a> · <a href="/privacy/">Privacy</a></p>
+<p><a href="/digest/feed.xml">Atom feed</a> · <a href="/llms.txt">llms.txt</a> · <a href="/data/matrix.json">matrix.json</a> · <a href="/sponsors/">Sponsors</a> · <a href="/privacy/">Privacy</a> · <a href="/legal/">Legal notice</a></p>
 </div></footer>
 ${page.script ? `<script type="module" src="${page.script}"></script>` : ''}
 </body>
@@ -329,7 +329,7 @@ ${form}
 <ul>
 <li>One email per week with the digest. No other mailings.</li>
 <li>Double opt-in and a one-click unsubscribe link in every email.</li>
-<li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for the list.</li>
+<li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for your data.</li>
 </ul>`;
   return layout(config, {
     path: '/newsletter/', title: 'Newsletter', description: 'Weekly email digest of what changed in AI coding tools. Signup is not open yet; the Atom feed works now.', body,
@@ -421,6 +421,7 @@ export function renderLlmsTxt(ctx) {
     `- [About](${url(config, '/about/')}): method and limits`,
     `- [Privacy](${url(config, '/privacy/')}): no cookies, no analytics`,
     `- [Sponsors](${url(config, '/sponsors/')}): sponsorship policy`,
+    `- [Legal notice](${url(config, '/legal/')}): publisher, host and contact`,
     ''
   ];
   return lines.join('\n');

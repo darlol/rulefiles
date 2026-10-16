@@ -29,7 +29,7 @@ data/drafts/                drafts written by the watch script (not built)
 data/watch-sources.json     official feeds the watch script reads
 data/watch-state.json       entries the watch script already listed
 data/allowed-source-hosts.json  hosts accepted as official sources
-content/*.md                prose for About, Sponsors and Privacy
+content/*.md                prose for About, Sponsors, Privacy and the legal notice
 src/js/generator-core.js    generator logic, shared by the browser and the tests
 src/static/                 CSS and the generator UI script
 scripts/                    build, validation, link check, watch, preview
@@ -38,7 +38,11 @@ docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
 docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public
 docs/NEWSLETTER.md          newsletter tools compared on vendor pages, with a recommendation
-docs/BRAND.md               candidate names and domain checks
+docs/LICENSE-RECOMMENDATION.md  recommended licenses for the code and the data, not active
+docs/licenses/              license texts, kept inactive until the owner decides
+docs/SOURCE-TERMS.md        what the project takes from each source and the clauses that matter
+docs/BRAND.md               the name, the fallback and the names dropped
+docs/BRAND-CLEARANCE.md     trademark, collision, domain, handle and fee checks for the name
 ```
 
 ## How a bot keeps it current

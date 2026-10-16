@@ -21,7 +21,7 @@ let result;
 before(() => { result = build({ outDir: out, quiet: true }); });
 after(() => fs.rmSync(out, { recursive: true, force: true }));
 
-const PAGES = ['index.html', 'matrix/index.html', 'generator/index.html', 'digest/index.html', 'digest/2026-W41/index.html', 'digest/2026-W42/index.html', 'about/index.html', 'sponsors/index.html', 'newsletter/index.html', 'privacy/index.html', '404.html'];
+const PAGES = ['index.html', 'matrix/index.html', 'generator/index.html', 'digest/index.html', 'digest/2026-W41/index.html', 'digest/2026-W42/index.html', 'about/index.html', 'sponsors/index.html', 'newsletter/index.html', 'privacy/index.html', 'legal/index.html', '404.html'];
 
 test('all expected pages and files exist', () => {
   for (const p of [...PAGES, 'sitemap.xml', 'robots.txt', 'llms.txt', 'llms-full.txt', 'digest/feed.xml', 'data/matrix.json', 'data/digests.json', 'assets/style.css', 'assets/generator.js', 'assets/generator-core.js', '_headers', 'favicon.svg']) {
@@ -312,10 +312,10 @@ test('built digest pages show source backticks as code and contain no raw backti
 test('the build warns, without failing, about every TODO marker and the placeholder domain', () => {
   const warnings = result.warnings;
   assert.ok(Array.isArray(warnings));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: host name and address]]')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: host name, address and phone number]]')), warnings.join('\n'));
   assert.ok(warnings.some((w) => w.startsWith('/about/:') && w.includes('[[TODO-OWNER: correction channel]]')), warnings.join('\n'));
   assert.ok(warnings.some((w) => w.startsWith('/sponsors/:') && w.includes('[[TODO-OWNER: sponsorship contact address]]')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: newsletter provider]]')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: data controller]]')), warnings.join('\n'));
   assert.ok(!warnings.some((w) => w.startsWith('/newsletter/:')), 'the newsletter page carries no marker');
   assert.ok(warnings.some((w) => w.includes('placeholder https://agentdiffs.dev')));
 });
@@ -337,4 +337,48 @@ test('the generator page names AGENTS.md as the main file and cites the matrix f
   assert.ok(html.includes(sentence));
   assert.equal(agentsMdSentence({ tools: [], cells: [] }), '');
   assert.match(html, /<input type="radio" name="claudeMode" value="import" checked>/);
+});
+
+const textOf = (rel) => read(rel).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/\s+/g, ' ');
+
+test('the legal notice has the publisher, director, contact, host and right of reply sections, and every owner fact is a marker', () => {
+  const html = read('legal/index.html');
+  for (const h of ['Publisher', 'Director of publication', 'Contact', 'Host', 'Names, quotations and independence', 'Personal data and cookies']) {
+    assert.match(html, new RegExp(`<h2>${h}</h2>`), h);
+  }
+  const text = textOf('legal/index.html');
+  assert.match(text, /loi n° 2004-575 du 21 juin 2004, article 1-1/);
+  assert.match(text, /right of reply/);
+  assert.match(text, /within three months/);
+  for (const f of ['publisher name', 'publisher status', 'publisher address', 'publisher phone number', 'publisher registration number and share capital', 'director of publication', 'contact email address', 'host name, address and phone number']) {
+    assert.ok(text.includes(`[[TODO-OWNER: ${f}]]`), f);
+  }
+  // No personal data was invented: no email address and no phone number outside the markers.
+  const bare = text.replace(/\[\[TODO-OWNER:[^\]]*\]\]/g, '');
+  assert.doesNotMatch(bare, /@/);
+  assert.doesNotMatch(bare, /\+?\d[\d .-]{8,}\d/);
+});
+
+test('the privacy page covers controller, basis, provider, retention, rights and the CNIL, with no invented data', () => {
+  const text = textOf('privacy/index.html');
+  for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies']) {
+    assert.ok(text.includes(needle), needle);
+  }
+  for (const f of ['data controller', 'privacy contact address', 'email open and click tracking', 'retention period after unsubscription', 'host name, address and phone number']) {
+    assert.ok(text.includes(`[[TODO-OWNER: ${f}]]`), f);
+  }
+  const html = read('privacy/index.html');
+  assert.match(html, /href="https:\/\/buttondown\.com\/legal\/data-processing-agreement"/);
+  assert.match(html, /href="https:\/\/www\.cnil\.fr\/fr\/plaintes"/);
+  assert.doesNotMatch(text.replace(/\[\[TODO-OWNER:[^\]]*\]\]/g, ''), /@/);
+});
+
+test('every page links the legal notice and the privacy page, and the sitemap and llms.txt list the legal notice', () => {
+  for (const p of PAGES) {
+    const html = read(p);
+    assert.match(html, /<a href="\/privacy\/">Privacy<\/a>/, p);
+    assert.match(html, /<a href="\/legal\/">Legal notice<\/a>/, p);
+  }
+  assert.match(read('sitemap.xml'), /<loc>https:\/\/agentdiffs\.dev\/legal\/<\/loc>/);
+  assert.match(read('llms.txt'), /\[Legal notice\]\(https:\/\/agentdiffs\.dev\/legal\/\)/);
 });
