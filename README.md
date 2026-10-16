@@ -86,7 +86,7 @@ Release dates use the UTC date of the publication timestamp.
 - No cookies, no analytics, no third-party scripts, fonts or images. A test fails if any appears.
 - Every page carries a Content-Security-Policy meta tag. `dist/_headers` repeats it for hosts that read that file.
 - The generator runs in the browser and sends nothing.
-- The newsletter form is off until `newsletter.formAction` in `site.config.json` (or the `NEWSLETTER_FORM_ACTION` environment variable) holds an https URL. Then it posts only the email address typed by the visitor, and the CSP allows that one origin.
+- The newsletter form posts to the Buttondown endpoint set in `newsletter.formAction` in `site.config.json` (the `NEWSLETTER_FORM_ACTION` environment variable overrides it, and an empty value closes the form). It sends only the email address typed by the visitor, plus the provider's `embed` field, and the CSP allows that one origin for `form-action` only. Signup uses double opt-in.
 - There are no secrets in the repository. The watch script reads an optional `GITHUB_TOKEN` from the environment, only for `api.github.com`.
 
 ## Environment variables

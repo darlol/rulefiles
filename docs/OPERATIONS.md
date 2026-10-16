@@ -24,7 +24,7 @@ Build command for a preview on either provider: `npm run build`. It prints a `LA
 
 ## Newsletter
 
-The form stays off until an https form endpoint is set. Set `newsletter.formAction` in `site.config.json`, or the `NEWSLETTER_FORM_ACTION` variable at build time, then add any provider-specific hidden fields under `newsletter.hiddenFields`. The CSP then allows that one form origin. Before enabling it, name the provider and the responsible person on the privacy page (`content/privacy.md`) and turn on double opt-in at the provider.
+The form is on while `newsletter.formAction` holds an https form endpoint (since 2026-10-16 it is the Buttondown embed endpoint of the `rulefiles` newsletter), and off when it is empty. To close it again, empty `newsletter.formAction`. A build with `NEWSLETTER_FORM_ACTION` set to an empty value closes it too, which is what the tests use. To change the endpoint, set `newsletter.formAction` in `site.config.json`, or the `NEWSLETTER_FORM_ACTION` variable at build time, then add any provider-specific hidden fields under `newsletter.hiddenFields`. The CSP then allows that one form origin, for `form-action` only. If the provider changes, change `content/privacy.md` in the same pull request, since it names the provider and its sub-processors.
 
 ## CI
 

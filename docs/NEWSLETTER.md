@@ -4,7 +4,7 @@ Checked on the vendors' own pages on 2026-10-15. The beehiiv row and everything 
 
 ## Decision
 
-The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form stays disabled until the publication go: `newsletter.formAction` in `site.config.json` stays empty, so the site sends nothing and collects nothing. Nothing in this file has been executed.
+The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form was opened at the owner's publication go of 2026-10-16: `newsletter.formAction` in `site.config.json` holds the Buttondown embed endpoint of the `rulefiles` newsletter. The steps below are the setup list. The owner did the account steps; the deletion call of step 6 was tried on test subscribers before the opening (result in `docs/LAUNCH.md`, item 5).
 
 ## What the site needs
 
@@ -65,7 +65,7 @@ Kit is the fallback if the list grows past 100 quickly. Its free plan goes to 10
 
 ## Steps when the owner gives the publication GO
 
-Not executed. Each step needs the owner, and the form stays disabled until the last one.
+Each step needs the owner. The last one was done in the pull request that opens the form.
 
 1. Create the Buttondown account with the owner's own address, and pick the newsletter username. This creates the account, so it is the owner's act.
 2. In the newsletter settings, set the name, the description, the sender name and a reply-to address. Use `privacy@rulefiles.dev`, the address on the privacy page. Check what Buttondown adds to the footer of each email (sender identity and unsubscribe link), since French law requires the sender to be identifiable and to offer a way to stop receiving messages (code des postes et des communications électroniques, article L34-5).
@@ -92,7 +92,7 @@ Buttondown documents an HTML form endpoint that accepts a plain form post (https
 }
 ```
 
-The `embed` field and the exact endpoint come from a search summary of Buttondown's documentation and were not seen in the fetched page text, so check them on the account's embed settings page. The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing. Once the address is set, the newsletter page and the first sentence of the newsletter section on the privacy page stop saying that signup is off; update the `updated` date in `content/privacy.md` in the same pull request.
+The endpoint and the plain `post` form (no `fetch`) are confirmed by https://docs.buttondown.com/building-your-subscriber-base, read on 2026-10-16. The `embed` hidden field comes from Buttondown's usual embed snippet; the page text fetched did not show the snippet, so the first real signup through the live form is the check (`docs/LAUNCH.md`, item 8). The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing. Once the address is set, the newsletter page and the first sentence of the newsletter section on the privacy page stop saying that signup is off; update the `updated` date in `content/privacy.md` in the same pull request.
 
 ## Still not verified
 
