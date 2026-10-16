@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "lastReviewed": "2026-10-15",
+  "lastReviewed": "2026-10-16",
   "tools": [
     {
       "id": "cursor",
       "name": "Cursor",
-      "docsUrl": "https://cursor.com/docs/context/rules"
+      "docsUrl": "https://cursor.com/docs/rules"
     },
     {
       "id": "claude-code",
@@ -15,7 +15,7 @@
     {
       "id": "codex",
       "name": "Codex",
-      "docsUrl": "https://developers.openai.com/codex/guides/agents-md"
+      "docsUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md"
     },
     {
       "id": "github-copilot",
@@ -77,72 +77,72 @@
       "file": "agents-md",
       "status": "reads",
       "note": "The page documents AGENTS.md in the project root and in subdirectories; nested files are combined, with more specific instructions taking precedence.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "sourceUrl": "https://cursor.com/docs/rules",
       "verifiedOn": "2026-10-15"
     },
     {
       "tool": "cursor",
       "file": "agents-override-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "claude-md",
-      "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "status": "reads",
+      "note": "The help page says: \"Cursor reads `CLAUDE.md` files the same way it reads `AGENTS.md`.\" It names the project root and says these files are always applied, whatever alwaysApply says.",
+      "sourceUrl": "https://cursor.com/help/customization/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "gemini-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "cursorrules",
-      "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "status": "migration-only",
+      "note": "The help page mentions the file only in a migration section, where it calls it \"legacy and will be deprecated\". It does not say whether Cursor still loads it.",
+      "sourceUrl": "https://cursor.com/help/customization/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "cursor-rules-mdc",
       "status": "reads",
       "note": "Project rules live in .cursor/rules as .mdc files. A plain .md file in that folder is ignored.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
+      "sourceUrl": "https://cursor.com/docs/rules",
       "verifiedOn": "2026-10-15"
     },
     {
       "tool": "cursor",
       "file": "claude-rules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "copilot-instructions-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "cursor",
       "file": "copilot-path-instructions",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://cursor.com/docs/context/rules",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "claude-code",
@@ -173,9 +173,9 @@
       "tool": "claude-code",
       "file": "gemini-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page when checked, including its /init migration list.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "claude-code",
@@ -213,16 +213,16 @@
       "tool": "claude-code",
       "file": "copilot-path-instructions",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page when checked, including its /init migration list.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "codex",
       "file": "agents-md",
       "status": "reads",
       "note": "Reads AGENTS.md from the global Codex home and from the project root down to the working directory, at most one file per directory, up to 32 KiB combined by default.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
       "verifiedOn": "2026-10-15"
     },
     {
@@ -230,7 +230,7 @@
       "file": "agents-override-md",
       "status": "reads",
       "note": "Checked before AGENTS.md in each directory. In the Codex home, AGENTS.override.md replaces AGENTS.md when it exists.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
       "verifiedOn": "2026-10-15"
     },
     {
@@ -238,7 +238,7 @@
       "file": "claude-md",
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
       "verifiedOn": "2026-10-15"
     },
     {
@@ -246,7 +246,7 @@
       "file": "gemini-md",
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
       "verifiedOn": "2026-10-15"
     },
     {
@@ -254,40 +254,40 @@
       "file": "cursorrules",
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
       "verifiedOn": "2026-10-15"
     },
     {
       "tool": "codex",
       "file": "cursor-rules-mdc",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "codex",
       "file": "claude-rules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "codex",
       "file": "copilot-instructions-md",
-      "status": "configurable",
-      "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
-      "verifiedOn": "2026-10-15"
+      "status": "unverified",
+      "note": "The page says Codex checks fallback names from project_doc_fallback_filenames in each directory from the project root to the working directory. It does not say whether a path such as .github/copilot-instructions.md can be listed.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "codex",
       "file": "copilot-path-instructions",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
-      "sourceUrl": "https://developers.openai.com/codex/guides/agents-md",
-      "verifiedOn": "2026-10-15"
+      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "github-copilot",
@@ -301,9 +301,9 @@
       "tool": "github-copilot",
       "file": "agents-override-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
       "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "github-copilot",
@@ -325,25 +325,25 @@
       "tool": "github-copilot",
       "file": "cursorrules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
       "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "github-copilot",
       "file": "cursor-rules-mdc",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
       "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "github-copilot",
       "file": "claude-rules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
       "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-10-16"
     },
     {
       "tool": "github-copilot",

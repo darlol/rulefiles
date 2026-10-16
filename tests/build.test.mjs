@@ -8,11 +8,10 @@ import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
 import { matrixStats } from '../scripts/lib/validate.mjs';
-import { launchWarnings } from '../scripts/lib/placeholders.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
 
-process.env.BUILD_DATE = '2026-10-15';
+process.env.BUILD_DATE = '2026-10-16';
 delete process.env.SITE_URL;
 delete process.env.NEWSLETTER_FORM_ACTION;
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-dist-'));
@@ -134,7 +133,8 @@ test('llms.txt follows the llms.txt layout and links resolve to built pages', ()
 test('llms-full.txt carries every matrix cell and every digest item', () => {
   const data = loadData();
   const full = read('llms-full.txt');
-  assert.equal((full.match(/ \(checked 2026-10-15\)/g) || []).length, data.matrix.cells.length);
+  for (const c of data.matrix.cells) assert.ok(full.includes(`(checked ${c.verifiedOn})`), `${c.tool} ${c.file}`);
+  assert.equal((full.match(/ \(checked \d{4}-\d\d-\d\d\)/g) || []).length, data.matrix.cells.length);
   for (const d of publishedDigests(data)) for (const i of d.items) assert.ok(full.includes(i.sourceUrl), i.id);
 });
 
@@ -157,7 +157,11 @@ test('matrix page shows every cell with its source link and date', () => {
   const html = read('matrix/index.html');
   const data = loadData();
   assert.equal((html.match(/<td class="st-/g) || []).length, data.matrix.cells.length);
-  assert.equal((html.match(/checked <time datetime="2026-10-15">/g) || []).length, data.matrix.cells.length);
+  assert.equal((html.match(/checked <time datetime="\d{4}-\d\d-\d\d">/g) || []).length, data.matrix.cells.length);
+  for (const date of new Set(data.matrix.cells.map((c) => c.verifiedOn))) {
+    const n = data.matrix.cells.filter((c) => c.verifiedOn === date).length;
+    assert.equal((html.match(new RegExp(`checked <time datetime="${date}">`, 'g')) || []).length, n, date);
+  }
   assert.match(html, /Unverified/);
   assert.match(html, /<th scope="col">/);
   assert.match(html, /<th scope="row">/);
@@ -305,23 +309,21 @@ test('built digest pages show source backticks as code and contain no raw backti
   assert.match(read('digest/feed.xml'), /&lt;code&gt;/);
 });
 
-test('the build warns, without failing, about placeholder text and the placeholder domain', () => {
+test('the build warns, without failing, about every TODO marker and the placeholder domain', () => {
   const warnings = result.warnings;
   assert.ok(Array.isArray(warnings));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && /will be (named|listed)/.test(w)), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/about/:')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.startsWith('/sponsors/:')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: host name and address]]')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/about/:') && w.includes('[[TODO-OWNER: correction channel]]')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/sponsors/:') && w.includes('[[TODO-OWNER: sponsorship contact address]]')), warnings.join('\n'));
+  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: newsletter provider]]')), warnings.join('\n'));
+  assert.ok(!warnings.some((w) => w.startsWith('/newsletter/:')), 'the newsletter page carries no marker');
   assert.ok(warnings.some((w) => w.includes('placeholder https://agentdiffs.dev')));
-  const clean = launchWarnings([{ path: '/x/', html: '<p>Contact: a@b.example.</p>' }], { baseUrl: 'https://real.example' });
-  assert.deepEqual(clean, []);
-  const dirty = launchWarnings([{ path: '/x/', html: '<p>A contact address will be listed here when sponsorship opens.</p>' }], { baseUrl: 'https://real.example' });
-  assert.equal(dirty.length, 1);
 });
 
 test('about page does not invite reuse while no license is chosen, and the JSON-LD names no license', () => {
   const about = read('about/index.html').replace(/<[^>]+>/g, ' ');
   assert.doesNotMatch(about, /reuse a line|you can reuse|free to (use|reuse|copy)/i);
-  assert.match(about, /Terms for reusing the data and the code are not set yet/);
+  assert.match(about, /The license for the data and the code is \[\[TODO-OWNER: license of the data and the code\]\]/);
   assert.doesNotMatch(read('matrix/index.html'), /"license"/);
   assert.ok(fs.existsSync(new URL('../docs/LAUNCH-BLOCKERS.md', import.meta.url)));
 });

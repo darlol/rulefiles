@@ -8,7 +8,11 @@ import * as r from './lib/render.mjs';
 import { launchWarnings } from './lib/placeholders.mjs';
 import { renderOgImage } from './lib/ogimage.mjs';
 
-export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = false } = {}) {
+/**
+ * @param {{root?: string, outDir?: string, quiet?: boolean, strict?: boolean}} options
+ *   strict makes the build throw, and removes outDir, while any launch placeholder remains.
+ */
+export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = false, strict = false } = {}) {
   const data = loadData(root);
   const today = todayIso();
   const errors = [
@@ -60,14 +64,20 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   fs.copyFileSync(path.join(root, 'src', 'js', 'generator-core.js'), path.join(outDir, 'assets', 'generator-core.js'));
 
   const warnings = launchWarnings(built, ctx.config);
+  if (strict && warnings.length) {
+    fs.rmSync(outDir, { recursive: true, force: true });
+    throw new Error(`Strict build failed: ${warnings.length} launch placeholder(s) remain. See docs/LAUNCH-BLOCKERS.md.\n` + warnings.map((w) => `- ${w}`).join('\n'));
+  }
   if (!quiet) {
     for (const w of warnings) console.warn(`LAUNCH WARNING: ${w}`);
-    if (warnings.length) console.warn(`${warnings.length} launch warning(s). See docs/LAUNCH-BLOCKERS.md. The build is not blocked.`);
+    if (warnings.length) console.warn(`${warnings.length} launch warning(s). See docs/LAUNCH-BLOCKERS.md. This build is not blocked. The release build uses --strict.`);
   }
   if (!quiet) console.log(`Built ${pages.length} pages into ${outDir} (baseUrl ${ctx.config.baseUrl}, date ${today}).`);
   return { outDir, pages, config: ctx.config, warnings };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try { build(); } catch (e) { console.error(e.message); process.exit(1); }
+  // Strict mode: --strict or AGENT_DIFFS_STRICT=1 (also true or yes).
+  const strict = process.argv.includes('--strict') || /^(1|true|yes)$/i.test(process.env.AGENT_DIFFS_STRICT || '');
+  try { build({ strict }); } catch (e) { console.error(e.message); process.exit(1); }
 }

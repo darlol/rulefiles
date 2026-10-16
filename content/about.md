@@ -20,8 +20,8 @@ It is an independent project. It is not affiliated with Cursor, Anthropic, OpenA
 
 ## Data files
 
-The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers. Terms for reusing the data and the code are not set yet. They will be named here before the site is published.
+The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers. The license for the data and the code is [[TODO-OWNER: license of the data and the code]].
 
 ## Corrections
 
-A correction channel will be listed here before the site goes public.
+To report a mistake, write to [[TODO-OWNER: correction channel]].

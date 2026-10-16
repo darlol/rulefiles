@@ -4,7 +4,7 @@ import { loadData } from '../scripts/lib/data.mjs';
 import { validateMatrix, validateDigest, validateConfig, validateWatchSources, staleCells } from '../scripts/lib/validate.mjs';
 import { isoWeekId, isoWeekRange, isIsoDate } from '../scripts/lib/util.mjs';
 
-const TODAY = '2026-10-15';
+const TODAY = '2026-10-16';
 const data = loadData();
 
 test('shipped data passes validation', () => {
@@ -23,7 +23,7 @@ test('matrix has one cell per tool and file', () => {
 
 test('every unverified cell says so in its note and carries a date', () => {
   for (const c of data.matrix.cells.filter((x) => x.status === 'unverified')) {
-    assert.match(c.note, /Not mentioned/);
+    assert.match(c.note, /Not mentioned|does not say/);
     assert.ok(isIsoDate(c.verifiedOn));
   }
 });
@@ -94,4 +94,24 @@ test('ISO week helpers', () => {
 test('watch sources reject github.com .atom feeds', () => {
   const ws = { sources: [{ id: 'x', tool: 'codex', type: 'rss', url: 'https://github.com/openai/codex/releases.atom' }] };
   assert.match(validateWatchSources(ws).join('\n'), /robots/);
+});
+
+test('cells re-checked on 2026-10-16 keep the status and the quoted wording the official pages support', () => {
+  const cell = (tool, file) => data.matrix.cells.find((c) => c.tool === tool && c.file === file);
+  const claude = cell('cursor', 'claude-md');
+  assert.equal(claude.status, 'reads');
+  assert.equal(claude.sourceUrl, 'https://cursor.com/help/customization/rules');
+  assert.ok(claude.note.includes('"Cursor reads `CLAUDE.md` files the same way it reads `AGENTS.md`."'));
+  const legacy = cell('cursor', 'cursorrules');
+  assert.equal(legacy.status, 'migration-only');
+  assert.ok(legacy.note.includes('"legacy and will be deprecated"'));
+  const codexPath = cell('codex', 'copilot-instructions-md');
+  assert.equal(codexPath.status, 'unverified', 'the Codex page lists file names per directory, not paths such as .github/');
+  for (const c of data.matrix.cells.filter((x) => x.verifiedOn === '2026-10-16')) assert.ok(isIsoDate(c.verifiedOn));
+});
+
+test('no cell cites a page that has moved: the Cursor and Codex URLs are the ones the old links redirect to', () => {
+  const urls = new Set([...data.matrix.cells.map((c) => c.sourceUrl), ...data.matrix.tools.map((t) => t.docsUrl)]);
+  assert.ok(!urls.has('https://cursor.com/docs/context/rules'));
+  assert.ok(![...urls].some((u) => u.startsWith('https://developers.openai.com/codex/')));
 });

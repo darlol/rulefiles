@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parse } from 'yaml';
+import { parse, parseDocument } from 'yaml';
 import { TARGETS, buildBody, generateFiles, yamlQuote, yamlScalar } from '../src/js/generator-core.js';
 
 const input = {
@@ -130,6 +130,56 @@ test('YAML helpers: no raw line breaks, and a generated block never needs more t
   assert.equal(yamlScalar('src/**/*.ts'), 'src/**/*.ts');
   assert.equal(yamlScalar('**/*.ts'), '"**/*.ts"');
   assert.equal(yamlScalar(''), '""');
+});
+
+// YAML 1.2 c-printable, minus U+0085 (a line break in YAML 1.1). Everything else must be escaped.
+const YAML_PRINTABLE = /^[\t\n\r\x20-\x7e\xa0-\ud7ff\ue000-\ufffd\u{10000}-\u{10ffff}]*$/u;
+
+test('characters YAML does not allow as printable text are written as escapes and parse back', () => {
+  const cases = {
+    'DEL': '\u007f',
+    'first C1 control': '\u0080',
+    'last C1 control': '\u009f',
+    'a middle C1 control': '\u0090',
+    'next line': '\u0085',
+    'noncharacter FFFE': '\ufffe',
+    'noncharacter FFFF': '\uffff',
+    'NUL and other C0 controls': '\u0000\u0001\u001f'
+  };
+  for (const [name, ch] of Object.entries(cases)) {
+    const description = `before${ch}after`;
+    const [f] = generateFiles({ ...input, description }, ['cursor-mdc'], { cursorGlobs: `src/${ch}x` });
+    const block = f.content.match(/^---\n([\s\S]*?)\n---\n/)[1];
+    assert.match(block, YAML_PRINTABLE, `${name}: the frontmatter has only printable YAML characters`);
+    const doc = parseDocument(block, { strict: true, uniqueKeys: true });
+    assert.deepEqual(doc.errors, [], name);
+    assert.deepEqual(doc.warnings, [], name);
+    assert.match(block, /\\u[0-9A-F]{4}/, `${name}: written as a \\uXXXX escape`);
+    // A control character in the middle of the text is kept as it is, apart from whitespace collapsing.
+    assert.equal(doc.get('description'), description.replace(/\s+/g, ' '), name);
+  }
+});
+
+test('line and paragraph separators become a space, so no raw separator reaches the file', () => {
+  const [f] = generateFiles({ ...input, description: 'a\u2028b\u2029c' }, ['cursor-mdc']);
+  assert.doesNotMatch(f.content.split('\n---\n')[0], /[\u2028\u2029]/);
+  assert.equal(split(f.content).fm.description, 'a b c');
+});
+
+test('yamlQuote uses upper-case four-digit escapes for DEL, C1 and the noncharacters', () => {
+  assert.equal(yamlQuote('\u007f'), '"\\u007F"');
+  assert.equal(yamlQuote('\u0080\u009f'), '"\\u0080\\u009F"');
+  assert.equal(yamlQuote('\u0085'), '"\\u0085"');
+  assert.equal(yamlQuote('\ufffe\uffff'), '"\\uFFFE\\uFFFF"');
+  assert.equal(yamlQuote('caf\u00e9 \u00a0x'), '"caf\u00e9 x"');
+});
+
+test('a lone surrogate is replaced because YAML has no escape for it, and a valid pair is kept', () => {
+  const out = yamlQuote('a\ud800b\udc00c');
+  assert.equal(out, '"a\ufffdb\ufffdc"');
+  const pair = '\u{1F600}';
+  assert.equal(parse(`k: ${yamlQuote(pair)}\n`).k, pair);
+  assert.match(`k: ${yamlQuote('x' + pair)}`, YAML_PRINTABLE);
 });
 
 test('random printable descriptions and globs always survive a YAML round trip', () => {

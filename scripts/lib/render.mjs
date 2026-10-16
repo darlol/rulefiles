@@ -293,7 +293,7 @@ export function contentPage(ctx, file, pagePath) {
     migrationOnly: matrixStats(matrix).byStatus['migration-only'],
     cells: matrix.cells.length,
     lastReviewed: matrix.lastReviewed,
-    sponsorContact: config.sponsorContact ? `Contact: ${config.sponsorContact}` : 'A contact address for sponsorship questions will be listed here when sponsorship opens.'
+    sponsorContact: config.sponsorContact ? `Contact: ${config.sponsorContact}` : 'Contact: [[TODO-OWNER: sponsorship contact address]]'
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
   return layout(config, {
@@ -329,7 +329,7 @@ ${form}
 <ul>
 <li>One email per week with the digest. No other mailings.</li>
 <li>Double opt-in and a one-click unsubscribe link in every email.</li>
-<li>The provider and the responsible person will be named on the <a href="/privacy/">privacy page</a> before the form is enabled.</li>
+<li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for the list.</li>
 </ul>`;
   return layout(config, {
     path: '/newsletter/', title: 'Newsletter', description: 'Weekly email digest of what changed in AI coding tools. Signup is not open yet; the Atom feed works now.', body,

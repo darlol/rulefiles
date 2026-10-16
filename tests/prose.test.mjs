@@ -5,7 +5,8 @@ import path from 'node:path';
 import { renderMarkdown, parseFrontmatter } from '../scripts/lib/markdown.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
-const prose = ['README.md', 'docs/DATA.md', 'docs/OPERATIONS.md', 'docs/BRAND.md', 'docs/NEWSLETTER.md', 'docs/LAUNCH-BLOCKERS.md', 'content/about.md', 'content/sponsors.md', 'content/privacy.md'].filter((f) => fs.existsSync(path.join(root, f)));
+const listMd = (dir) => (fs.existsSync(path.join(root, dir)) ? fs.readdirSync(path.join(root, dir)).filter((f) => f.endsWith('.md')).map((f) => `${dir}/${f}`) : []);
+const prose = ['README.md', ...listMd('docs'), ...listMd('content')];
 
 function stripCode(s) {
   return s.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '').replace(/https?:\/\/\S+/g, '');

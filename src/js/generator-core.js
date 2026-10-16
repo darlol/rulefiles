@@ -38,12 +38,16 @@ export function buildBody(input) {
 }
 
 /**
- * Double-quoted YAML scalar on one line. JSON string syntax is valid YAML, and the
- * line separators that YAML 1.1 treats as breaks are escaped on top of it.
+ * Double-quoted YAML scalar on one line. JSON string syntax is valid YAML, and this adds
+ * a \uXXXX escape for the characters YAML does not allow as printable text (DEL, the C1
+ * controls, U+FFFE and U+FFFF) or reads as a line break (U+0085). The C0 controls are
+ * escaped by JSON.stringify. Whitespace runs, including U+2028 and U+2029, become one space.
+ * A lone surrogate becomes U+FFFD, because YAML has no escape for it.
  */
 export function yamlQuote(value) {
-  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim();
-  return JSON.stringify(oneLine).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029').replace(/\u0085/g, '\\u0085');
+  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim()
+    .replace(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g, '\ufffd');
+  return JSON.stringify(oneLine).replace(/[\u007f-\u009f\ufffe\uffff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0'));
 }
 
 // Plain scalars are only used for values that every YAML parser reads back as the same string.
@@ -64,7 +68,8 @@ function frontmatter(entries) {
 /**
  * @param {object} input form values
  * @param {string[]} targets ids from TARGETS
- * @param {{claudeMode?: 'full'|'import', default 'import', cursorGlobs?: string, cursorAlwaysApply?: boolean, copilotApplyTo?: string}} options
+ * @param {{claudeMode?: 'full'|'import', cursorGlobs?: string, cursorAlwaysApply?: boolean, copilotApplyTo?: string}} options
+ *   claudeMode defaults to 'import', which writes a CLAUDE.md that imports AGENTS.md
  * @returns {{path: string, content: string, note: string}[]}
  */
 export function generateFiles(input, targets, options = {}) {
