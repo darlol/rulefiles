@@ -4,7 +4,7 @@ A static website with two parts. The first is a weekly digest of dated, sourced 
 
 The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Rulefiles" is the chosen name, set in `site.config.json`. The domain `rulefiles.dev`, bought on 2026-10-16, is the `baseUrl` in that file. The first candidate name, "Agent Diffs", was dropped on 2026-10-16.
 
-Status: MVP, not published. Nothing here sends email. The domain `rulefiles.dev` is bought and no hosting is set up yet. `npm run build:strict` passes. [docs/LAUNCH.md](docs/LAUNCH.md) lists what is still to validate before the go.
+Status: online at `https://rulefiles.dev` on Cloudflare Pages since 2026-10-16. The newsletter signup form posts to Buttondown. The site itself sends no email, and no issue has been sent yet. `npm run build:strict` passes. [docs/LAUNCH.md](docs/LAUNCH.md) lists what is still to validate.
 
 ## Quick start
 
@@ -86,7 +86,7 @@ Release dates use the UTC date of the publication timestamp.
 - No cookies, no analytics, no third-party scripts, fonts or images. A test fails if any appears.
 - Every page carries a Content-Security-Policy meta tag. `dist/_headers` repeats it for hosts that read that file.
 - The generator runs in the browser and sends nothing.
-- The newsletter form is off until `newsletter.formAction` in `site.config.json` (or the `NEWSLETTER_FORM_ACTION` environment variable) holds an https URL. Then it posts only the email address typed by the visitor, and the CSP allows that one origin.
+- The newsletter form posts to the Buttondown endpoint set in `newsletter.formAction` in `site.config.json` (the `NEWSLETTER_FORM_ACTION` environment variable overrides it, and an empty value closes the form). It sends only the email address typed by the visitor, plus the provider's `embed` field, and the CSP allows that one origin for `form-action` only. Signup uses double opt-in.
 - There are no secrets in the repository. The watch script reads an optional `GITHUB_TOKEN` from the environment, only for `api.github.com`.
 
 ## Environment variables

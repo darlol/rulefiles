@@ -5,7 +5,8 @@ import { ROOT, readJson } from './util.mjs';
 export function loadConfig(root = ROOT) {
   const config = readJson(path.join(root, 'site.config.json'));
   if (process.env.SITE_URL) config.baseUrl = process.env.SITE_URL.replace(/\/+$/, '');
-  if (process.env.NEWSLETTER_FORM_ACTION) config.newsletter = { ...config.newsletter, formAction: process.env.NEWSLETTER_FORM_ACTION };
+  // An empty value closes the form, which the tests use to build the closed state.
+  if (process.env.NEWSLETTER_FORM_ACTION !== undefined) config.newsletter = { ...config.newsletter, formAction: process.env.NEWSLETTER_FORM_ACTION };
   return config;
 }
 

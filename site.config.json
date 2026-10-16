@@ -7,11 +7,11 @@
   "homeTitle": "Rulefiles: AI coding tool changes and instruction files",
   "repoUrl": "",
   "newsletter": {
-    "provider": "",
-    "formAction": "",
+    "provider": "Buttondown",
+    "formAction": "https://buttondown.com/api/emails/embed-subscribe/rulefiles",
     "method": "post",
     "emailFieldName": "email",
-    "hiddenFields": {}
+    "hiddenFields": { "embed": "1" }
   },
   "contactEmail": "contact@rulefiles.dev",
   "privacyEmail": "privacy@rulefiles.dev",

@@ -14,7 +14,9 @@ import { markerFields } from '../scripts/lib/placeholders.mjs';
 
 process.env.BUILD_DATE = '2026-10-16';
 delete process.env.SITE_URL;
-delete process.env.NEWSLETTER_FORM_ACTION;
+// The shared build below is the CLOSED state (an empty value closes the form). The committed config opens the form on Buttondown;
+// the test 'the committed configuration opens the newsletter on Buttondown' builds that state.
+process.env.NEWSLETTER_FORM_ACTION = '';
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist-'));
 // The default build follows site.config.json. The wording about the data depends on whether the form address is set,
 // so the tests that read it expect the word of the branch that is built. Both branches are tested in the newsletter test.
@@ -23,7 +25,7 @@ const NL_TEXT = {
   off: ['Once the signup is open, our provider will also record the IP address and referrer-level details of each signup.', 'Every email will carry an unsubscribe link.', 'will send the emails and store the list on our behalf.', 'The signup and confirmation pages will be hosted by Buttondown, and its own policies will apply to them.', 'Our emails will carry no tracking pixel, and the links to other pages will not be rewritten.'],
   on: ['Our provider also records the IP address and referrer-level details of your signup.', 'Every email carries an unsubscribe link.', 'sends the emails and stores the list on our behalf.', 'The signup and confirmation pages are hosted by Buttondown, and its own policies apply to them.', 'Our emails carry no tracking pixel, and the links to other pages are not rewritten.']
 };
-const DATA_WORD = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).newsletter.formAction ? 'collected' : 'planned';
+const DATA_WORD = 'planned'; // the shared build is the closed state; the open state has its own tests
 const read = (rel) => fs.readFileSync(path.join(out, rel), 'utf8');
 const unescapeAttr = (s) => s.replace(/&#39;/g, "'");
 let result;
@@ -257,8 +259,45 @@ test('newsletter form is disabled without a provider and enabled with one', () =
     assert.match(fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8'), /"description":"What data Rulefiles collects, who is responsible for it, and your rights\. The data collected is/);
     assert.match(unescapeAttr(fs.readFileSync(path.join(out2, 'index.html'), 'utf8')), /form-action 'self' https:\/\/news\.example\.com/);
   } finally {
-    delete process.env.NEWSLETTER_FORM_ACTION;
+    process.env.NEWSLETTER_FORM_ACTION = '';
     fs.rmSync(out2, { recursive: true, force: true });
+  }
+});
+
+test('the committed configuration opens the newsletter on Buttondown with double opt-in and a minimal CSP', () => {
+  const cfg = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8'));
+  assert.equal(cfg.newsletter.provider, 'Buttondown');
+  assert.equal(cfg.newsletter.formAction, 'https://buttondown.com/api/emails/embed-subscribe/rulefiles');
+  assert.equal(cfg.newsletter.method, 'post');
+  assert.deepEqual(cfg.newsletter.hiddenFields, { embed: '1' });
+  const out5 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist5-'));
+  delete process.env.NEWSLETTER_FORM_ACTION;
+  try {
+    build({ outDir: out5, quiet: true });
+    const nl = fs.readFileSync(path.join(out5, 'newsletter/index.html'), 'utf8');
+    assert.match(nl, /<form class="nl-form" method="post" action="https:\/\/buttondown\.com\/api\/emails\/embed-subscribe\/rulefiles">/);
+    assert.match(nl, /<input id="nl-email" name="email" type="email" required autocomplete="email">/);
+    assert.match(nl, /<input type="hidden" name="embed" value="1">/);
+    assert.match(nl, /<button type="submit">Subscribe<\/button>/);
+    assert.match(nl, /double opt-in/);
+    assert.equal((nl.match(/<form\b/g) || []).length, 1, 'one form on the page');
+    assert.doesNotMatch(nl, /<input[^>]+disabled|switched off|Until the publication|will work/);
+    // Every page carries the same policy, and the only origin it adds is Buttondown's, for form-action only.
+    for (const f of ['index.html', 'newsletter/index.html', 'privacy/index.html', '404.html']) {
+      const html = unescapeAttr(fs.readFileSync(path.join(out5, f), 'utf8'));
+      assert.match(html, /content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'self' https:\/\/buttondown\.com"/, f);
+    }
+    const headers = fs.readFileSync(path.join(out5, '_headers'), 'utf8');
+    assert.match(headers, /Content-Security-Policy: default-src 'none'.*form-action 'self' https:\/\/buttondown\.com\s*$/m);
+    assert.doesNotMatch(headers, /buttondown\.com[^\n]*(script-src|connect-src|frame-src)/);
+    assert.doesNotMatch(nl, /<script(?![^>]*(\bsrc=|ld\+json))/, 'no inline script');
+    const priv = fs.readFileSync(path.join(out5, 'privacy/index.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.doesNotMatch(priv, /switched off/);
+    assert.doesNotMatch(priv, /\bwill (also )?(record|send|carry|be hosted|apply)\b/);
+    for (const s of NL_TEXT.on) assert.ok(priv.includes(s), `open: ${s}`);
+  } finally {
+    process.env.NEWSLETTER_FORM_ACTION = '';
+    fs.rmSync(out5, { recursive: true, force: true });
   }
 });
 

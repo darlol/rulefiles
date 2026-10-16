@@ -152,12 +152,11 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(launch.includes('the owner, named, is also responsible for the messages sent to the three addresses and for the request logs'));
   assert.ok(launch.includes('the legitimate interest in answering (GDPR, article 6(1)(f))') && launch.includes('both are to be confirmed by a lawyer'));
   assert.ok(launch.includes('The texts that say the signup is off follow `newsletterEnabled(config)`'));
-  assert.ok(launch.includes('Also change the `updated` dates of `content/privacy.md` and `content/legal.md`'));
-  assert.ok(launch.includes('update the two tests that describe the off state') && launch.includes('Content-Security-Policy meta tag locks scripts, styles and connections to self') && launch.includes('newsletter form is disabled without a provider and enabled with one'));
-  assert.ok(launch.includes('item 5 of "Before the publication go" tests it') && launch.includes('5. Check the deletion call on the real Buttondown account.') && launch.includes('create a test subscriber') && launch.includes('call `DELETE /v1/subscribers/{email}`') && launch.includes('switch off the automatic cleanup of the account'));
-  assert.ok(launch.includes('these two are the only tests that fail, because the assertions on the privacy and legal wording follow the configuration'));
+  assert.ok(launch.includes('The `updated` dates of `content/privacy.md` and `content/legal.md` are 2026-10-16, the day of the opening.'));
+  assert.ok(launch.includes('The same pull request updated the two tests that described the off state') && launch.includes("the committed configuration opens the newsletter on Buttondown with double opt-in and a minimal CSP") && launch.includes('Content-Security-Policy meta tag locks scripts, styles and connections to self') && launch.includes('newsletter form is disabled without a provider and enabled with one'));
+  assert.ok(launch.includes('item 5 of "Before the publication go" tried it on test subscribers on 2026-10-16 and it works') && launch.includes('5. Done on 2026-10-16: the deletion call was tried on the real Buttondown account') && launch.includes('`DELETE /v1/subscribers/{email}` returned 204 for both') && launch.includes('creating the first address again returned 201') && launch.includes('switch off the automatic cleanup of the account'));
   assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
-  assert.ok(text('docs/NEWSLETTER.md').includes('has to be tried on a test subscriber before the go'));
+  assert.ok(text('docs/NEWSLETTER.md').includes('Confirmed on 2026-10-16: the API works on the free plan'));
   assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('Deleting the old repository stays the owner\'s call.'));
   assert.ok(launch.includes('3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan.'));
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
@@ -180,11 +179,11 @@ test('docs/LAUNCH.md and docs/LAUNCH-BLOCKERS.md say that no field remains, name
   assert.ok(launch.includes('décret n° 2007-1527 du 24 octobre 2007, article 4') && launch.includes('in the next issue') && launch.includes('within 24 hours (article 6)'), 'LAUNCH.md cites the decree on the right of reply');
   assert.ok(launch.includes('PLACEHOLDER_DOMAIN'), 'LAUNCH.md says the domain guard was removed');
   assert.ok(launch.includes('releaseProblems'), 'LAUNCH.md names the release check');
-  // The owner is the named controller and newsletter publisher. The form is disabled until the publication go, as a step.
+  // The owner is the named controller and newsletter publisher. The form was opened at the publication go.
   assert.ok(launch.includes('replacing the earlier choice of an anonymous controller'));
-  assert.ok(launch.includes('The newsletter opens at the publication go. The form stays disabled until then, as a step of the publication.'));
-  assert.ok(launch.includes('4. Check the Buttondown settings above. Keep the form disabled until the publication go. At the go, set the form address and enable the form'));
-  assert.ok(launch.includes('This is a step of the publication, listed under "Before the publication go", and not a legal lock.'));
+  assert.ok(launch.includes('The newsletter was opened at the owner\'s go of 2026-10-16: the form posts to Buttondown'));
+  assert.ok(launch.includes('4. Done in the pull request that opens the newsletter: the form address is set'));
+  assert.ok(launch.includes('That was a step of the publication, and not a legal lock.'));
   for (const f of ['docs/LAUNCH.md', 'docs/LAUNCH-BLOCKERS.md', 'docs/NEWSLETTER.md', 'docs/OPERATIONS.md']) {
     assert.doesNotMatch(text(f), /\*\*Lock:\*\*|lawyer has confirmed|before a lawyer|until a lawyer|legal review of that wording/, `${f} holds no legal lock on the form`);
   }

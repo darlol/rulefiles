@@ -4,7 +4,7 @@ Checked on the vendors' own pages on 2026-10-15. The beehiiv row and everything 
 
 ## Decision
 
-The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form stays disabled until the publication go: `newsletter.formAction` in `site.config.json` stays empty, so the site sends nothing and collects nothing. Nothing in this file has been executed.
+The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form was opened at the owner's publication go of 2026-10-16: `newsletter.formAction` in `site.config.json` holds the Buttondown embed endpoint of the `rulefiles` newsletter. The steps below are the setup list. The owner did the account steps; the permanent deletion call was tried on test subscribers before the opening (result in `docs/LAUNCH.md`, item 5).
 
 ## What the site needs
 
@@ -17,7 +17,7 @@ The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signu
 
 | Tool | Free plan, as stated on the vendor page | Double opt-in | Export | API on the free plan | Source |
 | --- | --- | --- | --- | --- | --- |
-| Buttondown | Free for the first 100 subscribers. Includes a markdown editor, sending from a custom domain, hosted archives. Add-ons cost extra per month. | Required by default for every newsletter | CSV export from the dashboard. The file includes IP address and creation date when present. | The features page says yes, on all plans including free (https://buttondown.com/features/api). The drafting guide carries a "paid feature" tag for the API (https://docs.buttondown.com/drafting-emails-via-the-api), so this is to confirm when an account exists. No official MCP server or SDK. | https://buttondown.com/pricing, https://docs.buttondown.com/double-opt-in, https://docs.buttondown.com/data-exports-subscriber, https://buttondown.com/features/api, https://docs.buttondown.com/drafting-emails-via-the-api |
+| Buttondown | Free for the first 100 subscribers. Includes a markdown editor, sending from a custom domain, hosted archives. Add-ons cost extra per month. | Required by default for every newsletter | CSV export from the dashboard. The file includes IP address and creation date when present. | The features page says yes, on all plans including free (https://buttondown.com/features/api). The drafting guide carries a "paid feature" tag for the API (https://docs.buttondown.com/drafting-emails-via-the-api), so this was to confirm when an account exists. Confirmed on 2026-10-16: the API works on the free plan, and the permanent deletion call `DELETE /v1/subscribers/{email}` returned 204 on test subscribers, an unsubscribed one included (`docs/LAUNCH.md`, "Before the publication go", item 5). No official MCP server or SDK. | https://buttondown.com/pricing, https://docs.buttondown.com/double-opt-in, https://docs.buttondown.com/data-exports-subscriber, https://buttondown.com/features/api, https://docs.buttondown.com/drafting-emails-via-the-api |
 | Kit | Free for up to 10,000 subscribers, unlimited broadcasts, forms and landing pages, API access. Automations, sequences and RSS campaigns need a paid plan. Free accounts are in the Creator Network recommendations, which can be turned off. | Not verified | Not verified | Yes, listed as included | https://help.kit.com/en/articles/16627071-the-kit-free-plan, https://kit.com/pricing |
 | beehiiv | Free for up to 2,500 subscribers, unlimited sends. API access except the Send API. Custom domains, custom HTML and automations need a paid plan. Lite is listed from 49 USD per month billed annually (588 USD per year) for up to 1,000 subscribers, and 59 USD per month billed monthly for that tier. The page itself says not to read exact prices from its HTML price slider. | Not verified | Data exports listed on all plans | Yes, except the Send API (Pro only) | https://www.beehiiv.com/pricing |
 | MailerLite | Free for up to 250 subscribers and 2,500 emails per month. Sending is locked above 250 subscribers. | Not verified | Not verified | Limited. The page says sending through the API or MCP needs a paid plan. | https://www.mailerlite.com/pricing |
@@ -65,7 +65,7 @@ Kit is the fallback if the list grows past 100 quickly. Its free plan goes to 10
 
 ## Steps when the owner gives the publication GO
 
-Not executed. Each step needs the owner, and the form stays disabled until the last one.
+Each step needs the owner. The last one was done in the pull request that opens the form.
 
 1. Create the Buttondown account with the owner's own address, and pick the newsletter username. This creates the account, so it is the owner's act.
 2. In the newsletter settings, set the name, the description, the sender name and a reply-to address. Use `privacy@rulefiles.dev`, the address on the privacy page. Check what Buttondown adds to the footer of each email (sender identity and unsubscribe link), since French law requires the sender to be identifiable and to offer a way to stop receiving messages (code des postes et des communications électroniques, article L34-5).
@@ -92,12 +92,11 @@ Buttondown documents an HTML form endpoint that accepts a plain form post (https
 }
 ```
 
-The `embed` field and the exact endpoint come from a search summary of Buttondown's documentation and were not seen in the fetched page text, so check them on the account's embed settings page. The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing. Once the address is set, the newsletter page and the first sentence of the newsletter section on the privacy page stop saying that signup is off; update the `updated` date in `content/privacy.md` in the same pull request.
+The endpoint and the plain `post` form (no `fetch`) are confirmed by https://docs.buttondown.com/building-your-subscriber-base, read on 2026-10-16. The `embed` hidden field comes from Buttondown's usual embed snippet; the page text fetched did not show the snippet, so the first real signup through the live form is the check (`docs/LAUNCH.md`, "Before the publication go", item 8). The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing. Once the address is set, the newsletter page and the first sentence of the newsletter section on the privacy page stop saying that signup is off; if that happens on a day after 2026-10-16, change the `updated` dates in `content/privacy.md` and `content/legal.md` in the same pull request.
 
 ## Still not verified
 
 - Buttondown price beyond 100 subscribers.
-- Whether the API works on the free plan (the features page and a docs tag disagree). The deletion call `DELETE /v1/subscribers/{email}` has to be tried on a test subscriber before the go (`docs/LAUNCH.md`, "Before the publication go", item 5), and the result written here.
 - Buttondown cookies on its hosted pages, Data Privacy Framework status and AWS region.
 - The exact form fields above.
 - Kit: double opt-in, export, data processing terms, and prices.
