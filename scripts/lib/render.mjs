@@ -406,6 +406,7 @@ ${sections}
 export function contentPage(ctx, file, pagePath) {
   const { config, matrix } = ctx;
   const { meta, body } = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+  const nl = (present, future) => (newsletterEnabled(config) ? present : future);
   const vars = {
     unverified: matrixStats(matrix).unverified,
     migrationOnly: matrixStats(matrix).byStatus['migration-only'],
@@ -417,6 +418,12 @@ export function contentPage(ctx, file, pagePath) {
     contactEmail: config.contactEmail,
     privacyEmail: config.privacyEmail,
     dataStatus: newsletterEnabled(config) ? 'collected' : 'planned',
+    // Statements of fact about the newsletter are in the future while the form is closed, since nothing is sent or recorded yet.
+    nlRecords: nl('Our provider also records the IP address and referrer-level details of your signup.', 'Once the signup is open, our provider will also record the IP address and referrer-level details of each signup.'),
+    nlCarries: nl('Every email carries an unsubscribe link.', 'Every email will carry an unsubscribe link.'),
+    nlProviderRole: nl('sends the emails and stores the list on our behalf', 'will send the emails and store the list on our behalf'),
+    nlHostedPages: nl('The signup and confirmation pages are hosted by Buttondown, and its own policies apply to them.', 'The signup and confirmation pages will be hosted by Buttondown, and its own policies will apply to them.'),
+    nlNoTracking: nl('Our emails carry no tracking pixel, and the links to other pages are not rewritten.', 'Our emails will carry no tracking pixel, and the links to other pages will not be rewritten.'),
     newsletterIntro: newsletterEnabled(config)
       ? 'This section describes what applies when you subscribe.'
       : 'The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.',

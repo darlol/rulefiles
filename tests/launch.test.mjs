@@ -158,7 +158,11 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(launch.includes('these two are the only tests that fail, because the assertions on the privacy and legal wording follow the configuration'));
   assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
   assert.ok(text('docs/NEWSLETTER.md').includes('has to be tried on a test subscriber before the go'));
+  assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('Deleting the old repository stays the owner\'s call.'));
+  assert.ok(launch.includes('3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan.'));
+  assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
+  assert.ok(launch.includes('which say "will" while the form is closed'));
   assert.ok(launch.includes('the callout on the home page') && launch.includes('`{{dataStatus}}`'));
   assert.ok(launch.includes('Treat any income as a trigger: switch to the full notice (next section) before the first sponsor is booked, paid or invoiced, and before any affiliate link, advertising or paid plan goes live.'));
   assert.ok(launch.includes('Article 1-1 does not define the term.'));
@@ -279,8 +283,8 @@ test('the full name appears on the privacy page and the legal notice and nowhere
 });
 
 test('the commits that are not on origin/main yet hold neither the full name nor the first name', (t) => {
-  // The older commits on main still carry the old marker name in their messages: docs/HISTORY-REWRITE.md plans
-  // their rewrite, so only the range origin/main..HEAD is read. The check needs a clone that has origin/main and the
+  // The history was rewritten on 2026-10-16 (docs/HISTORY-REWRITE.md), so the commits already on main are clean, and
+  // only the range origin/main..HEAD, the new commits, is read. The check needs a clone that has origin/main and the
   // whole history. In the CI workflow, actions/checkout fetches one commit and no origin/main, and a checkout of
   // main itself has an empty range: in those cases the test is reported as skipped, not passed.
   const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
@@ -332,7 +336,7 @@ test('the identity patterns catch an upper-case first name and a handle in a pag
 
 test('the history rewrite plan is written, holds no address, and names both options', () => {
   const plan = text('docs/HISTORY-REWRITE.md');
-  for (const needle of ['Status: written on 2026-10-16, not executed', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
+  for (const needle of ['Status: written on 2026-10-16. Option A was carried out the same day', '## Result of option A, 2026-10-16', 'The old repository is archived and stays private. Deleting it is not done, and stays the owner\'s call.', 'GitHub refuses rulesets on a private repository on the free plan', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
     assert.ok(plan.includes(needle), needle);
   }
   assert.match(plan, /Option B, with force-push on main \(needs the owner's explicit approval\)/);
@@ -348,6 +352,11 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.ok(ops.includes('reported as skipped with its reason, not passed'), 'the skipped commit-message check is documented');
   assert.doesNotMatch(ops, /assistant|this box|\bbox\b/i, 'no internal wording in docs/OPERATIONS.md');
   assert.ok(ops.includes('which was not installed on the machine used for the checks, so it was not run'));
+  assert.ok(ops.includes('The GitHub repository is `darlol/rulefiles`, and it is private.'));
+  assert.doesNotMatch(ops, /darlol\/agent-diffs|still called/, 'the repository is called rulefiles');
+  assert.ok(ops.includes('"Upgrade to GitHub Pro or make this repository public"') && ops.includes('gh api --method POST repos/darlol/rulefiles/rulesets --input docs/ruleset-main.json'));
+  assert.ok(ops.includes('Until then nothing blocks a direct push, a force push or the deletion of `main`'));
+  assert.ok(ops.includes('squash merges only, "Allow GitHub Actions to create and approve pull requests" on'));
   assert.ok(plan.includes("grep -o 'TODO-[A-Z][A-Z]*'"), 'the old marker pattern cannot match an empty name');
   assert.doesNotMatch(plan, /TODO-\[A-Z\]\*/);
   assert.ok(plan.includes('unless the old commit held that name'));

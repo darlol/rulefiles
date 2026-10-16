@@ -42,7 +42,7 @@ docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
 docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public, and what is still open
 docs/LAUNCH.md              launch decisions, publisher and host details, aliases, Buttondown settings, what the strict build reports
-docs/HISTORY-REWRITE.md     plan, not executed, to remove the personal email address from the commit history
+docs/HISTORY-REWRITE.md     plan, and record of its run on 2026-10-16, to remove the personal email address from the commit history
 docs/NEWSLETTER.md          newsletter tools compared on vendor pages, with a recommendation
 docs/LICENSE-RECOMMENDATION.md  why MIT for the code and CC BY 4.0 for the data and text
 docs/licenses/              the license texts: MIT template and the CC BY 4.0 legal code
