@@ -36,6 +36,7 @@
       "url": "https://api.github.com/repos/openai/codex/releases?per_page=30",
       "humanUrl": "https://github.com/openai/codex/releases",
       "label": "Codex release notes",
+      "maxBytes": 20000000,
       "tagPrefix": "rust-v",
       "titleFormat": "Codex {version}"
     },

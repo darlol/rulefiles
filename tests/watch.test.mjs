@@ -4,9 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { parseRss, parseGithubReleases, firstSentence, contentLines, entryDate, groupDrafts } from '../scripts/lib/parsers.mjs';
-import { createFetcher, RobotsError } from '../scripts/lib/fetcher.mjs';
-import { run } from '../scripts/watch.mjs';
-import { validateDigest } from '../scripts/lib/validate.mjs';
+import { createFetcher, RobotsError, HARD_MAX_BYTES } from '../scripts/lib/fetcher.mjs';
+import { run, skippedSummary } from '../scripts/watch.mjs';
+import { validateDigest, validateWatchSources } from '../scripts/lib/validate.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 
 const FIX = new URL('./fixtures/', import.meta.url).pathname;
@@ -391,4 +391,90 @@ test('watch: the docs mode is gone', async () => {
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.scripts['watch:docs'], undefined);
   assert.equal(sources.docsPages, undefined);
+});
+
+// The live GitHub API answer for openai/codex/releases?per_page=30 was 12 009 211 bytes on 2026-10-16
+// (30 releases, up to 318 assets each). This builds an answer of that size without committing it.
+// The newest 15 releases carry 318 assets and the older ones 176, as on 2026-10-16.
+function realisticReleases(count = 30) {
+  const user = 'https://api.github.com/users/github-actions%5Bbot%5D';
+  const uploader = { login: 'github-actions[bot]', id: 41898282, node_id: 'MDM6Qm90NDE4OTgyODI=', avatar_url: 'https://avatars.githubusercontent.com/in/15368?v=4', gravatar_id: '', type: 'Bot', site_admin: false, html_url: 'https://github.com/apps/github-actions', user_view_type: 'public' };
+  for (const k of ['url', 'followers_url', 'following_url', 'gists_url', 'starred_url', 'subscriptions_url', 'organizations_url', 'repos_url', 'events_url', 'received_events_url']) uploader[k] = `${user}/${k.replace('_url', '')}`;
+  const asset = (i) => ({
+    url: `https://api.github.com/repos/openai/codex/releases/assets/${400000000 + i}`, id: 400000000 + i, node_id: `RA_kwDOPm${'x'.repeat(24)}${i}`,
+    name: `codex-${'a'.repeat(40)}-${i}.tar.gz`, label: '', uploader: uploader,
+    content_type: 'application/gzip', state: 'uploaded', size: 12345678 + i, digest: `sha256:${'f'.repeat(64)}`, download_count: i, created_at: '2026-10-15T21:30:00Z', updated_at: '2026-10-15T21:30:05Z',
+    browser_download_url: `https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-${'a'.repeat(40)}-${i}.tar.gz`
+  });
+  return Array.from({ length: count }, (_, k) => ({
+    url: `https://api.github.com/repos/openai/codex/releases/${300000000 + k}`, html_url: `https://github.com/openai/codex/releases/tag/rust-v0.${200 - k}.0`, id: 300000000 + k,
+    tag_name: `rust-v0.${200 - k}.0`, name: `0.${200 - k}.0`, draft: false, prerelease: false, published_at: `2026-10-${String(15 - Math.floor(k / 3)).padStart(2, '0')}T12:00:00Z`,
+    body: `## New features\n\n- Added thing number ${k}. (#${1000 + k})\n- Fixed other thing ${k}.`, assets: Array.from({ length: k < 15 ? 318 : 176 }, (_, i) => asset(i))
+  }));
+}
+
+async function runReleasesWith(body, source = src('codex-releases'), headers = {}) {
+  const dir = tmp();
+  const routes = { 'https://api.github.com/robots.txt': { body: '' }, [source.url]: { body, headers } };
+  const sourcesFile = path.join(dir, 'sources.json');
+  fs.writeFileSync(sourcesFile, JSON.stringify({ sources: [source] }));
+  const fetcher = createFetcher({ cacheDir: path.join(dir, 'cache'), fetchImpl: redirectFetch(routes, []), delayMs: 0, sleepImpl: async () => {} });
+  const res = await run(['--sources', sourcesFile, '--out', path.join(dir, 'out'), '--no-state', '--today', '2026-10-16', '--since', '2026-10-01'], { fetcher, log: () => {} });
+  fs.rmSync(dir, { recursive: true, force: true });
+  return res;
+}
+
+test('codex releases source: a live-sized answer (about 12 MB) is read, not skipped', async () => {
+  const body = JSON.stringify(realisticReleases());
+  assert.ok(Buffer.byteLength(body) > 11_000_000 && Buffer.byteLength(body) < 14_000_000, 'the generated answer is about as large as the live one');
+  assert.ok(Buffer.byteLength(body) > 5_000_000, 'larger than the default limit, so the source needs its own');
+  const res = await runReleasesWith(body);
+  assert.deepEqual(res.skipped, []);
+  assert.ok(res.entries.length > 0);
+  assert.ok(src('codex-releases').maxBytes >= 1.5 * Buffer.byteLength(body), 'at least 50 percent room over the live size');
+  assert.ok(src('codex-releases').maxBytes <= HARD_MAX_BYTES);
+});
+
+test('the same live-sized answer is refused when the source has no maxBytes, and the skip is reported', async () => {
+  const { maxBytes, ...plain } = src('codex-releases');
+  const res = await runReleasesWith(JSON.stringify(realisticReleases()), plain);
+  assert.equal(res.skipped.length, 1);
+  assert.match(res.skipped[0].reason, /larger than 5000000 bytes.*maxBytes/);
+  const line = skippedSummary(res.skipped, res.sourceCount);
+  assert.match(line, /^WARNING: 1 of 1 source\(s\) skipped: codex-releases \(/);
+  assert.equal(skippedSummary([], 5), '');
+});
+
+test('fetcher: the limit of a source applies, content-length is checked first, and the hard limit cannot be raised', async () => {
+  const mk = (routes, calls = []) => createFetcher({ cacheDir: tmp(), fetchImpl: (url, o) => {
+    const r = routes[url];
+    if (!r) return Promise.resolve({ status: 404, headers: { get: () => null }, text: async () => '' });
+    if (!url.endsWith('/robots.txt')) calls.push(url);
+    return Promise.resolve({ status: 200, headers: { get: (k) => (r.headers || {})[k.toLowerCase()] ?? null }, text: async () => { if (!url.endsWith('/robots.txt')) calls.push('text'); return r.body; } });
+  }, delayMs: 0, sleepImpl: async () => {} });
+  const robots = { 'https://l.example/robots.txt': { body: '' } };
+  const body = 'x'.repeat(1000);
+  assert.equal((await mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a', { maxBytes: 1000 })).body, body);
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a', { maxBytes: 999 }), /larger than 999 bytes/);
+  const calls = [];
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body, headers: { 'content-length': '5000' } } }, calls).get('https://l.example/a', { maxBytes: 4000 }), /larger than 4000 bytes/);
+  assert.ok(!calls.includes('text'), 'the body is not read when content-length is already too large');
+  // Multi-byte text counts in bytes, not characters.
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: '\u00e9'.repeat(600) } }).get('https://l.example/a', { maxBytes: 1000 }), /larger than 1000 bytes/);
+  // A source cannot ask for more than the hard limit.
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: 'x', headers: { 'content-length': String(HARD_MAX_BYTES + 1) } } }).get('https://l.example/a', { maxBytes: HARD_MAX_BYTES * 2 }), new RegExp(`larger than ${HARD_MAX_BYTES} bytes`));
+  assert.equal((await mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a')).body, body, 'no maxBytes: default limit');
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: 'x', headers: { 'content-length': '5000001' } } }).get('https://l.example/a'), /larger than 5000000 bytes/);
+});
+
+test('watch-sources: maxBytes must be a whole number from 1 to the hard limit', () => {
+  const base = { id: 'a', tool: 'codex', type: 'rss', url: 'https://x.example/f.xml' };
+  assert.deepEqual(validateWatchSources({ sources: [{ ...base, maxBytes: 20_000_000 }, { ...base, id: 'b', maxBytes: HARD_MAX_BYTES }, { ...base, id: 'c' }] }), []);
+  for (const bad of [0, -1, 1.5, '20000000', null, HARD_MAX_BYTES + 1]) {
+    assert.match(validateWatchSources({ sources: [{ ...base, maxBytes: bad }] }).join('\n'), /maxBytes must be an integer/, String(bad));
+  }
+});
+
+test('watch: the summary of skipped sources names each source and its reason', () => {
+  assert.equal(skippedSummary([{ id: 'a', reason: 'too big' }, { id: 'b', reason: 'HTTP 500' }], 5), 'WARNING: 2 of 5 source(s) skipped: a (too big); b (HTTP 500)');
 });

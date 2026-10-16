@@ -68,6 +68,8 @@ Rules:
 
 `watch-sources.json` lists the feeds (`rss` or `github-releases`). `watch-state.json` holds `seen`, which maps an entry id to the date it was listed. The watch script updates it. A reviewer does not need to edit it. Documentation pages are not fetched by the script.
 
+A response may be at most 5 000 000 bytes. A source can raise that with `maxBytes` (a whole number, never above 25 000 000, the hard limit in `scripts/lib/fetcher.mjs`). `codex-releases` sets 20 000 000, because the GitHub API lists every build asset of each release: 30 releases were 12 009 211 bytes on 2026-10-16. A source that fails, for a size or any other reason, is skipped and the run goes on with the others. The run ends with a `WARNING: n of m source(s) skipped: …` line on stderr. In GitHub Actions the same line is a warning annotation and appears in the job summary. The run still exits 0 unless four or more sources are skipped and nothing was listed (exit 3).
+
 What the parsers read, and which date they keep:
 
 - `rss`: `content:encoded` can hold HTML (list items, or paragraphs when there are none) or Markdown (the Codex changelog feed moved to Markdown). Both give at most three candidate lines. Markdown headings and code fences are skipped, and links, bold and code marks lose their syntax.

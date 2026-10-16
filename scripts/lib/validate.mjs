@@ -1,5 +1,6 @@
 import { isIsoDate, isoWeekRange, daysBetween } from './util.mjs';
 import { licenseProblems } from './license.mjs';
+import { HARD_MAX_BYTES } from './fetcher.mjs';
 
 export const MATRIX_STATUSES = ['reads', 'reads-conditionally', 'configurable', 'migration-only', 'not-read', 'unverified'];
 
@@ -149,6 +150,7 @@ export function validateWatchSources(ws) {
     if (!ITEM_TOOLS.includes(s.tool)) errors.push(`watch-sources.json: source ${s.id} has unknown tool`);
     if (!['rss', 'github-releases'].includes(s.type)) errors.push(`watch-sources.json: source ${s.id} has unknown type`);
     if (!/^https:\/\//.test(s.url || '')) errors.push(`watch-sources.json: source ${s.id} url must be https`);
+    if (s.maxBytes !== undefined && !(Number.isInteger(s.maxBytes) && s.maxBytes > 0 && s.maxBytes <= HARD_MAX_BYTES)) errors.push(`watch-sources.json: source ${s.id} maxBytes must be an integer from 1 to ${HARD_MAX_BYTES}`);
     if (/\.atom($|\?)/.test(s.url || '') && /github\.com/.test(s.url)) errors.push(`watch-sources.json: source ${s.id} uses a github.com .atom feed, which robots.txt disallows`);
   }
   return errors;
