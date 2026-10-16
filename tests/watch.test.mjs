@@ -509,3 +509,21 @@ test('github releases: lines lose Markdown marks, links and PR references like t
   const e = parseGithubReleases(rel, src('codex-releases'));
   assert.deepEqual(e[0].lines, ['Fixed /model crash with long names.', 'Updated the guide.']);
 });
+
+test('entry dates: a link two days away is ignored, a link one day ahead wins, leap days are checked', () => {
+  const at = (iso) => new Date(iso);
+  // Two days apart, in both directions: the UTC date stays. A mutation from one day to two days would fail here.
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-14-x'), '2026-10-16');
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-18-x'), '2026-10-16');
+  // Exactly one day apart, in both directions: the link date wins, including a link one day ahead of the feed date.
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-15-x'), '2026-10-15');
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-17-x'), '2026-10-17');
+  // 29 February: real in 2028, not a date in 2027 (the UTC date stays).
+  assert.equal(entryDate(at('Tue, 29 Feb 2028 23:30:00 GMT'), 'https://github.blog/changelog/2028-02-29-x'), '2028-02-29');
+  assert.equal(entryDate(at('Wed, 01 Mar 2028 02:00:00 GMT'), 'https://github.blog/changelog/2028-02-29-x'), '2028-02-29');
+  assert.equal(entryDate(at('Mon, 01 Mar 2027 02:00:00 GMT'), 'https://github.blog/changelog/2027-02-29-x'), '2027-03-01');
+  assert.equal(entryDate(at('Sun, 28 Feb 2027 02:00:00 GMT'), 'https://github.blog/changelog/2027-02-29-x'), '2027-02-28');
+  // Month and year boundaries.
+  assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-31-x'), '2026-12-31');
+  assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-30-x'), '2027-01-01');
+});
