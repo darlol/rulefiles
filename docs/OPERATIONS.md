@@ -26,6 +26,30 @@ Build command for a preview on either provider: `npm run build`. It prints a `LA
 
 The form is on while `newsletter.formAction` holds an https form endpoint (since 2026-10-16 it is the Buttondown embed endpoint of the `rulefiles` newsletter), and off when it is empty. To close it again, empty `newsletter.formAction`. A build with `NEWSLETTER_FORM_ACTION` set to an empty value closes it too, which is what the tests use. To change the endpoint, set `newsletter.formAction` in `site.config.json`, or the `NEWSLETTER_FORM_ACTION` variable at build time, then add any provider-specific hidden fields under `newsletter.hiddenFields`. The CSP then allows that one form origin, for `form-action` only. If the provider changes, change `content/privacy.md` in the same pull request, since it names the provider and its sub-processors.
 
+## IndexNow
+
+IndexNow is a protocol that tells the participating search engines which URLs of a site changed. The protocol is described at https://www.indexnow.org/documentation (read on 2026-10-16). Facts taken from it:
+
+- The key has 8 to 128 characters: lowercase and uppercase letters, digits and dashes.
+- Ownership is proved by a UTF-8 text file `{key}.txt` at the root of the host, containing the key. The documentation says the search engines crawl that file after a submission and keep using the key until it changes.
+- A set of URLs goes in one POST with `Content-Type: application/json; charset=utf-8` and the body `{"host": ..., "key": ..., "urlList": [...]}`, up to 10,000 URLs per request. The URLs must belong to the host.
+- HTTP 200 means the URLs were received, 202 means received with the key validation pending. 400 is an invalid format and 429 is too many requests (possible spam). The table also lists a case for a key that is not valid (key file not found, or found without the key) and a 422 for URLs that do not belong to the host or a key that does not match the protocol schema. Any code other than 200 and 202 makes the script fail.
+- The documentation says that engines which adopt the protocol share the submissions with the other participating engines. The list of participating engines is at https://www.indexnow.org/searchengines.json (on 2026-10-16: Bing, Yandex, Seznam, Naver, Yep, Internet Archive, Amazonbot). Google is not on that list, so this does not notify Google. Google Search Console and the sitemap are the way to reach Google.
+
+What the repository does:
+
+- `site.config.json` holds `indexNowKey`, a random 32-character hex string made for this site, with no link to a person. The build writes `dist/<key>.txt` with the key in it. The key is public by design, so it is not a secret and no secret is stored anywhere.
+- `scripts/indexnow.mjs` (`npm run indexnow -- ...`) reads `dist/sitemap.xml` and posts the chosen URLs to `https://api.indexnow.org/indexnow`. It sends nothing unless `--send` is given. The endpoint is the shared one named in the brief of this change. The documentation page read says only "the URL provided by the search engine", so check it against the engines' pages if a request is refused, and change it with `--endpoint`.
+- The tests use a mocked `fetch`. No test and no CI step calls IndexNow.
+
+Where the ping runs. The site is deployed to Cloudflare Pages by uploading the build, and no workflow in this repository deploys it, so no workflow can say "after the deployment". The ping is a manual step after the new build answers on https://rulefiles.dev:
+
+1. Check that `https://rulefiles.dev/<key>.txt` answers 200 with the key (`curl -s https://rulefiles.dev/<key>.txt`).
+2. `npm run build:strict`, then `npm run indexnow -- --since YYYY-MM-DD` with the date of the previous deployment. It lists the URLs and sends nothing. A URL without `lastmod` in the sitemap is listed as well, since its date is unknown.
+3. Add `--send` to post them. Expect `IndexNow answered HTTP 200` or `202`.
+
+Do it once per deployment, not more: the documentation asks to submit when content is added, updated or deleted, and a 429 means too many requests. If the deployment later moves to a GitHub workflow, add a step after the deploy step that runs the same command with `--send`. It needs no secret.
+
 ## CI
 
 - `.github/workflows/ci.yml` runs on pushes and pull requests: `npm ci`, validate, build, test, check links, on Node 20 and 22. The only dev dependency is `yaml`, used by the generator tests to parse the frontmatter that the generator writes.
