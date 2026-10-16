@@ -7,9 +7,9 @@
   "start": "2026-10-12",
   "end": "2026-10-18",
   "status": "published",
-  "verifiedOn": "2026-10-15",
+  "verifiedOn": "2026-10-16",
   "title": "Digest for 12 to 18 October 2026 (through 15 October)",
-  "summary": "The week is still running: this issue lists changes published up to 15 October 2026. Each item quotes the source wording and links to it.",
+  "summary": "The week is still running: this issue lists changes published up to 15 October 2026. Each item quotes the source wording and links to it. No new Cursor changelog entry since 2026-10-13, as of 2026-10-16.",
   "items": [
     {
       "id": "cursor-2026-10-13-origin-app-marketplace",
@@ -34,6 +34,17 @@
       "sourceLabel": "Claude Code release notes"
     },
     {
+      "id": "claude-code-2026-10-14-v2.1.300",
+      "date": "2026-10-14",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.300",
+      "text": "Added `cache_creation_5m_tokens` and `cache_creation_1h_tokens` to the OpenTelemetry `api_request` event, splitting cache writes by lifetime",
+      "quote": true,
+      "version": "2.1.300",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.300",
+      "sourceLabel": "Anthropic, Claude Code release notes"
+    },
+    {
       "id": "claude-code-2026-10-15-v2.1.301",
       "date": "2026-10-15",
       "tool": "claude-code",
@@ -43,6 +54,16 @@
       "version": "2.1.301",
       "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.301",
       "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "codex-2026-10-14-gpt-5-5-retirement",
+      "date": "2026-10-14",
+      "tool": "codex",
+      "title": "GPT-5.5 retirement in Codex",
+      "text": "Effective October 14, 2026, at noon PDT (19:00 UTC), GPT-5.5 retires from Codex for users signed in with ChatGPT.",
+      "quote": true,
+      "sourceUrl": "https://learn.chatgpt.com/docs/changelog#codex-2026-10-14-gpt-55-retirement",
+      "sourceLabel": "OpenAI, Codex changelog"
     },
     {
       "id": "codex-2026-10-15-0.163.0",
@@ -66,6 +87,16 @@
       "sourceLabel": "GitHub changelog"
     },
     {
+      "id": "github-copilot-2026-10-13-managed-settings-enforcement",
+      "date": "2026-10-13",
+      "tool": "github-copilot",
+      "title": "Enterprise managed settings enforcement updates",
+      "text": "Enterprise administrators can now require supported GitHub Copilot clients to retrieve current server-managed settings at startup instead of relying on a cached policy.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-13-enterprise-managed-settings-enforcement-updates/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
       "id": "github-copilot-2026-10-15-model-deprecation",
       "date": "2026-10-15",
       "tool": "github-copilot",
@@ -74,6 +105,16 @@
       "quote": true,
       "figure": "2026-11-16",
       "sourceUrl": "https://github.blog/changelog/2026-10-15-upcoming-deprecation-of-selected-github-copilot-models-in-mid-november",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-15-agentic-autofix-ga",
+      "date": "2026-10-15",
+      "tool": "github-copilot",
+      "title": "Agentic autofix for code scanning alerts general availability",
+      "text": "Agentic autofix is available to GitHub Code Security and GitHub Advanced Security customers on GitHub Enterprise Cloud, including GitHub Enterprise Cloud with data residency.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-15-agentic-autofix-for-code-scanning-alerts-general-availability/",
       "sourceLabel": "GitHub changelog"
     }
   ]
