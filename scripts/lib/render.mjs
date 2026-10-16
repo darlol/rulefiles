@@ -2,12 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { escapeHtml as h, escapeXml as x, daysBetween } from './util.mjs';
 import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
-import { staleCells } from './validate.mjs';
+import { staleCells, matrixStats } from './validate.mjs';
 
 export const STATUS_LABEL = {
   reads: 'Reads',
   'reads-conditionally': 'Reads, with conditions',
   configurable: 'Only if configured',
+  'migration-only': 'Migration only',
   'not-read': 'Not read',
   unverified: 'Unverified'
 };
@@ -15,10 +16,16 @@ const STATUS_HELP = {
   reads: 'The official page says the tool reads this file.',
   'reads-conditionally': 'The tool reads the file only under the conditions stated in the cell.',
   configurable: 'The tool does not read the file by default but can be set up to.',
+  'migration-only': 'The page mentions the file only as input to a migration command such as /init, which copies parts of it into the tool\'s own instruction file. It does not say the tool loads the file itself.',
   'not-read': 'The official page says the tool does not read this file.',
   unverified: 'We could not confirm this on the cited official page on the date shown.'
 };
 export const TOOL_NAME = { cursor: 'Cursor', 'claude-code': 'Claude Code', codex: 'Codex', 'github-copilot': 'GitHub Copilot' };
+
+/** Escapes text for HTML, then turns `code` spans into <code>. The escaping runs first, so no markup can get through. */
+export function inlineHtml(text) {
+  return h(text).replace(/`([^`\n]+)`/g, '<code>$1</code>');
+}
 
 export function url(config, p) { return config.baseUrl + p; }
 
@@ -40,7 +47,8 @@ export const cspFor = csp;
 
 export function layout(config, page) {
   const canonical = url(config, page.path);
-  const title = page.path === '/' ? `${config.name}: ${config.tagline}` : `${page.title} | ${config.name}`;
+  const title = page.path === '/' ? (config.homeTitle || config.name) : `${page.title} | ${config.name}`;
+  const image = url(config, '/og.png');
   const ld = (page.jsonLd || []).map((o) => `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...o }).replace(/</g, '\\u003c')}</script>`).join('\n');
   const nav = [['/matrix/', 'Matrix'], ['/generator/', 'Generator'], ['/digest/', 'Digest'], ['/newsletter/', 'Newsletter'], ['/about/', 'About']]
     .map(([href, label]) => `<a href="${href}"${page.path.startsWith(href) ? ' aria-current="page"' : ''}>${label}</a>`).join('');
@@ -52,13 +60,15 @@ export function layout(config, page) {
 <meta http-equiv="Content-Security-Policy" content="${h(csp(config))}">
 <title>${h(title)}</title>
 <meta name="description" content="${h(page.description)}">
-<link rel="canonical" href="${h(canonical)}">
-${page.noindex ? '<meta name="robots" content="noindex">\n' : ''}<meta property="og:type" content="${page.ogType || 'website'}">
+${page.noindex ? '<meta name="robots" content="noindex">\n' : `<link rel="canonical" href="${h(canonical)}">\n`}<meta property="og:type" content="${page.ogType || 'website'}">
 <meta property="og:site_name" content="${h(config.name)}">
 <meta property="og:title" content="${h(title)}">
 <meta property="og:description" content="${h(page.description)}">
-<meta property="og:url" content="${h(canonical)}">
-<meta name="twitter:card" content="summary">
+${page.noindex ? '' : `<meta property="og:url" content="${h(canonical)}">\n`}<meta property="og:image" content="${h(image)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${h(config.name)} logo">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="alternate" type="application/atom+xml" title="${h(config.name)} digest" href="/digest/feed.xml">
 <link rel="stylesheet" href="/assets/style.css">
@@ -95,8 +105,8 @@ const publisher = (config) => ({ '@type': 'Organization', name: config.name, url
 export function itemHtml(it) {
   const meta = [it.version ? `version ${h(it.version)}` : '', it.figure ? h(it.figure) : ''].filter(Boolean).join(' · ');
   return `<li class="item" id="${h(it.id)}">
-<p class="item-head"><time datetime="${h(it.date)}">${h(it.date)}</time> <span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span> <strong>${h(it.title)}</strong></p>
-<p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${h(it.text)}</p>
+<p class="item-head"><time datetime="${h(it.date)}">${h(it.date)}</time> <span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span> <strong>${inlineHtml(it.title)}</strong></p>
+<p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
 <p class="item-meta">${meta ? `${meta} · ` : ''}Source: <a href="${h(it.sourceUrl)}" rel="noopener">${h(it.sourceLabel)}</a></p>
 </li>`;
 }
@@ -104,7 +114,7 @@ export function itemHtml(it) {
 export function homePage(ctx) {
   const { config, matrix, digests } = ctx;
   const latest = digests[0];
-  const unverified = matrix.cells.filter((c) => c.status === 'unverified').length;
+  const stats = matrixStats(matrix);
   const digestBlock = latest
     ? `<section aria-labelledby="latest"><h2 id="latest">Latest digest</h2>
 <p><a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>: ${latest.items.length} dated items from official sources.</p>
@@ -115,7 +125,7 @@ export function homePage(ctx) {
 <p>${h(config.description)}</p>
 ${digestBlock}
 <section aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
-<p>The <a href="/matrix/">instruction file matrix</a> covers ${matrix.tools.length} tools and ${matrix.files.length} file types. Each of its ${matrix.cells.length} cells links to an official page and shows the date it was checked. ${unverified} cells are marked unverified because the official page did not confirm them. The data was last reviewed on ${h(matrix.lastReviewed)}.</p>
+<p>The <a href="/matrix/">instruction file matrix</a> covers ${matrix.tools.length} tools and ${matrix.files.length} file types. Each of its ${matrix.cells.length} cells links to an official page and shows the date it was checked. ${stats.unverified} of them are marked unverified because the cited official page does not mention the file, and ${stats.byStatus['migration-only']} are marked migration only. The data was last reviewed on ${h(matrix.lastReviewed)}.</p>
 <p>The <a href="/generator/">generator</a> writes a first version of those files from a short form, in your browser.</p></section>
 <section aria-labelledby="news"><h2 id="news">Newsletter</h2>
 <p>A weekly email with the digest is planned. <a href="/newsletter/">Signup status</a>. The <a href="/digest/feed.xml">Atom feed</a> works today.</p></section>`;
@@ -135,7 +145,7 @@ export function matrixPage(ctx) {
       const c = cellMap.get(`${t.id}/${f.id}`);
       const isStale = stale.has(`${t.id}/${f.id}`);
       return `<td class="st-${c.status}"><span class="badge badge-${c.status}">${h(STATUS_LABEL[c.status])}</span>${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}
-<p class="note">${h(c.note)}</p>
+<p class="note">${inlineHtml(c.note)}</p>
 <p class="muted"><a href="${h(c.sourceUrl)}" rel="noopener">Source</a> · checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time>${isStale ? ' · <strong>check again</strong>' : ''}</p></td>`;
     }).join('');
     return `<tr><th scope="row"><code>${h(f.path)}</code><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
@@ -144,7 +154,7 @@ export function matrixPage(ctx) {
   const counts = Object.keys(STATUS_LABEL).map((k) => `${STATUS_LABEL[k]}: ${matrix.cells.filter((c) => c.status === k).length}`).join(', ');
   const body = `<h1>Which coding agent reads which instruction file</h1>
 <p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
-<p>Each cell cites an official page and the date we checked it. A cell reads "unverified" when the page we checked did not mention the file. That means we have no source, not that the tool ignores the file. Counts: ${h(counts)}.</p>
+<p>Each cell cites an official page and the date we checked it. A cell reads "unverified" when the page we checked does not mention the file. We then have no source, which says nothing about whether the tool reads it. A cell reads "migration only" when the page mentions the file only as input to a migration command such as /init. Counts: ${h(counts)}.</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>
 <thead><tr><th scope="col">File</th>${head}</tr></thead>
@@ -168,8 +178,26 @@ ${rows}
   });
 }
 
+function listNames(names) {
+  if (names.length <= 1) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/** Sentence about who reads AGENTS.md, built only from matrix cells that cite a source. */
+export function agentsMdSentence(matrix) {
+  const nameOf = Object.fromEntries(matrix.tools.map((t) => [t.id, t.name]));
+  const of = (status) => matrix.cells.filter((c) => c.file === 'agents-md' && c.status === status).map((c) => nameOf[c.tool]);
+  const reads = of('reads');
+  const cond = of('reads-conditionally');
+  if (!reads.length && !cond.length) return '';
+  const parts = [];
+  if (reads.length) parts.push(`${listNames(reads)} read${reads.length === 1 ? 's' : ''} it`);
+  if (cond.length) parts.push(`${listNames(cond)} read${cond.length === 1 ? 's' : ''} it under the conditions given in the matrix`);
+  return `According to the <a href="/matrix/">matrix</a>, ${parts.join(', and ')}.`;
+}
+
 export function generatorPage(ctx) {
-  const { config } = ctx;
+  const { config, matrix } = ctx;
   const field = (id, label, hint, rows) => `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off">`}</div>`;
   const body = `<h1>Instruction file generator</h1>
 <p class="lead">Fill in the form and copy the files. Everything runs in your browser. Nothing is sent or stored.</p>
@@ -193,12 +221,15 @@ ${field('never', 'Never', '', 2)}
 ${field('pr', 'Commits and pull requests', '', 2)}
 </fieldset>
 <fieldset><legend>Files to generate</legend>
+<div id="gen-main"></div>
+<p class="muted">AGENTS.md is the main file and is always generated. ${agentsMdSentence(matrix)} Add the files below only for tools that need their own.</p>
+<p>Optional extra files:</p>
 <div id="gen-targets"></div>
 </fieldset>
 <fieldset><legend>Options</legend>
 <div class="field"><span id="claude-mode-label">CLAUDE.md content</span>
-<label class="check"><input type="radio" name="claudeMode" value="full" checked> Full copy of the instructions</label>
-<label class="check"><input type="radio" name="claudeMode" value="import"> Import AGENTS.md with <code>@AGENTS.md</code></label></div>
+<label class="check"><input type="radio" name="claudeMode" value="import" checked> Import AGENTS.md with <code>@AGENTS.md</code></label>
+<label class="check"><input type="radio" name="claudeMode" value="full"> Full copy of the instructions</label></div>
 <div class="field"><label for="cursorGlobs">Cursor rule globs</label><span class="muted block">Leave empty for none. Example: <code>src/**/*.ts</code></span><input id="cursorGlobs" name="cursorGlobs" type="text"></div>
 <label class="check"><input type="checkbox" name="cursorAlwaysApply" checked> Cursor rule: always apply</label>
 <div class="field"><label for="copilotApplyTo">Copilot applyTo glob</label><span class="muted block">Used for the path-specific file. Default: <code>**</code></span><input id="copilotApplyTo" name="copilotApplyTo" type="text"></div>
@@ -241,7 +272,7 @@ export function digestWeekPage(ctx, digest) {
   const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(TOOL_NAME[g.t])}</h2><ul class="items">${g.items.map(itemHtml).join('\n')}</ul></section>`).join('\n');
   const body = `<h1>${h(digest.title)}</h1>
 <p class="lead">${h(digest.week)}, ${h(digest.start)} to ${h(digest.end)}. Checked against the sources on ${h(digest.verifiedOn)}.</p>
-<p>${h(digest.summary)}</p>
+<p>${inlineHtml(digest.summary)}</p>
 ${sections}
 <p><a href="/digest/">Back to the archive</a></p>`;
   const cites = [...new Set(digest.items.map((i) => i.sourceUrl))];
@@ -258,7 +289,8 @@ export function contentPage(ctx, file, pagePath) {
   const { config, matrix } = ctx;
   const { meta, body } = parseFrontmatter(fs.readFileSync(file, 'utf8'));
   const vars = {
-    unverified: matrix.cells.filter((c) => c.status === 'unverified').length,
+    unverified: matrixStats(matrix).unverified,
+    migrationOnly: matrixStats(matrix).byStatus['migration-only'],
     cells: matrix.cells.length,
     lastReviewed: matrix.lastReviewed,
     sponsorContact: config.sponsorContact ? `Contact: ${config.sponsorContact}` : 'A contact address for sponsorship questions will be listed here when sponsorship opens.'
@@ -317,12 +349,13 @@ export function renderFeed(ctx) {
   const { config, digests } = ctx;
   const updated = digests.length ? digests[0].verifiedOn : '1970-01-01';
   const entries = digests.map((d) => {
-    const content = `<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(TOOL_NAME[i.tool])}: ${h(i.title)}. ${h(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
+    const content = `<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(TOOL_NAME[i.tool])}: ${inlineHtml(i.title)}. ${inlineHtml(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
     return `  <entry>
     <title>${x(d.title)}</title>
     <id>tag:${new URL(config.baseUrl).hostname},2026:digest/${x(d.week)}</id>
     <link rel="alternate" type="text/html" href="${x(url(config, `/digest/${d.week}/`))}"/>
     <updated>${d.verifiedOn}T00:00:00Z</updated>
+    <author><name>${x(config.name)}</name></author>
     <summary>${x(d.summary)}</summary>
     <content type="html">${x(content)}</content>
   </entry>`;
@@ -335,6 +368,7 @@ export function renderFeed(ctx) {
   <link rel="self" type="application/atom+xml" href="${x(url(config, '/digest/feed.xml'))}"/>
   <link rel="alternate" type="text/html" href="${x(url(config, '/digest/'))}"/>
   <updated>${updated}T00:00:00Z</updated>
+  <author><name>${x(config.name)}</name></author>
 ${entries}
 </feed>
 `;
@@ -364,7 +398,7 @@ export function renderLlmsTxt(ctx) {
     '',
     `> ${config.description}`,
     '',
-    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page. Pages are plain HTML without cookies or scripts that load data.',
+    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page, and cells marked "migration only" are mentioned there only as input to a migration command. Pages are plain HTML without cookies or scripts that load data.',
     '',
     '## Data',
     '',

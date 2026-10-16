@@ -4,7 +4,9 @@
   "private": true,
   "description": "Static site and weekly digest: what changed in AI coding tools, and which instruction file each agent reads.",
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "validate": "node scripts/validate-data.mjs",
     "build": "node scripts/build.mjs",
@@ -13,8 +15,10 @@
     "check-links:external": "node scripts/check-links.mjs --external",
     "watch": "node scripts/watch.mjs",
     "watch:offline": "node scripts/watch.mjs --offline tests/fixtures --out /tmp/agent-diffs-drafts",
-    "watch:docs": "node scripts/watch.mjs --docs",
     "preview": "node scripts/preview.mjs",
     "ci": "npm run validate && npm run build && npm test && npm run check-links"
+  },
+  "devDependencies": {
+    "yaml": "2.9.1"
   }
 }

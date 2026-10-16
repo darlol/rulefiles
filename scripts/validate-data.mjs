@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadData } from './lib/data.mjs';
-import { validateConfig, validateMatrix, validateDigest, validateWatchSources, staleCells } from './lib/validate.mjs';
+import { validateConfig, validateMatrix, validateDigest, validateWatchSources, staleCells, matrixStats } from './lib/validate.mjs';
 import { todayIso, readJson } from './lib/util.mjs';
 
 const data = loadData();
@@ -24,7 +24,8 @@ if (fs.existsSync(draftDir)) {
 const stale = staleCells(data.matrix, today, data.config.staleAfterDays);
 const summary = {
   matrixCells: data.matrix.cells.length,
-  unverified: data.matrix.cells.filter((c) => c.status === 'unverified').length,
+  unverified: matrixStats(data.matrix).unverified,
+  migrationOnly: matrixStats(data.matrix).byStatus['migration-only'],
   digests: data.digests.length,
   items: data.digests.reduce((n, d) => n + d.data.items.length, 0),
   staleCells: stale.length

@@ -4,6 +4,7 @@
   "description": "A weekly digest of dated, sourced changes in Cursor, Claude Code, Codex and GitHub Copilot, plus a matrix of which agent reads which instruction file.",
   "baseUrl": "https://agentdiffs.dev",
   "language": "en",
+  "homeTitle": "Agent Diffs: AI coding tool changes and instruction files",
   "repoUrl": "",
   "newsletter": {
     "provider": "",

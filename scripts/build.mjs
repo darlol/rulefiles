@@ -5,6 +5,8 @@ import { ROOT, writeFile, todayIso } from './lib/util.mjs';
 import { loadData, publishedDigests } from './lib/data.mjs';
 import { validateConfig, validateMatrix, validateDigest } from './lib/validate.mjs';
 import * as r from './lib/render.mjs';
+import { launchWarnings } from './lib/placeholders.mjs';
+import { renderOgImage } from './lib/ogimage.mjs';
 
 export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = false } = {}) {
   const data = loadData(root);
@@ -20,7 +22,9 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   fs.rmSync(outDir, { recursive: true, force: true });
   const put = (rel, content) => writeFile(path.join(outDir, rel), content);
   const pages = [];
+  const built = [];
   const page = (p, html, lastmod) => {
+    built.push({ path: p, html });
     put(p === '/' ? 'index.html' : path.join(p, 'index.html'), html);
     pages.push({ path: p, lastmod });
   };
@@ -44,6 +48,7 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   put('llms-full.txt', r.renderLlmsFull(ctx));
   put('_headers', r.renderHeaders(ctx.config));
   put('favicon.svg', r.FAVICON);
+  put('og.png', renderOgImage());
   put('data/matrix.json', JSON.stringify(ctx.matrix, null, 2) + '\n');
   put('data/digests.json', JSON.stringify(ctx.digests, null, 2) + '\n');
 
@@ -54,8 +59,13 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   }
   fs.copyFileSync(path.join(root, 'src', 'js', 'generator-core.js'), path.join(outDir, 'assets', 'generator-core.js'));
 
+  const warnings = launchWarnings(built, ctx.config);
+  if (!quiet) {
+    for (const w of warnings) console.warn(`LAUNCH WARNING: ${w}`);
+    if (warnings.length) console.warn(`${warnings.length} launch warning(s). See docs/LAUNCH-BLOCKERS.md. The build is not blocked.`);
+  }
   if (!quiet) console.log(`Built ${pages.length} pages into ${outDir} (baseUrl ${ctx.config.baseUrl}, date ${today}).`);
-  return { outDir, pages, config: ctx.config };
+  return { outDir, pages, config: ctx.config, warnings };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

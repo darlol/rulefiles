@@ -1,18 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { ROOT, readJson, writeFile, todayIso, isIsoDate } from './lib/util.mjs';
 import { createFetcher, DEFAULT_USER_AGENT } from './lib/fetcher.mjs';
-import { parseRss, parseGithubReleases, groupDrafts, decodeEntities } from './lib/parsers.mjs';
+import { parseRss, parseGithubReleases, groupDrafts } from './lib/parsers.mjs';
 import { publishedDigestsFromDir } from './lib/drafts.mjs';
 
 function parseArgs(argv) {
-  const a = { docs: false, noState: false };
+  const a = { noState: false };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
-    if (k === '--docs') a.docs = true;
-    else if (k === '--no-state') a.noState = true;
+    if (k === '--no-state') a.noState = true;
     else if (['--offline', '--out', '--since', '--today', '--state', '--cache', '--user-agent', '--sources'].includes(k)) a[k.slice(2)] = argv[++i];
     else throw new Error(`Unknown argument ${k}`);
   }
@@ -21,12 +19,8 @@ function parseArgs(argv) {
 
 const addDays = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
 
-export function visibleText(html) {
-  return decodeEntities(html.replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
-}
-
 /**
- * Run the watcher. Returns {entries, drafts, skipped, docs} and writes draft files unless dryRun.
+ * Run the watcher. Returns {entries, drafts, written, skipped, state} and writes draft files unless dryRun.
  * deps lets tests inject a fetcher and a clock.
  */
 export async function run(argv, deps = {}) {
@@ -38,9 +32,8 @@ export async function run(argv, deps = {}) {
   const sources = readJson(args.sources || path.join(root, 'data', 'watch-sources.json'));
   const outDir = args.out || path.join(root, 'data', 'drafts');
   const statePath = args.state || path.join(root, 'data', 'watch-state.json');
-  const state = !args.noState && fs.existsSync(statePath) ? readJson(statePath) : { seen: {}, docs: {} };
+  const state = !args.noState && fs.existsSync(statePath) ? readJson(statePath) : { seen: {} };
   state.seen = state.seen || {};
-  state.docs = state.docs || {};
   const log = deps.log || ((m) => console.log(m));
 
   const fetcher = args.offline ? null : deps.fetcher || createFetcher({ cacheDir: args.cache || path.join(root, '.cache', 'watch'), userAgent: args['user-agent'] || process.env.WATCH_USER_AGENT || DEFAULT_USER_AGENT });
@@ -93,30 +86,10 @@ export async function run(argv, deps = {}) {
   }
   for (const e of entries) state.seen[e.id] = today;
 
-  const docs = [];
-  if (args.docs) {
-    for (const p of sources.docsPages || []) {
-      try {
-        const body = args.offline
-          ? fs.readFileSync(path.join(args.offline, `${p.id}.html`), 'utf8')
-          : (await fetcher.get(p.url)).body;
-        const hash = crypto.createHash('sha256').update(visibleText(body)).digest('hex');
-        const prev = state.docs[p.id];
-        const status = !prev ? 'first-seen' : prev.hash === hash ? 'unchanged' : 'changed';
-        docs.push({ id: p.id, url: p.url, status });
-        log(`docs ${p.id}: ${status}${status === 'changed' ? ' (re-verify the matrix cells that cite this page)' : ''}`);
-        state.docs[p.id] = { hash, checkedOn: today };
-      } catch (e) {
-        skipped.push({ id: p.id, reason: e.message });
-        log(`docs ${p.id}: SKIPPED (${e.message})`);
-      }
-    }
-  }
-
   if (!args.noState && !args.offline) writeFile(statePath, JSON.stringify(state, null, 2) + '\n');
   if (written.length) log(`\nWrote ${written.length} draft file(s): ${written.join(', ')}`);
   if (fetcher) log(`Network requests: ${fetcher.stats.network}, cache hits: ${fetcher.stats.cacheHits}, not modified: ${fetcher.stats.notModified}`);
-  return { entries, drafts, written, skipped, docs, state };
+  return { entries, drafts, written, skipped, state };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -1,6 +1,14 @@
 import { isIsoDate, isoWeekRange, daysBetween } from './util.mjs';
 
-export const MATRIX_STATUSES = ['reads', 'reads-conditionally', 'configurable', 'not-read', 'unverified'];
+export const MATRIX_STATUSES = ['reads', 'reads-conditionally', 'configurable', 'migration-only', 'not-read', 'unverified'];
+
+// Counts per status, always computed from the data so no page needs a hard-coded total.
+export function matrixStats(matrix) {
+  const byStatus = Object.fromEntries(MATRIX_STATUSES.map((s) => [s, 0]));
+  for (const c of matrix.cells || []) byStatus[c.status] = (byStatus[c.status] || 0) + 1;
+  const total = (matrix.cells || []).length;
+  return { total, byStatus, unverified: byStatus.unverified, verified: total - byStatus.unverified };
+}
 export const ITEM_TOOLS = ['cursor', 'claude-code', 'codex', 'github-copilot'];
 export const DIGEST_STATUSES = ['published', 'draft'];
 
@@ -21,6 +29,7 @@ export function validateConfig(config) {
   if (typeof config.baseUrl === 'string' && !/^https:\/\/[^/]+$/.test(config.baseUrl)) {
     errors.push('site.config.json: baseUrl must look like https://example.com without a trailing slash');
   }
+  if (config.homeTitle !== undefined && (typeof config.homeTitle !== 'string' || !config.homeTitle || config.homeTitle.length > 60)) errors.push('site.config.json: homeTitle must be a non-empty string of at most 60 characters');
   if (config.description && config.description.length > 200) errors.push('site.config.json: description should stay under 200 characters');
   const nl = config.newsletter;
   if (!nl || typeof nl !== 'object') errors.push('site.config.json: newsletter object is missing');
@@ -126,9 +135,6 @@ export function validateWatchSources(ws) {
     if (!['rss', 'github-releases'].includes(s.type)) errors.push(`watch-sources.json: source ${s.id} has unknown type`);
     if (!/^https:\/\//.test(s.url || '')) errors.push(`watch-sources.json: source ${s.id} url must be https`);
     if (/\.atom($|\?)/.test(s.url || '') && /github\.com/.test(s.url)) errors.push(`watch-sources.json: source ${s.id} uses a github.com .atom feed, which robots.txt disallows`);
-  }
-  for (const p of ws.docsPages || []) {
-    if (!p.id || !/^https:\/\//.test(p.url || '')) errors.push(`watch-sources.json: docs page ${p.id} needs id and https url`);
   }
   return errors;
 }

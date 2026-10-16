@@ -180,16 +180,16 @@
     {
       "tool": "claude-code",
       "file": "cursorrules",
-      "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section. /init reads Cursor rules in .cursor/rules/ or .cursorrules and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads the file itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
       "verifiedOn": "2026-10-15"
     },
     {
       "tool": "claude-code",
       "file": "cursor-rules-mdc",
-      "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section, as Cursor rules in .cursor/rules/. /init incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads these files itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
       "verifiedOn": "2026-10-15"
     },
@@ -204,8 +204,8 @@
     {
       "tool": "claude-code",
       "file": "copilot-instructions-md",
-      "status": "unverified",
-      "note": "Not mentioned on the cited page when checked.",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section. /init reads Copilot rules in .github/copilot-instructions.md and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads the file itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
       "verifiedOn": "2026-10-15"
     },

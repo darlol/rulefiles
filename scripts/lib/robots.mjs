@@ -34,6 +34,14 @@ function patternToRegex(pattern) {
   return new RegExp('^' + body + (end ? '$' : ''));
 }
 
+// A group applies to us when its user-agent value is our product token or a leading part of it,
+// compared without case and without a version suffix such as "/0.1". A value that merely occurs
+// inside our token, or that is longer than our token, does not apply.
+function matchLength(ruleToken, ourToken) {
+  const t = ruleToken.split('/')[0].trim();
+  return t.length > 0 && ourToken.startsWith(t) ? t.length : 0;
+}
+
 /** @param {string} productToken the product token of our User-Agent, for example "AgentDiffsWatch" */
 export function isAllowed(groups, productToken, pathWithQuery) {
   const token = productToken.toLowerCase();
@@ -42,8 +50,10 @@ export function isAllowed(groups, productToken, pathWithQuery) {
   for (const g of groups) {
     for (const a of g.agents) {
       if (a === '*') continue;
-      if (token.includes(a) && a.length > best) { best = a.length; selected = [g]; }
-      else if (token.includes(a) && a.length === best) selected.push(g);
+      const len = matchLength(a, token);
+      if (!len) continue;
+      if (len > best) { best = len; selected = [g]; }
+      else if (len === best && !selected.includes(g)) selected.push(g);
     }
   }
   if (!selected.length) selected = groups.filter((g) => g.agents.includes('*'));

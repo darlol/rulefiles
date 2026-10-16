@@ -2,7 +2,7 @@
 
 A static website with two parts. The first is a weekly digest of dated, sourced changes in Cursor, Claude Code, Codex and GitHub Copilot. The second is a matrix of which agent reads which instruction file (`AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions), plus a generator for those files that runs in the browser.
 
-The site has no runtime dependencies. It is built by plain Node scripts, and bots update it by editing JSON files, never code. "Agent Diffs" is a working name, set in `site.config.json`.
+The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Agent Diffs" is a working name, set in `site.config.json`.
 
 Status: MVP, not published. Nothing here sends email, and no domain or hosting account has been bought or created.
 
@@ -27,7 +27,7 @@ data/matrix.json            instruction file matrix, one cell per tool and file
 data/digest/YYYY-Www.json   one published digest per ISO week
 data/drafts/                drafts written by the watch script (not built)
 data/watch-sources.json     official feeds the watch script reads
-data/watch-state.json       entries already listed, and hashes of docs pages
+data/watch-state.json       entries the watch script already listed
 data/allowed-source-hosts.json  hosts accepted as official sources
 content/*.md                prose for About, Sponsors and Privacy
 src/js/generator-core.js    generator logic, shared by the browser and the tests
@@ -36,6 +36,7 @@ scripts/                    build, validation, link check, watch, preview
 tests/                      node:test suites and fixtures
 docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
+docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public
 docs/NEWSLETTER.md          newsletter tools compared on vendor pages, with a recommendation
 docs/BRAND.md               candidate names and domain checks
 ```
@@ -44,7 +45,7 @@ docs/BRAND.md               candidate names and domain checks
 
 1. The weekly workflow runs `npm run watch`. It reads the official feeds, skips anything already published or already listed, and writes `data/drafts/YYYY-Www.draft.json`. It opens a pull request. It never publishes.
 2. A reviewer, human or bot, opens the draft, keeps the items worth publishing, checks each against its source link, and moves the file to `data/digest/YYYY-Www.json` with `"status": "published"`.
-3. For the matrix, `npm run watch:docs` flags documentation pages whose text changed. The reviewer re-checks the cells that cite that page and updates `verifiedOn`.
+3. For the matrix, a person or bot re-reads the cited official pages and updates `verifiedOn`. The watch script does not fetch documentation pages. `npm run validate` warns about cells older than `staleAfterDays`.
 4. `npm run validate` and `npm test` must pass before merge. Validation fails on a source URL that is not https or not on an official host, a missing matrix cell, a bad date, or an item dated outside its week.
 
 The full schema is in [docs/DATA.md](docs/DATA.md).
@@ -54,7 +55,7 @@ The full schema is in [docs/DATA.md](docs/DATA.md).
 `scripts/watch.mjs` lists changes. It does not write summaries: each draft item holds the title, date and link from the source, and the first line of the release notes in the source's own words.
 
 - It identifies itself with a User-Agent that starts with `AgentDiffsWatch/0.1`.
-- It reads `robots.txt` for every host before any request, including hosts reached by redirect. It stays out when `robots.txt` cannot be read (5xx) or disallows the path.
+- It reads `robots.txt` for every host before any request, including hosts reached by redirect. It follows up to five redirects when fetching `robots.txt`. It treats a 404, 410 or 403 as no restrictions, and stays out when `robots.txt` answers 429 or 5xx, cannot be followed, or disallows the path. A group in `robots.txt` applies when its user-agent value is `AgentDiffsWatch` or a leading part of it.
 - It waits 1.5 seconds between network requests, caches responses on disk, sends conditional requests, and does not hit the network again within six hours.
 - For GitHub it calls the REST API. It does not read `releases.atom`, because `github.com/robots.txt` disallows `*.atom`.
 - `npm run watch:offline` runs against the fixtures in `tests/fixtures` with no network.
@@ -90,6 +91,6 @@ Release dates use the UTC date of the publication timestamp.
 
 ## Limits
 
-- Cells marked "unverified" in the matrix mean the cited official page did not mention the file. They are not a claim that the tool ignores it.
+- Cells marked "unverified" in the matrix mean the cited official page does not mention the file. They are not a claim that the tool ignores it. Cells marked "migration only" mean the page mentions the file only as input to a migration command such as `/init`.
 - The domain in `site.config.json` is a placeholder. Nothing is registered.
 - Digest items are a selection, not every release.

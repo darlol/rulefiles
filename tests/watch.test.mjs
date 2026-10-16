@@ -92,11 +92,11 @@ test('offline run writes drafts, skips items already published, and remembers wh
 test('a second run with state lists nothing new', async () => {
   const out = tmp();
   const state = path.join(out, 'state.json');
-  fs.writeFileSync(state, '{"seen":{},"docs":{}}');
+  fs.writeFileSync(state, '{"seen":{}}');
   // offline mode does not write state, so mark entries as seen by hand through a first dry listing.
   const first = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
   const seen = Object.fromEntries(first.entries.map((e) => [e.id, '2026-10-15']));
-  fs.writeFileSync(state, JSON.stringify({ seen, docs: {} }));
+  fs.writeFileSync(state, JSON.stringify({ seen }));
   const second = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
   assert.equal(second.entries.length, 0);
   fs.rmSync(out, { recursive: true, force: true });
@@ -195,21 +195,138 @@ test('fetcher: waits between network requests and a 5xx robots.txt keeps us out'
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('docs mode detects a changed page by hash of visible text', async () => {
-  const out = tmp();
-  const docsDir = tmp();
-  for (const p of sources.docsPages) fs.writeFileSync(path.join(docsDir, `${p.id}.html`), `<html><body><script>var a=1</script><p>Hello ${p.id}</p></body></html>`);
-  for (const s of sources.sources) fs.writeFileSync(path.join(docsDir, `${s.id}.${s.type === 'rss' ? 'xml' : 'json'}`), s.type === 'rss' ? '<rss><channel></channel></rss>' : '[]');
-  const state = path.join(out, 'state.json');
-  const args = ['--offline', docsDir, '--docs', '--out', out, '--today', '2026-10-15', '--state', state];
-  const r1 = await run(args, { log: () => {} });
-  assert.ok(r1.docs.every((d) => d.status === 'first-seen'));
-  fs.writeFileSync(path.join(docsDir, 'claude-memory-doc.html'), '<p>Different</p>');
-  // offline runs do not persist state; seed it from the first run
-  fs.writeFileSync(state, JSON.stringify({ seen: {}, docs: r1.state.docs }));
-  const r2 = await run(args, { log: () => {} });
-  assert.equal(r2.docs.find((d) => d.id === 'claude-memory-doc').status, 'changed');
-  assert.equal(r2.docs.find((d) => d.id === 'cursor-rules-doc').status, 'unchanged');
-  fs.rmSync(out, { recursive: true, force: true });
-  fs.rmSync(docsDir, { recursive: true, force: true });
+const redirectFetch = (routes, calls) => async (url, opts) => {
+  calls.push({ url, headers: opts.headers });
+  const r = routes[url];
+  if (!r) return { status: 404, headers: { get: () => null }, text: async () => '' };
+  const h = r.headers || {};
+  return { status: r.status || 200, headers: { get: (k) => h[k.toLowerCase()] ?? null }, text: async () => r.body ?? '' };
+};
+const quick = (dir, routes, calls, extra = {}) => createFetcher({ cacheDir: dir, fetchImpl: redirectFetch(routes, calls), delayMs: 0, sleepImpl: async () => {}, ...extra });
+
+test('fetcher: robots.txt that redirects is followed, and the rules at the end of the chain apply', async () => {
+  const dir = tmp();
+  const calls = [];
+  const routes = {
+    'https://r.example/robots.txt': { status: 301, headers: { location: 'https://www.r.example/robots.txt' } },
+    'https://www.r.example/robots.txt': { status: 308, headers: { location: '/other-robots.txt' } },
+    'https://www.r.example/other-robots.txt': { body: 'User-agent: *\nDisallow: /private\n' },
+    'https://r.example/ok': { body: 'fine' }
+  };
+  const f = quick(dir, routes, calls);
+  assert.equal((await f.get('https://r.example/ok')).body, 'fine');
+  assert.deepEqual(calls.map((c) => c.url).slice(0, 3), ['https://r.example/robots.txt', 'https://www.r.example/robots.txt', 'https://www.r.example/other-robots.txt']);
+  await assert.rejects(() => f.get('https://r.example/private/x'), RobotsError);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('fetcher: up to five robots.txt redirects are followed, a sixth stops the run', async () => {
+  const chain = (n) => {
+    const routes = { 'https://c.example/page': { body: 'x' } };
+    for (let i = 0; i < n; i++) routes[i === 0 ? 'https://c.example/robots.txt' : `https://c.example/r${i}`] = { status: 302, headers: { location: `https://c.example/r${i + 1}` } };
+    routes[`https://c.example/r${n}`] = { body: '' };
+    return routes;
+  };
+  const dir5 = tmp();
+  assert.equal((await quick(dir5, chain(5), []).get('https://c.example/page')).body, 'x');
+  const dir6 = tmp();
+  const calls6 = [];
+  await assert.rejects(() => quick(dir6, chain(6), calls6).get('https://c.example/page'), RobotsError);
+  assert.ok(!calls6.some((c) => c.url === 'https://c.example/page'), 'the page itself is never requested');
+  fs.rmSync(dir5, { recursive: true, force: true });
+  fs.rmSync(dir6, { recursive: true, force: true });
+});
+
+test('fetcher: robots.txt answering 429 or 5xx means skip, and the failure is not cached as "allowed"', async () => {
+  for (const status of [429, 500, 502, 503]) {
+    const dir = tmp();
+    const calls = [];
+    const routes = { 'https://t.example/robots.txt': { status, body: '' }, 'https://t.example/page': { body: 'x' } };
+    const f = quick(dir, routes, calls);
+    await assert.rejects(() => f.get('https://t.example/page'), RobotsError, String(status));
+    assert.ok(!calls.some((c) => c.url === 'https://t.example/page'), `${status}: page not requested`);
+    // The host recovers: the next run asks robots.txt again instead of reusing a cached "allow all".
+    routes['https://t.example/robots.txt'] = { body: 'User-agent: *\nDisallow: /page\n' };
+    await assert.rejects(() => f.get('https://t.example/page'), RobotsError);
+    assert.equal(calls.filter((c) => c.url === 'https://t.example/robots.txt').length, 2, `${status}: robots.txt asked again`);
+    assert.ok(!calls.some((c) => c.url === 'https://t.example/page'));
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('fetcher: robots.txt answering 404, 410 or 403 means no restrictions', async () => {
+  for (const status of [404, 410, 403]) {
+    const dir = tmp();
+    const calls = [];
+    const routes = { 'https://u.example/robots.txt': { status, body: 'User-agent: *\nDisallow: /\n' }, 'https://u.example/page': { body: 'x' } };
+    assert.equal((await quick(dir, routes, calls).get('https://u.example/page')).body, 'x', String(status));
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('fetcher: the default delay between network requests is 1500 ms', async () => {
+  const dir = tmp();
+  const sleeps = [];
+  const routes = { 'https://d.example/robots.txt': { body: '' }, 'https://d.example/a': { body: 'a' } };
+  const f = createFetcher({ cacheDir: dir, fetchImpl: redirectFetch(routes, []), now: () => 5000, sleepImpl: async (ms) => { sleeps.push(ms); } });
+  await f.get('https://d.example/a');
+  assert.deepEqual(sleeps, [1500]);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('fetcher: robots.txt is cached for 24 hours and asked again after that', async () => {
+  const dir = tmp();
+  const calls = [];
+  let clock = 1_000_000;
+  const routes = { 'https://k.example/robots.txt': { body: '' }, 'https://k.example/a': { body: 'a' }, 'https://k.example/b': { body: 'b' }, 'https://k.example/c': { body: 'c' } };
+  const f = createFetcher({ cacheDir: dir, fetchImpl: redirectFetch(routes, calls), now: () => clock, delayMs: 0, sleepImpl: async () => {} });
+  const robotsCalls = () => calls.filter((c) => c.url.endsWith('/robots.txt')).length;
+  await f.get('https://k.example/a');
+  assert.equal(robotsCalls(), 1);
+  clock += 24 * 3600 * 1000 - 1;
+  await f.get('https://k.example/b');
+  assert.equal(robotsCalls(), 1, 'one millisecond before 24 hours the cached file is used');
+  clock += 1;
+  await f.get('https://k.example/c');
+  assert.equal(robotsCalls(), 2, 'at 24 hours robots.txt is fetched again');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('fetcher: GITHUB_TOKEN is sent to api.github.com only', async () => {
+  const saved = process.env.GITHUB_TOKEN;
+  process.env.GITHUB_TOKEN = 'test-token-not-a-secret';
+  try {
+    const dir = tmp();
+    const calls = [];
+    const routes = {
+      'https://api.github.com/robots.txt': { body: '' },
+      'https://api.github.com/repos/o/r/releases': { body: '[]' },
+      'https://api.github.com.evil.example/robots.txt': { body: '' },
+      'https://api.github.com.evil.example/x': { body: 'x' },
+      'https://github.com/robots.txt': { body: '' },
+      'https://github.com/o/r': { body: 'page' },
+      'https://example.org/robots.txt': { body: '' },
+      'https://example.org/go': { status: 302, headers: { location: 'https://api.github.com.evil.example/x' } }
+    };
+    const f = quick(dir, routes, calls);
+    await f.get('https://api.github.com/repos/o/r/releases');
+    await f.get('https://api.github.com.evil.example/x');
+    await f.get('https://github.com/o/r');
+    await f.get('https://example.org/go');
+    const auth = (url) => calls.filter((c) => c.url === url).map((c) => c.headers.authorization);
+    assert.deepEqual(auth('https://api.github.com/repos/o/r/releases'), ['Bearer test-token-not-a-secret']);
+    for (const url of ['https://api.github.com.evil.example/robots.txt', 'https://api.github.com.evil.example/x', 'https://github.com/robots.txt', 'https://github.com/o/r', 'https://example.org/go']) {
+      assert.ok(auth(url).length >= 1 && auth(url).every((a) => a === undefined), url);
+    }
+    fs.rmSync(dir, { recursive: true, force: true });
+  } finally {
+    if (saved === undefined) delete process.env.GITHUB_TOKEN; else process.env.GITHUB_TOKEN = saved;
+  }
+});
+
+test('watch: the docs mode is gone', async () => {
+  await assert.rejects(() => run(['--docs', '--offline', FIX]), /Unknown argument --docs/);
+  const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(pkg.scripts['watch:docs'], undefined);
+  assert.equal(sources.docsPages, undefined);
 });

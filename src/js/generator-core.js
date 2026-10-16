@@ -1,11 +1,11 @@
 // Pure functions shared by the browser generator and the tests. No DOM, no network.
 
 export const TARGETS = [
-  { id: 'agents-md', path: 'AGENTS.md', label: 'AGENTS.md', checked: true },
-  { id: 'claude-md', path: 'CLAUDE.md', label: 'CLAUDE.md', checked: true },
+  { id: 'agents-md', path: 'AGENTS.md', label: 'AGENTS.md', checked: true, main: true },
+  { id: 'claude-md', path: 'CLAUDE.md', label: 'CLAUDE.md', checked: false },
   { id: 'gemini-md', path: 'GEMINI.md', label: 'GEMINI.md', checked: false },
-  { id: 'cursor-mdc', path: '.cursor/rules/project.mdc', label: '.cursor/rules/project.mdc', checked: true },
-  { id: 'copilot-instructions', path: '.github/copilot-instructions.md', label: '.github/copilot-instructions.md', checked: true },
+  { id: 'cursor-mdc', path: '.cursor/rules/project.mdc', label: '.cursor/rules/project.mdc', checked: false },
+  { id: 'copilot-instructions', path: '.github/copilot-instructions.md', label: '.github/copilot-instructions.md', checked: false },
   { id: 'copilot-path', path: '.github/instructions/project.instructions.md', label: '.github/instructions/project.instructions.md', checked: false },
   { id: 'cursorrules', path: '.cursorrules', label: '.cursorrules (legacy)', checked: false }
 ];
@@ -37,14 +37,34 @@ export function buildBody(input) {
   return out.join('\n') + '\n';
 }
 
-function frontmatter(obj) {
-  return ['---', ...Object.entries(obj).map(([k, v]) => `${k}: ${v}`), '---', ''].join('\n');
+/**
+ * Double-quoted YAML scalar on one line. JSON string syntax is valid YAML, and the
+ * line separators that YAML 1.1 treats as breaks are escaped on top of it.
+ */
+export function yamlQuote(value) {
+  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim();
+  return JSON.stringify(oneLine).replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029').replace(/\u0085/g, '\\u0085');
+}
+
+// Plain scalars are only used for values that every YAML parser reads back as the same string.
+const PLAIN_SAFE = /^[A-Za-z0-9_./][A-Za-z0-9_./*, -]*$/;
+const PLAIN_RESERVED = /^(true|false|null|yes|no|on|off|y|n|~|[-+]?(\d[\d_]*)?\.?\d+([eE][-+]?\d+)?|0[xo][0-9a-fA-F]+|\.inf|\.nan|\d{4}-\d\d?-\d\d?.*)$/i;
+
+/** Plain when that is safe and readable, double-quoted otherwise. */
+export function yamlScalar(value) {
+  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim();
+  if (oneLine && PLAIN_SAFE.test(oneLine) && !PLAIN_RESERVED.test(oneLine) && !/^-( |$)/.test(oneLine)) return oneLine;
+  return yamlQuote(oneLine);
+}
+
+function frontmatter(entries) {
+  return ['---', ...entries.map(([k, v]) => `${k}: ${v}`), '---', ''].join('\n');
 }
 
 /**
  * @param {object} input form values
  * @param {string[]} targets ids from TARGETS
- * @param {{claudeMode?: 'full'|'import', cursorGlobs?: string, cursorAlwaysApply?: boolean, copilotApplyTo?: string}} options
+ * @param {{claudeMode?: 'full'|'import', default 'import', cursorGlobs?: string, cursorAlwaysApply?: boolean, copilotApplyTo?: string}} options
  * @returns {{path: string, content: string, note: string}[]}
  */
 export function generateFiles(input, targets, options = {}) {
@@ -58,7 +78,7 @@ export function generateFiles(input, targets, options = {}) {
         results.push({ path: t.path, content: body, note: 'Plain Markdown, no frontmatter.' });
         break;
       case 'claude-md':
-        if (options.claudeMode === 'import') {
+        if (options.claudeMode !== 'full') {
           results.push({
             path: t.path,
             content: '@AGENTS.md\n',
@@ -73,7 +93,10 @@ export function generateFiles(input, targets, options = {}) {
         break;
       case 'cursor-mdc': {
         const always = options.cursorAlwaysApply !== false;
-        const fm = { description: desc, globs: (options.cursorGlobs || '').trim(), alwaysApply: String(always) };
+        const globs = (options.cursorGlobs || '').trim();
+        const fm = [['description', yamlQuote(desc)]];
+        if (globs) fm.push(['globs', yamlScalar(globs)]);
+        fm.push(['alwaysApply', String(always)]);
         results.push({ path: t.path, content: frontmatter(fm) + body, note: 'Cursor project rule. The frontmatter keys are description, globs and alwaysApply.' });
         break;
       }
@@ -82,7 +105,7 @@ export function generateFiles(input, targets, options = {}) {
         break;
       case 'copilot-path': {
         const applyTo = (options.copilotApplyTo || '').trim() || '**';
-        results.push({ path: t.path, content: frontmatter({ applyTo: `"${applyTo.replace(/"/g, '\\"')}"` }) + body, note: 'Path-specific Copilot instructions. applyTo takes a glob.' });
+        results.push({ path: t.path, content: frontmatter([['applyTo', yamlQuote(applyTo)]]) + body, note: 'Path-specific Copilot instructions. applyTo takes a glob.' });
         break;
       }
       case 'cursorrules':

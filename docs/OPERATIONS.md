@@ -26,14 +26,14 @@ The form stays off until an https form endpoint is set. Set `newsletter.formActi
 
 ## CI
 
-- `.github/workflows/ci.yml` runs on pushes and pull requests: validate, build, test, check links, on Node 20 and 22.
-- `.github/workflows/weekly-watch.yml` runs every Monday at 06:17 UTC and on demand. It runs the watch script and opens a pull request with the draft, never a deployment. The repository setting "Allow GitHub Actions to create and approve pull requests" must be on for the pull request step.
+- `.github/workflows/ci.yml` runs on pushes and pull requests: `npm ci`, validate, build, test, check links, on Node 20 and 22. The only dev dependency is `yaml`, used by the generator tests to parse the frontmatter that the generator writes.
+- `.github/workflows/weekly-watch.yml` runs every Monday at 06:17 UTC and on demand, with a 15 minute timeout. It runs the watch script and opens a draft pull request, never a deployment. The checkout does not keep credentials. The push passes the token for that one command only. The branch name holds the date, the run id and the attempt number, so a second run on the same day does not collide with the first. The repository setting "Allow GitHub Actions to create and approve pull requests" must be on for the pull request step.
+- A pull request opened with `GITHUB_TOKEN` does not start other workflows, so CI does not run on the watch pull request by itself. A person can close and reopen it, or push a commit from their own account, and CI then runs. This was not tested here.
 - Actions are pinned to commit SHAs. The workflows use the built-in `GITHUB_TOKEN` and no other secret.
 
 ## Launch checklist
 
-1. Choose and buy a domain (not done), then set `baseUrl` in `site.config.json`.
-2. Name a contact address and the person responsible for data requests. Fill the placeholders in `content/about.md`, `content/privacy.md` and `content/sponsors.md`.
-3. Pick a newsletter provider and enable the form.
-4. Re-verify every matrix cell dated more than 30 days ago.
-5. Read the terms of use of each source again before publishing.
+1. Settle every item in [LAUNCH-BLOCKERS.md](LAUNCH-BLOCKERS.md): license, publisher identity and legal notice, host, domain, contacts, newsletter list, sponsorship, repository settings.
+2. Run `npm run build` and check that it prints no `LAUNCH WARNING`. Each warning is a placeholder sentence or the placeholder domain.
+3. Re-verify every matrix cell dated more than 30 days ago.
+4. Read the terms of use of each source again before publishing.

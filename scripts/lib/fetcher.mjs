@@ -7,6 +7,8 @@ export const PRODUCT_TOKEN = 'AgentDiffsWatch';
 export const DEFAULT_USER_AGENT = `${PRODUCT_TOKEN}/0.1 (changelog watcher; honest bot; see repository README)`;
 const MAX_BYTES = 5_000_000;
 const MAX_REDIRECTS = 4;
+const MAX_ROBOTS_REDIRECTS = 5; // RFC 9309 section 2.3.1.2: follow at least five consecutive redirects
+const REDIRECT_STATUSES = [301, 302, 303, 307, 308];
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex').slice(0, 24);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -47,10 +49,21 @@ export function createFetcher({
       const c = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (now() - c.fetchedAt < robotsTtlMs) return parseRobots(c.body);
     }
-    const res = await network(origin + '/robots.txt');
-    // 4xx means no restrictions; 5xx means we cannot tell, so we stay out.
-    if (res.status >= 500) throw new RobotsError(`robots.txt of ${origin} returned ${res.status}; skipping`);
-    const body = res.status === 200 ? (await res.text()).slice(0, 500_000) : '';
+    // RFC 9309: 2xx is parsed, 3xx is followed (up to five hops), other 4xx means no restrictions.
+    // 429 and 5xx mean the file is temporarily unavailable, so nothing is fetched from that host.
+    let current = origin + '/robots.txt';
+    let res;
+    for (let hop = 0; ; hop++) {
+      if (new URL(current).protocol !== 'https:') throw new RobotsError(`robots.txt of ${origin} redirected to a non-https URL; skipping`);
+      res = await network(current);
+      const location = REDIRECT_STATUSES.includes(res.status) ? res.headers.get('location') : null;
+      if (!location) break;
+      if (hop >= MAX_ROBOTS_REDIRECTS) throw new RobotsError(`robots.txt of ${origin} redirected more than ${MAX_ROBOTS_REDIRECTS} times; skipping`);
+      current = new URL(location, current).href;
+    }
+    if (res.status === 429 || res.status >= 500) throw new RobotsError(`robots.txt of ${origin} returned ${res.status}; skipping`);
+    if (REDIRECT_STATUSES.includes(res.status)) throw new RobotsError(`robots.txt of ${origin} returned a redirect without a location; skipping`);
+    const body = res.status >= 200 && res.status < 300 ? (await res.text()).slice(0, 500_000) : '';
     fs.writeFileSync(file, JSON.stringify({ origin, fetchedAt: now(), status: res.status, body }));
     return parseRobots(body);
   }

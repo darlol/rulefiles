@@ -1,10 +1,10 @@
 # Brand names and domains
 
-Checked on 2026-10-15. Nothing was bought or reserved.
+Checked on 2026-10-15. Nothing was bought or reserved. The domains and name searches have not been repeated since.
 
 ## How the domains were checked
 
-For each name I asked the registry's RDAP server (found through the IANA bootstrap file at https://data.iana.org/rdap/dns.json) and then asked Cloudflare DNS over HTTPS for the NS record. A 404 from RDAP together with NXDOMAIN means the name looks unregistered. A 200 from RDAP means it is registered.
+For each name, the registry's RDAP server (found through the IANA bootstrap file at https://data.iana.org/rdap/dns.json) was queried, then Cloudflare DNS over HTTPS was queried for the NS record. A 404 from RDAP together with NXDOMAIN means the name looks unregistered. A 200 from RDAP means it is registered.
 
 These checks do not prove that a name can be bought. A registry can reserve a name, a registrar can price it as premium, and a name can be released or taken between this check and a purchase. Trademark databases were not searched. The name search below used a handful of web searches and can miss things.
 
@@ -24,13 +24,13 @@ These checks do not prove that a name can be bought. A registry can reserve a na
 
 ## Related projects seen while searching
 
-These cover nearby ground and Thomas should look at them before committing to the idea:
+These cover nearby ground and are worth reading before the project commits to the idea:
 
 - https://thediff-news.github.io/ describes itself as AI dev news, only what is verified.
 - https://worldneedsai.com/en/agent-changelog tracks agent changelogs.
 
-I did not review either in depth.
+Neither was reviewed in depth.
 
 ## Recommendation
 
-Agent Diffs, on agentdiffs.dev, if Thomas wants to move. It had no exact-name conflict in the searches and the .dev domain looked free. Before buying, run a trademark search in the EUIPO and USPTO databases and repeat the RDAP check the same day.
+Agent Diffs, on agentdiffs.dev. It had no exact-name conflict in the searches and the .dev domain looked free. Before any purchase, a trademark search in the EUIPO and USPTO databases and a repeat of the RDAP check on the same day are still needed. The choice of name belongs to the project owner.

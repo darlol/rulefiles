@@ -3,6 +3,7 @@ import { TARGETS, generateFiles } from './generator-core.js';
 const form = document.getElementById('gen-form');
 const out = document.getElementById('gen-output');
 const targetBox = document.getElementById('gen-targets');
+const mainBox = document.getElementById('gen-main');
 
 for (const t of TARGETS) {
   const label = document.createElement('label');
@@ -12,8 +13,14 @@ for (const t of TARGETS) {
   input.name = 'target';
   input.value = t.id;
   input.checked = t.checked;
-  label.append(input, ' ' + t.label);
-  targetBox.append(label);
+  if (t.main) {
+    input.disabled = true;
+    label.append(input, ' ' + t.label + ' (main file)');
+    mainBox.append(label);
+  } else {
+    label.append(input, ' ' + t.label);
+    targetBox.append(label);
+  }
 }
 
 function values() {

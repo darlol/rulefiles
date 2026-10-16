@@ -16,8 +16,11 @@ concurrency:
 jobs:
   watch:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
@@ -27,7 +30,7 @@ jobs:
         run: node scripts/watch.mjs
       - name: Validate drafts
         run: npm run validate
-      - name: Open a pull request with the draft
+      - name: Open a draft pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -35,13 +38,18 @@ jobs:
             echo "No new changes detected."
             exit 0
           fi
-          branch="watch/$(date -u +%Y-%m-%d)"
+          # The date plus the run id and attempt keep the branch name unique, so a second run on the same day does not fail.
+          stamp="$(date -u +%Y-%m-%d)"
+          branch="watch/${stamp}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
           git add data/drafts data/watch-state.json
-          git commit -m "Add watch draft for $(date -u +%Y-%m-%d)"
-          git push origin "$branch"
-          gh pr create --base main --head "$branch" \
-            --title "Watch draft $(date -u +%Y-%m-%d)" \
-            --body "Changes listed by scripts/watch.mjs from the official feeds. Each item quotes its source. Review each item against its link, then move kept items into data/digest/ with status published. This pull request does not publish anything."
+          git commit -m "Add watch draft for ${stamp}"
+          # checkout ran with persist-credentials: false, so the token is passed for this one push only and is not stored in .git/config.
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::${auth}"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push origin "$branch"
+          gh pr create --draft --base main --head "$branch" \
+            --title "Watch draft ${stamp}" \
+            --body "Changes listed by scripts/watch.mjs from the official feeds. Each item quotes its source. Review each item against its link, then move kept items into data/digest/ with status published. This pull request does not publish anything. It was opened with GITHUB_TOKEN, so CI does not run on it until a person closes and reopens it or pushes a commit."

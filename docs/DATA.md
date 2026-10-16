@@ -22,8 +22,9 @@ All content comes from JSON files in `data/`. `npm run validate` checks every ru
 Rules:
 
 - There is exactly one cell for every tool and file pair.
-- `status` is one of `reads`, `reads-conditionally`, `configurable`, `not-read`, `unverified`.
+- `status` is one of `reads`, `reads-conditionally`, `configurable`, `migration-only`, `not-read`, `unverified`.
 - `note` is required, at most 400 characters, and states only what the cited page says.
+- Use `migration-only` when the page mentions the file only as input to a migration command, such as `/init` copying Cursor or Copilot rules into CLAUDE.md. The note says so and says that the page does not state that the tool loads the file.
 - Use `unverified` when the cited page does not confirm the cell. The note then reads "Not mentioned on the cited page when checked." and `verifiedOn` is the date of the check.
 - `verifiedOn` is the day a person or bot read `sourceUrl`. It cannot be in the future or later than `lastReviewed`.
 - `version` is optional and names the first version that behaves as described, when the source says so.
@@ -62,7 +63,7 @@ Rules:
 
 ## watch-sources.json and watch-state.json
 
-`watch-sources.json` lists the feeds (`rss` or `github-releases`) and the docs pages for `--docs`. `watch-state.json` holds `seen` (entry id to the date it was listed) and `docs` (page id to the hash of its visible text). The watch script updates it. A reviewer does not need to edit it.
+`watch-sources.json` lists the feeds (`rss` or `github-releases`). `watch-state.json` holds `seen`, which maps an entry id to the date it was listed. The watch script updates it. A reviewer does not need to edit it. Documentation pages are not fetched by the script.
 
 ## Published JSON
 
