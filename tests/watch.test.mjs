@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { parseRss, parseGithubReleases, firstSentence, contentLines, groupDrafts } from '../scripts/lib/parsers.mjs';
-import { createFetcher, RobotsError } from '../scripts/lib/fetcher.mjs';
-import { run } from '../scripts/watch.mjs';
-import { validateDigest } from '../scripts/lib/validate.mjs';
+import { parseRss, parseGithubReleases, firstSentence, contentLines, entryDate, groupDrafts } from '../scripts/lib/parsers.mjs';
+import { createFetcher, RobotsError, HARD_MAX_BYTES } from '../scripts/lib/fetcher.mjs';
+import { spawnSync } from 'node:child_process';
+import { run, skippedSummary, skippedNotice, writeSkippedNotice } from '../scripts/watch.mjs';
+import { validateDigest, validateWatchSources } from '../scripts/lib/validate.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 
 const FIX = new URL('./fixtures/', import.meta.url).pathname;
@@ -43,7 +44,8 @@ test('github releases: prereleases and drafts are skipped, version and bullet li
   assert.equal(e[0].title, 'Claude Code v2.1.301');
   assert.equal(e[0].version, '2.1.301');
   assert.equal(e[0].date, '2026-10-15');
-  assert.match(e[0].firstLine, /^Added `CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS`/);
+  assert.match(e[0].firstLine, /^Added CLAUDE_CODE_RETRY_WATCHDOG_MAX_USAGE_LIMIT_WAIT_MS so unattended retry mode \(CLAUDE_CODE_RETRY_WATCHDOG\) ends/);
+  for (const x of e) for (const l of x.lines) assert.doesNotMatch(l, /`/);
   assert.ok(e[0].lines.length <= 3);
 });
 
@@ -55,6 +57,68 @@ test('codex changelog RSS: release entries get a version and the first list item
   assert.doesNotMatch(rel.firstLine, /#\d+/);
   assert.equal(rel.url, 'https://developers.openai.com/codex/changelog/#github-release-414286110');
   assert.deepEqual(contentLines('<ul><li>One. (<a href="x">#1</a>, <a href="y">#2</a>)</li><li>Two</li></ul>'), ['One.', 'Two']);
+});
+
+test('codex changelog RSS in Markdown: lines come from list items, or from paragraphs, with no heading, link syntax or code marks', () => {
+  // tests/fixtures/codex-changelog-markdown.xml holds four entries copied unchanged from the live feed on 2026-10-16.
+  const e = parseRss(fx('codex-changelog-markdown.xml'), src('codex-changelog'));
+  assert.equal(e.length, 4);
+  const app = e.find((x) => x.title === 'Codex app');
+  assert.equal(app.date, '2026-10-08');
+  assert.equal(app.lines.length, 3);
+  assert.equal(app.firstLine, 'Fixed queued messages getting stuck on Sending and restored Steer in secondary app windows.');
+  assert.match(app.lines[2], /^Added clearer recovery guidance when a tool call needs approval but the chat's permissions prevent approval requests/);
+  const retire = e.find((x) => /retirement/.test(x.title));
+  assert.match(retire.firstLine, /^Effective October 14, 2026, at noon PDT \(19:00 UTC\), GPT-5\.5 retires from Codex/);
+  assert.equal(retire.lines[1].startsWith('Use GPT-6.1 Sol (gpt-6.1-sol) when available'), true);
+  const comp = e.find((x) => /Composer/.test(x.title));
+  assert.match(comp.lines[2], /^Learn more about composer predictions\.$/);
+  for (const x of e) for (const l of x.lines) assert.doesNotMatch(l, /[#`*\]\[]|\]\(/);
+});
+
+test('contentLines reads Markdown: nested and numbered items, wrapped lines, fences, PR references, and text in angle brackets', () => {
+  const md = '# Title\n\nIntro paragraph.\n\n```\n- not a line\n```\n\n### New features\n\n- Added `/side <prompt>` to start a\n  side conversation. ([#1](https://x/1), [#2](https://x/2))\n  - Nested **bold** detail\n2. Second [link](https://x) item\n- Third\n- Fourth';
+  assert.deepEqual(contentLines(md), ['Added /side <prompt> to start a side conversation.', 'Nested bold detail', 'Second link item']);
+  assert.deepEqual(contentLines('# Only a heading'), []);
+  assert.deepEqual(contentLines(''), []);
+  assert.deepEqual(contentLines('First para.\nstill first.\n\nSecond para.'), ['First para. still first.', 'Second para.']);
+});
+
+test('contentLines still reads HTML, including text that mentions Markdown marks', () => {
+  assert.deepEqual(contentLines('<ul><li>Use <code>a_b</code> and **x**.</li></ul>'), ['Use a_b and **x**.']);
+  assert.deepEqual(contentLines('<p>One.</p><p>Two.</p>'), ['One.', 'Two.']);
+});
+
+test('codex releases from the GitHub API: the rust- prefix goes, prereleases are skipped, the title matches the digests', () => {
+  const e = parseGithubReleases(fx('codex-releases.json'), src('codex-releases'));
+  assert.equal(e.length, 1);
+  assert.equal(e[0].title, 'Codex 0.162.1');
+  assert.equal(e[0].version, '0.162.1');
+  assert.equal(e[0].date, '2026-10-09');
+  assert.equal(e[0].url, 'https://github.com/openai/codex/releases/tag/rust-v0.162.1');
+  assert.match(e[0].firstLine, /^Fixed a TUI crash/);
+  assert.doesNotMatch(e[0].firstLine, /#\d+/);
+});
+
+test('codex releases source follows the rules of the other GitHub sources: REST API, one request, humanUrl, allowed hosts', () => {
+  const s = src('codex-releases');
+  assert.equal(s.type, 'github-releases');
+  assert.equal(s.url, 'https://api.github.com/repos/openai/codex/releases?per_page=30');
+  assert.equal(s.humanUrl, 'https://github.com/openai/codex/releases');
+  assert.doesNotMatch(s.url, /\.atom/);
+  const { hosts } = loadData();
+  assert.ok(hosts.includes('github.com'));
+});
+
+test('entry dates: the date in the link wins within one day of the UTC date, otherwise the UTC date stays', () => {
+  // The link dates of github.blog match Pacific time (not stated by the site): 02:16 UTC on 16 October is 19:16 on 15 October there.
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates'), '2026-10-15');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates/'), '2026-10-15');
+  assert.equal(entryDate(new Date('Thu, 15 Oct 2026 19:35:00 GMT'), 'https://github.blog/changelog/2026-10-15-deprecation'), '2026-10-15');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-10-01-old-slug'), '2026-10-16');
+  assert.equal(entryDate(new Date('Fri, 16 Oct 2026 02:16:00 GMT'), 'https://github.blog/changelog/2026-02-31-not-a-date'), '2026-10-16');
+  assert.equal(entryDate(new Date('Wed, 14 Oct 2026 00:00:00 GMT'), 'https://developers.openai.com/codex/changelog/#codex-2026-10-12-x'), '2026-10-14');
+  assert.equal(entryDate(new Date('Tue, 13 Oct 2026 00:00:00 GMT'), 'https://cursor.com/changelog/origin-app-marketplace'), '2026-10-13');
 });
 
 test('draft grouping makes one valid digest-shaped draft per ISO week', () => {
@@ -329,4 +393,180 @@ test('watch: the docs mode is gone', async () => {
   const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.equal(pkg.scripts['watch:docs'], undefined);
   assert.equal(sources.docsPages, undefined);
+});
+
+// The live GitHub API answer for openai/codex/releases?per_page=30 was 12 009 211 bytes on 2026-10-16
+// (30 releases, up to 318 assets each). This builds an answer of that size without committing it.
+// The newest 15 releases carry 318 assets and the older ones 176, as on 2026-10-16.
+function realisticReleases(count = 30) {
+  const user = 'https://api.github.com/users/github-actions%5Bbot%5D';
+  const uploader = { login: 'github-actions[bot]', id: 41898282, node_id: 'MDM6Qm90NDE4OTgyODI=', avatar_url: 'https://avatars.githubusercontent.com/in/15368?v=4', gravatar_id: '', type: 'Bot', site_admin: false, html_url: 'https://github.com/apps/github-actions', user_view_type: 'public' };
+  for (const k of ['url', 'followers_url', 'following_url', 'gists_url', 'starred_url', 'subscriptions_url', 'organizations_url', 'repos_url', 'events_url', 'received_events_url']) uploader[k] = `${user}/${k.replace('_url', '')}`;
+  const asset = (i) => ({
+    url: `https://api.github.com/repos/openai/codex/releases/assets/${400000000 + i}`, id: 400000000 + i, node_id: `RA_kwDOPm${'x'.repeat(24)}${i}`,
+    name: `codex-${'a'.repeat(40)}-${i}.tar.gz`, label: '', uploader: uploader,
+    content_type: 'application/gzip', state: 'uploaded', size: 12345678 + i, digest: `sha256:${'f'.repeat(64)}`, download_count: i, created_at: '2026-10-15T21:30:00Z', updated_at: '2026-10-15T21:30:05Z',
+    browser_download_url: `https://github.com/openai/codex/releases/download/rust-v0.163.0/codex-${'a'.repeat(40)}-${i}.tar.gz`
+  });
+  return Array.from({ length: count }, (_, k) => ({
+    url: `https://api.github.com/repos/openai/codex/releases/${300000000 + k}`, html_url: `https://github.com/openai/codex/releases/tag/rust-v0.${200 - k}.0`, id: 300000000 + k,
+    tag_name: `rust-v0.${200 - k}.0`, name: `0.${200 - k}.0`, draft: false, prerelease: false, published_at: `2026-10-${String(15 - Math.floor(k / 3)).padStart(2, '0')}T12:00:00Z`,
+    body: `## New features\n\n- Added thing number ${k}. (#${1000 + k})\n- Fixed other thing ${k}.`, assets: Array.from({ length: k < 15 ? 318 : 176 }, (_, i) => asset(i))
+  }));
+}
+
+async function runReleasesWith(body, source = src('codex-releases'), headers = {}) {
+  const dir = tmp();
+  const routes = { 'https://api.github.com/robots.txt': { body: '' }, [source.url]: { body, headers } };
+  const sourcesFile = path.join(dir, 'sources.json');
+  fs.writeFileSync(sourcesFile, JSON.stringify({ sources: [source] }));
+  const fetcher = createFetcher({ cacheDir: path.join(dir, 'cache'), fetchImpl: redirectFetch(routes, []), delayMs: 0, sleepImpl: async () => {} });
+  const res = await run(['--sources', sourcesFile, '--out', path.join(dir, 'out'), '--no-state', '--today', '2026-10-16', '--since', '2026-10-01'], { fetcher, log: () => {} });
+  fs.rmSync(dir, { recursive: true, force: true });
+  return res;
+}
+
+test('codex releases source: a live-sized answer (about 12 MB) is read, not skipped', async () => {
+  const body = JSON.stringify(realisticReleases());
+  assert.ok(Buffer.byteLength(body) > 11_000_000 && Buffer.byteLength(body) < 14_000_000, 'the generated answer is about as large as the live one');
+  assert.ok(Buffer.byteLength(body) > 5_000_000, 'larger than the default limit, so the source needs its own');
+  const res = await runReleasesWith(body);
+  assert.deepEqual(res.skipped, []);
+  assert.ok(res.entries.length > 0);
+  assert.ok(src('codex-releases').maxBytes >= 1.5 * Buffer.byteLength(body), 'at least 50 percent room over the live size');
+  assert.ok(src('codex-releases').maxBytes <= HARD_MAX_BYTES);
+});
+
+test('the same live-sized answer is refused when the source has no maxBytes, and the skip is reported', async () => {
+  const { maxBytes, ...plain } = src('codex-releases');
+  const res = await runReleasesWith(JSON.stringify(realisticReleases()), plain);
+  assert.equal(res.skipped.length, 1);
+  assert.match(res.skipped[0].reason, /larger than 5000000 bytes.*maxBytes/);
+  const line = skippedSummary(res.skipped, res.sourceCount);
+  assert.match(line, /^WARNING: 1 of 1 source\(s\) skipped: codex-releases \(/);
+  assert.equal(skippedSummary([], 5), '');
+});
+
+test('fetcher: the limit of a source applies, content-length is checked first, and the hard limit cannot be raised', async () => {
+  const mk = (routes, calls = []) => createFetcher({ cacheDir: tmp(), fetchImpl: (url, o) => {
+    const r = routes[url];
+    if (!r) return Promise.resolve({ status: 404, headers: { get: () => null }, text: async () => '' });
+    if (!url.endsWith('/robots.txt')) calls.push(url);
+    return Promise.resolve({ status: 200, headers: { get: (k) => (r.headers || {})[k.toLowerCase()] ?? null }, text: async () => { if (!url.endsWith('/robots.txt')) calls.push('text'); return r.body; } });
+  }, delayMs: 0, sleepImpl: async () => {} });
+  const robots = { 'https://l.example/robots.txt': { body: '' } };
+  const body = 'x'.repeat(1000);
+  assert.equal((await mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a', { maxBytes: 1000 })).body, body);
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a', { maxBytes: 999 }), /larger than 999 bytes/);
+  const calls = [];
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body, headers: { 'content-length': '5000' } } }, calls).get('https://l.example/a', { maxBytes: 4000 }), /larger than 4000 bytes/);
+  assert.ok(!calls.includes('text'), 'the body is not read when content-length is already too large');
+  // Multi-byte text counts in bytes, not characters.
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: '\u00e9'.repeat(600) } }).get('https://l.example/a', { maxBytes: 1000 }), /larger than 1000 bytes/);
+  // A source cannot ask for more than the hard limit.
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: 'x', headers: { 'content-length': String(HARD_MAX_BYTES + 1) } } }).get('https://l.example/a', { maxBytes: HARD_MAX_BYTES * 2 }), new RegExp(`larger than ${HARD_MAX_BYTES} bytes`));
+  assert.equal((await mk({ ...robots, 'https://l.example/a': { body } }).get('https://l.example/a')).body, body, 'no maxBytes: default limit');
+  await assert.rejects(() => mk({ ...robots, 'https://l.example/a': { body: 'x', headers: { 'content-length': '5000001' } } }).get('https://l.example/a'), /larger than 5000000 bytes/);
+});
+
+test('watch-sources: maxBytes must be a whole number from 1 to the hard limit', () => {
+  const base = { id: 'a', tool: 'codex', type: 'rss', url: 'https://x.example/f.xml' };
+  assert.deepEqual(validateWatchSources({ sources: [{ ...base, maxBytes: 20_000_000 }, { ...base, id: 'b', maxBytes: HARD_MAX_BYTES }, { ...base, id: 'c' }] }), []);
+  for (const bad of [0, -1, 1.5, '20000000', null, HARD_MAX_BYTES + 1]) {
+    assert.match(validateWatchSources({ sources: [{ ...base, maxBytes: bad }] }).join('\n'), /maxBytes must be an integer/, String(bad));
+  }
+});
+
+test('watch: the summary of skipped sources names each source and its reason', () => {
+  assert.equal(skippedSummary([{ id: 'a', reason: 'too big' }, { id: 'b', reason: 'HTTP 500' }], 5), 'WARNING: 2 of 5 source(s) skipped: a (too big); b (HTTP 500)');
+});
+
+test('contentLines: an unclosed bracket or link in a huge line does not make the cleaning slow', () => {
+  const started = Date.now();
+  for (const piece of ['[', '[a(', '![a(', '![', '[a](', '[a](((', '<a ', '`', '**a ']) {
+    const lines = contentLines(`- ${piece.repeat(Math.ceil(100_000 / piece.length))}`);
+    assert.ok(lines.length <= 3);
+    assert.ok(lines.every((l) => l.length <= 2000), `${piece}: a line is cut at 2000 characters`);
+  }
+  // Nine inputs of 100 KB: each took 2 to 8 seconds before the line was cut and the patterns were bounded.
+  assert.ok(Date.now() - started < 2000, `took ${Date.now() - started} ms`);
+});
+
+test('contentLines: a literal <p> or <li> in Markdown code does not turn the text into HTML', () => {
+  assert.deepEqual(contentLines('- Added `<p>` tag support\n- Fixed `<li>` nesting'), ['Added <p> tag support', 'Fixed <li> nesting']);
+  assert.deepEqual(contentLines('Intro.\n\n```html\n<p>x</p>\n```\n\n- Item one'), ['Item one']);
+  // Real HTML, even with backticks in the text, is still read as HTML.
+  assert.deepEqual(contentLines('<ul><li>Use `a` here</li><li>Two</li></ul>'), ['Use `a` here', 'Two']);
+});
+
+test('contentLines: links with nested parentheses, javascript: links and inline HTML leave no residue', () => {
+  assert.deepEqual(contentLines('- See [the docs](https://x.example/a_(b)) now\n- Click [x](javascript:alert(1)) ok\n- ![shot](https://x/i.png) Clip <video src="https://x/v.mp4" controls></video> done\n- Line<br/>break and <https://x.example> and 1 < 2 and `<b>`'), ['See the docs now', 'Click x ok', 'shot Clip done']);
+  assert.deepEqual(contentLines('- Line<br/>break and <https://x.example> and 1 < 2 and `<b>`'), ['Linebreak and <https://x.example> and 1 < 2 and <b>']);
+});
+
+test('github releases: lines lose Markdown marks, links and PR references like the Codex feed lines do', () => {
+  const rel = [{ tag_name: 'rust-v0.160.1', draft: false, prerelease: false, published_at: '2026-10-05T18:29:00Z', html_url: 'https://github.com/openai/codex/releases/tag/rust-v0.160.1',
+    body: '## Fixes\n\n- Fixed `/model` crash with **long** names. ([#51121](https://github.com/openai/codex/pull/51121))\n* Updated [the guide](https://x.example/a_(b)) (#1, #2).\n- ' }];
+  const e = parseGithubReleases(rel, src('codex-releases'));
+  assert.deepEqual(e[0].lines, ['Fixed /model crash with long names.', 'Updated the guide.']);
+});
+
+test('entry dates: a link two days away is ignored, a link one day ahead wins, leap days are checked', () => {
+  const at = (iso) => new Date(iso);
+  // Two days apart, in both directions: the UTC date stays. A mutation from one day to two days would fail here.
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-14-x'), '2026-10-16');
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-18-x'), '2026-10-16');
+  // Exactly one day apart, in both directions: the link date wins, including a link one day ahead of the feed date.
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-15-x'), '2026-10-15');
+  assert.equal(entryDate(at('Fri, 16 Oct 2026 12:00:00 GMT'), 'https://github.blog/changelog/2026-10-17-x'), '2026-10-17');
+  // 29 February: real in 2028, not a date in 2027 (the UTC date stays).
+  assert.equal(entryDate(at('Tue, 29 Feb 2028 23:30:00 GMT'), 'https://github.blog/changelog/2028-02-29-x'), '2028-02-29');
+  assert.equal(entryDate(at('Wed, 01 Mar 2028 02:00:00 GMT'), 'https://github.blog/changelog/2028-02-29-x'), '2028-02-29');
+  assert.equal(entryDate(at('Mon, 01 Mar 2027 02:00:00 GMT'), 'https://github.blog/changelog/2027-02-29-x'), '2027-03-01');
+  assert.equal(entryDate(at('Sun, 28 Feb 2027 02:00:00 GMT'), 'https://github.blog/changelog/2027-02-29-x'), '2027-02-28');
+  // Month and year boundaries.
+  assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-31-x'), '2026-12-31');
+  assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-30-x'), '2027-01-01');
+});
+
+test('watch: the pull request notice is one visible line with each skipped source and its reason', () => {
+  assert.equal(skippedNotice([]), '');
+  assert.equal(skippedNotice([{ id: 'a', reason: 'too big' }, { id: 'b', reason: 'HTTP 500\nsecond line' }]), '⚠ Sources skipped: a (too big); b (HTTP 500 second line)');
+});
+
+test('watch: the notice file is written when a source is skipped and removed when none is', () => {
+  const dir = tmp();
+  const file = path.join(dir, 'cache', 'skipped-sources.txt');
+  writeSkippedNotice(file, [{ id: 'codex-releases', reason: 'larger than 5000000 bytes' }]);
+  assert.equal(fs.readFileSync(file, 'utf8'), '⚠ Sources skipped: codex-releases (larger than 5000000 bytes)\n');
+  writeSkippedNotice(file, []);
+  assert.ok(!fs.existsSync(file), 'an old notice does not stay after a clean run');
+  writeSkippedNotice(file, []);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('watch CLI: a skipped source writes the notice and keeps exit 0, a clean run removes it, four skips with nothing listed still exit 3', () => {
+  const dir = tmp();
+  const notice = path.join(dir, 'skipped-sources.txt');
+  const fixtures = path.join(dir, 'fixtures');
+  fs.mkdirSync(fixtures);
+  const mk = (n) => ({ sources: Array.from({ length: n }, (_, i) => ({ ...src('cursor-changelog'), id: `s${i}` })) });
+  const cli = (srcs, extra = []) => {
+    const f = path.join(dir, 'sources.json');
+    fs.writeFileSync(f, JSON.stringify(srcs));
+    return spawnSync(process.execPath, [path.join(FIX, '..', '..', 'scripts', 'watch.mjs'), '--offline', fixtures, '--sources', f, '--out', path.join(dir, 'out'), '--no-state', '--today', '2026-10-15', '--since', '2026-10-01', ...extra], { encoding: 'utf8', env: { ...process.env, WATCH_SKIPPED_FILE: notice } });
+  };
+  fs.writeFileSync(path.join(fixtures, 's0.xml'), fx('cursor-changelog.xml'));
+  const partial = cli(mk(2));
+  assert.equal(partial.status, 0, partial.stderr);
+  assert.match(fs.readFileSync(notice, 'utf8'), /^⚠ Sources skipped: s1 \(fixture .*s1\.xml not found\)\n$/);
+  fs.writeFileSync(path.join(fixtures, 's1.xml'), fx('cursor-changelog.xml'));
+  assert.equal(cli(mk(2)).status, 0);
+  assert.ok(!fs.existsSync(notice), 'the clean run removed the notice');
+  fs.rmSync(path.join(fixtures, 's0.xml'));
+  fs.rmSync(path.join(fixtures, 's1.xml'));
+  const four = cli(mk(4));
+  assert.equal(four.status, 3);
+  assert.match(fs.readFileSync(notice, 'utf8'), /^⚠ Sources skipped: s0 \(.*\); s1 \(.*\); s2 \(.*\); s3 \(/);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

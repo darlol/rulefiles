@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>ChatGPT &amp; Codex changelog</title><description>Latest updates to ChatGPT and Codex.</description><link>https://developers.openai.com/</link><atom:link rel="self" type="application/rss+xml" href="https://developers.openai.com/codex/changelog/rss.xml"/><item><title>GPT-5.5 retirement in Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement</guid><description>GPT-5.5 retirement in Codex</description><pubDate>Wed, 14 Oct 2026 00:00:00 GMT</pubDate><content:encoded># GPT-5.5 retirement in Codex
+
+Effective October 14, 2026, at noon PDT (19:00 UTC), GPT-5.5 retires from
+Codex for users signed in with ChatGPT. The OpenAI API and Codex sessions
+authenticated with an API key aren&apos;t affected.
+
+Use **GPT-6.1 Sol** (`gpt-6.1-sol`) when available to your plan and client.
+Update workspace defaults, saved model settings, managed configurations,
+custom agents, scheduled tasks, and scripts that still select `gpt-5.5`.
+
+See [GPT-5.5 retirement](/codex/models#gpt-55-retirement) for plan-specific
+replacements and [workspace model availability](/codex/enterprise/workspace-model-availability#prepare-for-the-gpt-55-retirement)
+for administrator guidance.</content:encoded></item><item><title>Composer predictions in Codex</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions</guid><description>Composer predictions in Codex</description><pubDate>Fri, 09 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Composer predictions in Codex
+
+Composer predictions adds autocomplete-style suggestions for your next message in
+the Codex desktop app. After Codex responds, it uses the current conversation to
+suggest a follow-up prompt in the message box. Press **Tab** to accept the suggestion
+as an editable draft, or type your own message. Accepting a prediction doesn&apos;t send
+it for you.
+
+The feature is available in beta to users aged 18 and older with personal ChatGPT
+Pro plans in supported regions, in local and SSH threads with GPT-6 Astra and
+GPT-6.1 Sol.
+
+Learn more about [composer predictions](/codex/features/composer-predictions).</content:encoded></item><item><title>Codex app</title><link>https://developers.openai.com/codex/changelog/#codex-2026-10-08-app</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-10-08-app</guid><description>Codex app</description><pubDate>Thu, 08 Oct 2026 00:00:00 GMT</pubDate><content:encoded># Codex app
+
+### Performance improvements and bug fixes
+
+- Fixed queued messages getting stuck on **Sending** and restored **Steer** in
+  secondary app windows.
+- Improved scrolling and navigation between files in the **Changes** panel.
+- Added clearer recovery guidance when a tool call needs approval but the chat&apos;s
+  permissions prevent approval requests, with a link to those permissions when available.</content:encoded></item><item><title>ChatGPT for iOS</title><link>https://developers.openai.com/codex/changelog/#codex-2026-06-02-mobile</link><guid>https://developers.openai.com/codex/changelog/#codex-2026-06-02-mobile</guid><description>ChatGPT for iOS</description><pubDate>Tue, 02 Jun 2026 00:00:00 GMT</pubDate><content:encoded># ChatGPT for iOS
+
+### New features
+
+- Added an optional Face ID or passcode lock for Codex.
+- Added a new settings screen for choosing Queue or Steer as the default
+  follow-up behavior and toggling line wrapping for code diffs.
+- Added support for connecting to Windows machines over SSH.
+
+### Improvements and bug fixes
+
+- Added support for `/side &lt;prompt&gt;` to start a side
+  conversation with an initial question.
+- Improved follow-up prompts, the Codex home screen, and viewing changed files.
+- Fixed issues with reconnecting, archiving threads, loading tasks, and
+  connecting to hosts.</content:encoded></item></channel></rss>

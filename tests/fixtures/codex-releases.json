@@ -1,0 +1,20 @@
+[
+  {
+    "tag_name": "rust-v0.163.0-alpha.11",
+    "name": "0.163.0-alpha.11",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-10-14T03:27:29Z",
+    "html_url": "https://github.com/openai/codex/releases/tag/rust-v0.163.0-alpha.11",
+    "body": "Release 0.163.0-alpha.11\n\n"
+  },
+  {
+    "tag_name": "rust-v0.162.1",
+    "name": "0.162.1",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-10-09T19:44:51Z",
+    "html_url": "https://github.com/openai/codex/releases/tag/rust-v0.162.1",
+    "body": "## Bug Fixes\n\n- Fixed a TUI crash when asynchronous questions contain multiple lines, preserving line breaks and complete hyperlink destinations. (#51866)\n- Fixed startup failures caused by differences between a running background server's feature settings and CLI defaults. Compatibility checks now apply only to explicit command-line feature overrides. (#52648)\n\nFull Changelog: https://github.com/openai/codex/compare/rust-v0.162.0...rust-v0.162.1\n\n\n"
+  }
+]

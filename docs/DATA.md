@@ -68,6 +68,14 @@ Rules:
 
 `watch-sources.json` lists the feeds (`rss` or `github-releases`). `watch-state.json` holds `seen`, which maps an entry id to the date it was listed. The watch script updates it. A reviewer does not need to edit it. Documentation pages are not fetched by the script.
 
+A response may be at most 5 000 000 bytes. A source can raise that with `maxBytes` (a whole number, never above 25 000 000, the hard limit in `scripts/lib/fetcher.mjs`). `codex-releases` sets 20 000 000, because the GitHub API lists every build asset of each release: 30 releases were 12 009 211 bytes on 2026-10-16. A source that fails, for a size or any other reason, is skipped and the run goes on with the others. The run ends with a `WARNING: n of m source(s) skipped: …` line on stderr. In GitHub Actions the same line is a warning annotation and appears in the job summary. The same sources are listed in a `⚠ Sources skipped: id (reason)` line at the top of the draft pull request body (the watch writes `.cache/watch/skipped-sources.txt`, `scripts/open-watch-pr.sh` reads it). The run still exits 0 unless four or more sources are skipped and nothing was listed (exit 3).
+
+What the parsers read, and which date they keep:
+
+- `rss`: `content:encoded` can hold HTML (list items, or paragraphs when there are none) or Markdown (the Codex changelog feed moved to Markdown). Both give at most three candidate lines. Markdown headings and code fences are skipped, and links, bold and code marks lose their syntax.
+- `github-releases`: the lines are the first three bullet points of the release notes. `tagPrefix` removes a prefix such as `rust-v` from the tag to get the version, and `titleFormat` builds the title. Prereleases and drafts are skipped.
+- Date of an `rss` entry: the feed date, read in UTC. When the link holds a date (`/2026-10-15-slug`) that is at most one day away from the UTC date, the date in the link is kept, because it is the date the publisher shows on the page. github.blog does not state its zone. Its link dates matched Pacific time on all ten entries of the Copilot feed read on 2026-10-16, so an entry published at 02:16 UTC on 16 October reads 15 October on the page and in its link. Other feeds, and a link date further than one day away, keep the UTC date. GitHub release dates stay in UTC (`published_at`).
+
 ## Published JSON
 
 The build copies the matrix to `/data/matrix.json` and all published digests to `/data/digests.json`, so readers and crawlers can use the data without scraping HTML.

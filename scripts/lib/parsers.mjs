@@ -33,12 +33,88 @@ export function firstSentence(description) {
 const PR_REFS = /\s*\((?:\s*#\d+\s*,?)+\)(\.?)\s*$/;
 const cleanLine = (t) => stripTags(t).replace(PR_REFS, (_, dot) => dot).trim();
 
-/** First lines of the HTML in content:encoded, taken from list items, or from paragraphs when there are none. */
-export function contentLines(contentHtml) {
-  const html = contentHtml || '';
-  let parts = [...html.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
-  if (!parts.length) parts = [...html.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => m[1]);
+const MD_LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+(\S.*)$/;
+
+// A line longer than this is cut before any pattern runs on it. The feed is third-party text, and a long
+// run of "[" or "![a(" with no closing bracket would otherwise make the link patterns quadratic.
+const MAX_MARKDOWN_TEXT = 2000;
+const MD_IMAGE = /!\[([^\]\n]{0,300})\]\((?:[^()\n]|\([^()\n]{0,200}\)){0,500}\)/g;
+const MD_LINK = /\[([^\]\n]{1,300})\]\((?:[^()\n]|\([^()\n]{0,200}\)){0,500}\)/g;
+const INLINE_HTML_TAG = /<\/?[a-zA-Z][\w-]{0,30}(?:\s[^<>]{0,300})?\/?>/g;
+const CODE_SPAN = /`([^`\n]+)`/g;
+
+/**
+ * Plain text of one Markdown line or paragraph: links keep their text (one level of nested parentheses in
+ * the address is understood), emphasis and code marks go, inline HTML tags go, PR references go. Text in
+ * code spans is kept as written, so `<prompt>` stays.
+ */
+function cleanMarkdown(t) {
+  const codes = [];
+  return t
+    .slice(0, MAX_MARKDOWN_TEXT)
+    .replace(/[\uE000\uE001]/g, '')
+    .replace(CODE_SPAN, (_, c) => `\uE000${codes.push(c) - 1}\uE001`)
+    .replace(MD_IMAGE, '$1')
+    .replace(MD_LINK, '$1')
+    .replace(INLINE_HTML_TAG, '')
+    .replace(/(\*\*|__)(.+?)\1/g, '$2')
+    .replace(/\s+/g, ' ')
+    .replace(PR_REFS, (_, dot) => dot)
+    .replace(/\uE000(\d+)\uE001/g, (_, i) => codes[Number(i)])
+    .trim();
+}
+
+/** First lines of Markdown text: list items, or paragraphs when there are none. Headings, rules and code fences are skipped. */
+function markdownLines(md) {
+  const items = [];
+  const paragraphs = [];
+  let fenced = false;
+  let current = null; // { list: boolean, text: string }
+  const flush = () => { if (current) (current.list ? items : paragraphs).push(current.text); current = null; };
+  for (const raw of md.split(/\r?\n/)) {
+    if (/^\s*(```|~~~)/.test(raw)) { flush(); fenced = !fenced; continue; }
+    if (fenced) continue;
+    if (!raw.trim()) { flush(); continue; }
+    if (/^\s*#{1,6}\s/.test(raw) || /^\s*([-*_])(\s*\1){2,}\s*$/.test(raw)) { flush(); continue; }
+    const li = raw.match(MD_LIST_ITEM);
+    if (li) { flush(); current = { list: true, text: li[1] }; continue; }
+    if (current) current.text += ` ${raw.trim()}`;
+    else current = { list: false, text: raw.trim() };
+  }
+  flush();
+  return (items.length ? items : paragraphs).map(cleanMarkdown).filter(Boolean).slice(0, 3);
+}
+
+/**
+ * First lines of the text in content:encoded. The feed text is HTML (list items, or paragraphs when there
+ * are none) or, for feeds that moved to Markdown such as the Codex changelog, Markdown. It counts as HTML
+ * when it holds an <li> or <p> element.
+ */
+export function contentLines(content) {
+  const text = content || '';
+  // Code in Markdown can mention <p> or <li> (``- Added `<p>` tag support``), so code is set aside before looking for HTML.
+  const outsideCode = text.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`\n]{0,200}`/g, ' ');
+  if (!/<(li|p)>/.test(outsideCode)) return markdownLines(text);
+  let parts = [...text.matchAll(/<li>([\s\S]*?)<\/li>/g)].map((m) => m[1]);
+  if (!parts.length) parts = [...text.matchAll(/<p>([\s\S]*?)<\/p>/g)].map((m) => m[1]);
   return parts.map(cleanLine).filter(Boolean).slice(0, 3);
+}
+
+const DAY_MS = 86400000;
+
+/**
+ * The calendar date of an RSS entry. The feed date is read in UTC. A publisher that dates its pages in another
+ * zone puts that date in the link (github.blog/changelog/2026-10-15-...), so when the link holds a date within
+ * one day of the UTC date, the link's date wins: it is the date the page shows. Otherwise the UTC date stays.
+ */
+export function entryDate(pubDate, link) {
+  const utc = pubDate.toISOString().slice(0, 10);
+  const m = String(link).match(/\/(\d{4}-\d{2}-\d{2})-[^/]*\/?$/);
+  if (!m) return utc;
+  const linked = new Date(`${m[1]}T00:00:00Z`);
+  if (Number.isNaN(linked.getTime()) || linked.toISOString().slice(0, 10) !== m[1]) return utc;
+  const diff = Math.abs(linked.getTime() - new Date(`${utc}T00:00:00Z`).getTime());
+  return diff <= DAY_MS ? m[1] : utc;
 }
 
 export function parseRss(xml, source) {
@@ -50,7 +126,7 @@ export function parseRss(xml, source) {
     const pub = tag(block, 'pubDate');
     const d = new Date(pub);
     if (!title || !link || Number.isNaN(d.getTime())) continue;
-    const date = d.toISOString().slice(0, 10);
+    const date = entryDate(d, link);
     let lines;
     if (source.lineFrom === 'content') lines = contentLines(tag(block, 'content:encoded'));
     else { const l = firstSentence(tag(block, 'description')); lines = l ? [l] : []; }
@@ -73,7 +149,8 @@ export function parseGithubReleases(json, source) {
       .split(/\r?\n/)
       .map((l) => l.trim())
       .filter((l) => /^[-*]\s+\S/.test(l))
-      .map((l) => l.replace(/^[-*]\s+/, '').replace(/\s*\((?:#\d+(?:,\s*#\d+)*)\)\.?$/, (m) => (m.endsWith('.') ? '.' : '')))
+      .map((l) => cleanMarkdown(l.replace(/^[-*]\s+/, '')))
+      .filter(Boolean)
       .slice(0, 3);
     const title = (source.titleFormat || '{tag}').replace('{version}', version).replace('{tag}', tagName);
     out.push({ id: `${source.id}:${tagName}`, tool: source.tool, sourceId: source.id, sourceLabel: source.label, title, version, date: r.published_at.slice(0, 10), url: r.html_url, firstLine: lines[0] || '', lines });

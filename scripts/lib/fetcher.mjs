@@ -5,7 +5,9 @@ import { parseRobots, isAllowed } from './robots.mjs';
 
 export const PRODUCT_TOKEN = 'RulefilesWatch';
 export const DEFAULT_USER_AGENT = `${PRODUCT_TOKEN}/0.1 (changelog watcher; honest bot; see repository README)`;
-const MAX_BYTES = 5_000_000;
+/** Largest response a source may use by default, and the ceiling no source can raise (the `maxBytes` of a source in data/watch-sources.json). */
+export const DEFAULT_MAX_BYTES = 5_000_000;
+export const HARD_MAX_BYTES = 25_000_000;
 const MAX_REDIRECTS = 4;
 const MAX_ROBOTS_REDIRECTS = 5; // RFC 9309 section 2.3.1.2: follow at least five consecutive redirects
 const REDIRECT_STATUSES = [301, 302, 303, 307, 308];
@@ -68,7 +70,8 @@ export function createFetcher({
     return parseRobots(body);
   }
 
-  async function get(url) {
+  async function get(url, { maxBytes } = {}) {
+    const limit = Number.isInteger(maxBytes) && maxBytes > 0 ? Math.min(maxBytes, HARD_MAX_BYTES) : DEFAULT_MAX_BYTES;
     const file = path.join(cacheDir, `page-${sha(url)}.json`);
     let cached = null;
     if (fs.existsSync(file)) {
@@ -101,9 +104,10 @@ export function createFetcher({
     }
     if (res.status !== 200) throw new Error(`${url} returned HTTP ${res.status}`);
     const len = Number(res.headers.get('content-length') || 0);
-    if (len > MAX_BYTES) throw new Error(`${url} is larger than ${MAX_BYTES} bytes`);
+    const tooLarge = () => new Error(`${url} is larger than ${limit} bytes (set maxBytes on the source in data/watch-sources.json, at most ${HARD_MAX_BYTES})`);
+    if (len > limit) throw tooLarge();
     const body = await res.text();
-    if (body.length > MAX_BYTES) throw new Error(`${url} is larger than ${MAX_BYTES} bytes`);
+    if (Buffer.byteLength(body) > limit) throw tooLarge();
     fs.writeFileSync(file, JSON.stringify({ url, finalUrl: current, fetchedAt: now(), etag: res.headers.get('etag'), lastModified: res.headers.get('last-modified'), body }));
     return { status: 200, body, fromCache: false };
   }

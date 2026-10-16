@@ -4,7 +4,7 @@ Read on 2026-10-16 on the vendors' own pages. This is a working note for the own
 
 ## What the project does with the sources
 
-- The watch script (`scripts/watch.mjs`) reads four public feeds listed in `data/watch-sources.json`: the Cursor changelog RSS, the GitHub REST API for the releases of `anthropics/claude-code`, the Codex changelog RSS, and the GitHub changelog feed filtered on the Copilot label. It does not fetch HTML pages.
+- The watch script (`scripts/watch.mjs`) reads five public sources listed in `data/watch-sources.json`: the Cursor changelog RSS, the GitHub REST API for the releases of `anthropics/claude-code`, the Codex changelog RSS, the GitHub REST API for the releases of `openai/codex`, and the GitHub changelog feed filtered on the Copilot label. It does not fetch HTML pages.
 - It identifies itself with the User-Agent `RulefilesWatch/0.1`, checks `robots.txt` on every host, waits 1,500 ms between requests, and caches responses on disk. It runs once a week.
 - A digest item keeps a title, a date, a link and one short excerpt of the source wording. A matrix cell keeps a status, a link to an official page, a date, and a short note that can quote one sentence.
 - The matrix pages were read one by one by hand on 2026-10-16. No crawler fetched them.
@@ -39,11 +39,11 @@ Cautious reading: the project does not touch Anthropic's own services, it reads 
 
 | Item | Detail |
 | --- | --- |
-| Used | https://developers.openai.com/codex/changelog/rss.xml (RSS). Links to developers.openai.com and learn.chatgpt.com pages for the matrix. |
+| Used | https://developers.openai.com/codex/changelog/rss.xml (RSS, which redirects to learn.chatgpt.com), and the GitHub REST API for the releases of `openai/codex` (`https://api.github.com/repos/openai/codex/releases`, one request, not the `.atom` feed). Links to developers.openai.com, learn.chatgpt.com and github.com release pages for the matrix and the digests. |
 | Terms read | Terms of Use, effective January 1, 2026, https://openai.com/policies/terms-of-use/. It applies to ChatGPT and OpenAI's other services for individuals. The Business Terms govern the APIs. |
 | Clauses | "Modify, copy, lease, sell or distribute any of our Services." and "Automatically or programmatically extract data or Output (defined below)." On the brand: "You may only use our name and logo in accordance with our Brand Guidelines." |
-| Repository | `openai/codex` is Apache-2.0 (GitHub API, 2026-10-16). That covers the code, not the documentation site. |
-| robots.txt | developers.openai.com and learn.chatgpt.com both have `User-agent: *` and `Allow: /`. |
+| Repository | `openai/codex` is Apache-2.0 (GitHub API, 2026-10-16). That covers the code, not the documentation site, and the license text does not say anything about the text of the release notes. The release notes are quoted short, with a link to the release, like any other source. |
+| robots.txt | developers.openai.com and learn.chatgpt.com both have `User-agent: *` and `Allow: /`. api.github.com is the host already used for the Claude Code releases and is checked the same way (see the GitHub section). |
 | Feed license | None stated in the feed. |
 | Brand | The OpenAI brand guidelines page returned an error to the command-line check and was not read. Not verified. |
 
@@ -53,7 +53,7 @@ Cautious reading: this is the least clear source. The Terms of Use are written f
 
 | Item | Detail |
 | --- | --- |
-| Used | https://github.blog/changelog/label/copilot/feed/ (WordPress feed), and the GitHub REST API for the Claude Code releases. Links to docs.github.com pages for the matrix. |
+| Used | https://github.blog/changelog/label/copilot/feed/ (WordPress feed), and the GitHub REST API for the Claude Code and Codex releases. Links to docs.github.com pages for the matrix. |
 | Terms read | Terms of Service, effective April 27, 2026, https://docs.github.com/en/site-policy/github-terms/github-terms-of-service, Section H (API Terms). Acceptable Use Policies, https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies. Logos and usage page, https://github.com/logos. |
 | Clauses | AUP Section 6: "You will not reproduce, duplicate, copy, sell, resell or exploit any portion of the Service, use of the Service, or access to the Service without our express written permission." AUP Section 7 defines scraping as "extracting information from our Service via an automated process, such as a bot or webcrawler" and says "Scraping does not refer to the collection of information through our API". It forbids using the information for spam. Logos page: "Do not use GitHub trademarks, logos, or artwork without GitHub's prior written permission." |
 | robots.txt | github.com: "If you would like to crawl GitHub contact us via https://support.github.com?tags=dotcom-robots". github.blog: `User-agent: *` with an empty `Disallow`. |
@@ -61,7 +61,7 @@ Cautious reading: this is the least clear source. The Terms of Use are written f
 
 Cautious reading: reading the REST API is explicitly not scraping under AUP Section 7, and the API terms apply. The github.blog feed is a published feed on a site whose robots file allows access. The project sends no spam and keeps no personal data from GitHub. Whole-entry copying is the risk, not the reading. To confirm.
 
-## What holds for all four
+## What holds for all the sources
 
 - No source gave an explicit permission to republish its text. None stated a license for its changelog text, apart from the GitHub documentation repository (CC-BY-4.0) and the Apache-2.0 code of `openai/codex`.
 - The practice that keeps the project closest to safe ground is the one it already follows: read feeds and APIs rather than pages, honor `robots.txt`, keep volume low, quote one short excerpt with the vendor named and a link, keep the project's own fields apart from the quote, and never restate a release note in new words.

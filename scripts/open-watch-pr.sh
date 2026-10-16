@@ -7,9 +7,12 @@
 #   GITHUB_RUN_ID       run number, part of the branch name
 #   GITHUB_RUN_ATTEMPT  attempt number, part of the branch name
 #   DRY_RUN             "true" commits locally and stops before the push and the pull request
+#   WATCH_SKIPPED_FILE  file written by scripts/watch.mjs when a source was skipped (default .cache/watch/skipped-sources.txt);
+#                       its line goes at the top of the pull request body
 set -euo pipefail
 
 DRY_RUN="${DRY_RUN:-false}"
+skipped_file="${WATCH_SKIPPED_FILE:-.cache/watch/skipped-sources.txt}"
 
 if [ -z "$(git status --porcelain data/)" ]; then
   echo "No new changes detected."
@@ -38,6 +41,9 @@ auth="$(printf 'x-access-token:%s' "${GH_TOKEN:?GH_TOKEN is required}" | base64 
 echo "::add-mask::${auth}"
 git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" push origin "$branch"
 
-gh pr create --draft --base main --head "$branch" \
-  --title "Watch draft ${stamp}" \
-  --body "Changes listed by scripts/watch.mjs from the official feeds. Each item quotes its source. Review each item against its link, then move kept items into data/digest/ with status published. This pull request does not publish anything. It was opened with GITHUB_TOKEN, so CI does not run on it until a person closes and reopens it or pushes a commit."
+body="Changes listed by scripts/watch.mjs from the official feeds. Each item quotes its source. Review each item against its link, then move kept items into data/digest/ with status published. This pull request does not publish anything. It was opened with GITHUB_TOKEN, so CI does not run on it until a person closes and reopens it or pushes a commit."
+if [ -s "$skipped_file" ]; then
+  body="$(cat "$skipped_file")"$'\n\n'"${body}"
+fi
+
+gh pr create --draft --base main --head "$branch" --title "Watch draft ${stamp}" --body "$body"

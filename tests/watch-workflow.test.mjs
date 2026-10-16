@@ -97,6 +97,32 @@ test('script: a real run pushes the branch and opens a draft pull request, witho
   } finally { fs.rmSync(s.base, { recursive: true, force: true }); }
 });
 
+test('script: a skipped source puts one visible line at the top of the pull request body, and no line without a skip', () => {
+  const s = scratch();
+  try {
+    s.change('a');
+    const notice = path.join(s.base, 'skipped-sources.txt');
+    fs.writeFileSync(notice, '⚠ Sources skipped: codex-releases (larger than 5000000 bytes)\n');
+    assert.equal(s.run({ GITHUB_RUN_ID: '3001', WATCH_SKIPPED_FILE: notice }).status, 0);
+    const log = fs.readFileSync(path.join(s.base, 'gh.log'), 'utf8');
+    const body = log.slice(log.indexOf('--body ') + '--body '.length);
+    assert.ok(body.startsWith('⚠ Sources skipped: codex-releases (larger than 5000000 bytes)\n\nChanges listed by scripts/watch.mjs'), body);
+    assert.match(body, /does not publish anything/);
+    s.g('checkout', '-q', 'main');
+    fs.rmSync(path.join(s.base, 'gh.log'));
+    s.change('b');
+    assert.equal(s.run({ GITHUB_RUN_ID: '3002', WATCH_SKIPPED_FILE: path.join(s.base, 'none.txt') }).status, 0);
+    const plain = fs.readFileSync(path.join(s.base, 'gh.log'), 'utf8');
+    assert.ok(plain.includes('--body Changes listed by scripts/watch.mjs'), plain);
+    assert.ok(!plain.includes('Sources skipped'));
+  } finally { fs.rmSync(s.base, { recursive: true, force: true }); }
+});
+
+test('the script and the watch use the same default notice file', () => {
+  assert.ok(fs.readFileSync(SCRIPT, 'utf8').includes('.cache/watch/skipped-sources.txt'));
+  assert.ok(fs.readFileSync(path.join(root, 'scripts', 'watch.mjs'), 'utf8').includes("'.cache', 'watch', 'skipped-sources.txt'"));
+});
+
 test('script: a second run on the same day gets another branch name and does not collide', () => {
   const s = scratch();
   try {

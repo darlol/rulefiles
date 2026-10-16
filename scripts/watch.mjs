@@ -48,7 +48,7 @@ export async function run(argv, deps = {}) {
         if (!fs.existsSync(file)) throw new Error(`fixture ${file} not found`);
         body = fs.readFileSync(file, 'utf8');
       } else {
-        body = (await fetcher.get(s.url)).body;
+        body = (await fetcher.get(s.url, { maxBytes: s.maxBytes })).body;
       }
       const list = s.type === 'rss' ? parseRss(body, s) : parseGithubReleases(body, s);
       log(`${s.id}: ${list.length} entries parsed`);
@@ -89,13 +89,45 @@ export async function run(argv, deps = {}) {
   if (!args.noState && !args.offline) writeFile(statePath, JSON.stringify(state, null, 2) + '\n');
   if (written.length) log(`\nWrote ${written.length} draft file(s): ${written.join(', ')}`);
   if (fetcher) log(`Network requests: ${fetcher.stats.network}, cache hits: ${fetcher.stats.cacheHits}, not modified: ${fetcher.stats.notModified}`);
-  return { entries, drafts, written, skipped, state };
+  return { entries, drafts, written, skipped, sourceCount: sources.sources.length, state };
+}
+
+/**
+ * One line that names every skipped source and why. The run still succeeds when only some sources fail
+ * (the other sources are still worth a draft), so this line is how a skip gets noticed: it ends the log,
+ * goes to stderr, and in GitHub Actions becomes a warning annotation and a line in the job summary.
+ */
+export function skippedSummary(skipped, sourceCount) {
+  if (!skipped.length) return '';
+  return `WARNING: ${skipped.length} of ${sourceCount} source(s) skipped: ${skipped.map((s) => `${s.id} (${s.reason})`).join('; ')}`;
+}
+
+/**
+ * The line for the top of the draft pull request body: a skip is otherwise only in the run log, which nobody
+ * reads on a green run. The reasons are error messages, so any line break is flattened to keep it one line.
+ */
+export function skippedNotice(skipped) {
+  if (!skipped.length) return '';
+  return `⚠ Sources skipped: ${skipped.map((s) => `${s.id} (${String(s.reason).replace(/\s+/g, ' ').trim()})`).join('; ')}`;
+}
+
+/** scripts/open-watch-pr.sh reads this file. It is written on every run, and removed when nothing was skipped, so an old notice never stays. */
+export function writeSkippedNotice(file, skipped) {
+  const notice = skippedNotice(skipped);
+  if (notice) writeFile(file, notice + '\n');
+  else fs.rmSync(file, { force: true });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const res = await run(process.argv.slice(2));
-    if (res.skipped.length) console.error(`${res.skipped.length} source(s) skipped.`);
+    const summary = skippedSummary(res.skipped, res.sourceCount);
+    writeSkippedNotice(process.env.WATCH_SKIPPED_FILE || path.join(ROOT, '.cache', 'watch', 'skipped-sources.txt'), res.skipped);
+    if (summary) {
+      console.error(summary);
+      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Watch source skipped::${summary.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+      if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Watch: sources skipped\n\n${summary}\n`);
+    }
     if (res.skipped.length && res.entries.length === 0 && res.skipped.length >= 4) process.exit(3);
   } catch (e) {
     console.error(e.message);
