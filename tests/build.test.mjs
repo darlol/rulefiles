@@ -207,6 +207,16 @@ test('newsletter form is disabled without a provider and enabled with one', () =
   assert.match(html, /<input id="nl-email" name="email" type="email" disabled/);
   assert.match(html, /<button type="button" disabled>Subscribe<\/button>/);
   assert.doesNotMatch(html, /<form[^>]+action=/);
+  assert.ok(html.includes('<li>The <a href="/privacy/">privacy page</a> names the provider, says who is responsible for your data and how to reach them.</li>'));
+  assert.doesNotMatch(html, /names the provider and the person responsible/);
+  const off = textOf('newsletter/index.html');
+  assert.ok(off.includes('The weekly digest by email, sent through Buttondown.'));
+  assert.ok(off.includes('Signup is switched off until the publication. Nothing can be submitted or sent.'));
+  assert.ok(off.includes('Until the publication, the Atom feed carries every issue'));
+  assert.ok(off.includes('How signup will work'));
+  assert.doesNotMatch(off, /No newsletter provider has been configured|once a provider is chosen/);
+  assert.match(html, /name="description" content="Weekly email digest of what changed in AI coding tools\. Signup is switched off until the publication; the Atom feed works now\."/);
+  assert.ok(textOf('privacy/index.html').includes('The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.'));
   const out2 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist2-'));
   process.env.NEWSLETTER_FORM_ACTION = 'https://news.example.com/subscribe';
   try {
@@ -214,6 +224,15 @@ test('newsletter form is disabled without a provider and enabled with one', () =
     const on = fs.readFileSync(path.join(out2, 'newsletter/index.html'), 'utf8');
     assert.match(on, /<form class="nl-form" method="post" action="https:\/\/news\.example\.com\/subscribe">/);
     assert.match(on, /double opt-in/);
+    const onText = on.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.ok(onText.includes('The weekly digest by email, sent through Buttondown.'));
+    assert.ok(onText.includes('The Atom feed carries every issue'));
+    assert.ok(onText.includes('How signup works'));
+    assert.doesNotMatch(onText, /switched off|Until the publication|will work/);
+    assert.match(on, /name="description" content="Weekly email digest of what changed in AI coding tools\. Sign up by email, or follow the Atom feed\."/);
+    const privOn = fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+    assert.ok(privOn.includes('This section describes what applies when you subscribe.'));
+    assert.doesNotMatch(privOn, /switched off/);
     assert.match(unescapeAttr(fs.readFileSync(path.join(out2, 'index.html'), 'utf8')), /form-action 'self' https:\/\/news\.example\.com/);
   } finally {
     delete process.env.NEWSLETTER_FORM_ACTION;
@@ -314,13 +333,10 @@ test('built digest pages show source backticks as code and contain no raw backti
   assert.match(read('digest/feed.xml'), /&lt;code&gt;/);
 });
 
-test('the build warns, without failing, about the marker that remains and the placeholder domain', () => {
+test('the build raises no launch warning: no marker, no placeholder sentence, no placeholder domain', () => {
   const warnings = result.warnings;
   assert.ok(Array.isArray(warnings));
-  assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: data controller name]]')), warnings.join('\n'));
-  assert.ok(warnings.some((w) => w.includes('placeholder https://rulefiles.dev')));
-  for (const page of ['/about/', '/sponsors/', '/legal/', '/newsletter/']) assert.ok(!warnings.some((w) => w.startsWith(`${page}:`)), `${page} carries no marker`);
-  assert.equal(warnings.length, 2, warnings.join('\n'));
+  assert.deepEqual(warnings, []);
 });
 
 test('about page names both licenses and the suggested credit, and the JSON-LD names the data license', () => {
@@ -346,10 +362,12 @@ test('the generator page names AGENTS.md as the main file and cites the matrix f
 
 const textOf = (rel) => read(rel).replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/\s+/g, ' ');
 
+// The owner's name is on the privacy page and the legal notice. Built from parts: tests/launch.test.mjs refuses it elsewhere.
+const OWNER = ['Tho', 'mas', ' ', 'Ram', 'baut'].join('');
 const ALLOWED_EMAILS = ['contact@rulefiles.dev', 'privacy@rulefiles.dev', 'sponsors@rulefiles.dev'];
 const emailsIn = (t) => [...new Set(t.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [])].sort();
 
-test('the legal notice states the anonymous non-professional publisher and the host, with the contact alias and the right of reply', () => {
+test('the legal notice names the publisher of the site and of the newsletter, gives the host, and says where to send a right of reply', () => {
   const html = read('legal/index.html');
   for (const h of ['Publisher', 'Host', 'Contact and right of reply', 'Names, quotations and independence', 'Personal data and cookies']) {
     assert.match(html, new RegExp(`<h2>${h}</h2>`), h);
@@ -357,19 +375,24 @@ test('the legal notice states the anonymous non-professional publisher and the h
   assert.doesNotMatch(html, /<h2>Director of publication<\/h2>/);
   const text = textOf('legal/index.html');
   assert.match(text, /loi n° 2004-575 du 21 juin 2004, article 1-1/);
+  assert.ok(text.includes('It is sent by registered letter with acknowledgment of receipt, or by any other means that proves who sent it and that it was received (décret n° 2007-1527 du 24 octobre 2007), and it says which message and which passages are concerned and what the reply says.'));
   assert.match(text, /published by a private individual, on a non-professional basis/);
-  assert.match(text, /Article 1-1, II of the law allows a person who publishes on a non-professional basis to stay anonymous and to give only the name and address of the host\. The publisher has chosen to remain anonymous\./);
+  assert.ok(text.replace(/\s+([).,])/g, '$1').includes(`The publisher of the site and of the newsletter is ${OWNER}, who is also responsible for the personal data of the newsletter (see Privacy). No postal address is published.`));
+  assert.ok(text.includes('Article 1-1, II of the law allows a person who publishes on a non-professional basis to give only the name and address of the host. The publisher uses that option for the site: no postal address and no phone number are published.'));
+  assert.doesNotMatch(text, /anonymous|anonymity/i, 'the legal notice no longer says the publisher is anonymous');
   assert.match(text, /Name: Cloudflare, Inc\./);
   assert.match(text, /Address: 101 Townsend St, San Francisco, CA 94107, USA/);
   assert.match(text, /Phone: \+1 \(650\) 319-8930/);
   assert.match(text, /right of reply \(article 1-1, III\)/);
-  assert.match(text, /the request is sent to the host, which passes it on to the director of publication without delay/);
+  assert.ok(text.replace(/\s+([).,])/g, '$1').includes('As no postal address is published, send the request to the publisher at contact@rulefiles.dev or privacy@rulefiles.dev, with a copy to the host, which passes it on to the director of publication without delay.'));
+  assert.doesNotMatch(text, /The publisher being anonymous/);
   assert.match(text, /within three months/);
   assert.match(html, /<a href="mailto:contact@rulefiles\.dev">contact@rulefiles\.dev<\/a>/);
-  // No publisher identity on the page: no name, address, phone, registration number or share capital.
+  // No site publisher identity on the page: no address, phone, registration number or share capital. Only the newsletter publisher is named.
   assert.doesNotMatch(text, /\[\[TODO/);
   assert.doesNotMatch(text, /SIRET|SIREN|RCS|share capital|Phone: (?!\+1 \(650\) 319-8930)/);
-  assert.deepEqual(emailsIn(text), ['contact@rulefiles.dev']);
+  assert.match(html, /<a href="mailto:privacy@rulefiles\.dev">privacy@rulefiles\.dev<\/a>/);
+  assert.deepEqual(emailsIn(text), ['contact@rulefiles.dev', 'privacy@rulefiles.dev']);
 });
 
 test('the privacy page covers controller, basis, provider, tracking, retention, rights and the CNIL', () => {
@@ -377,17 +400,28 @@ test('the privacy page covers controller, basis, provider, tracking, retention, 
   for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies', 'The host is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.']) {
     assert.ok(text.includes(needle), needle);
   }
-  assert.ok(text.includes('We do not track them. Our emails carry no tracking pixel, and the links in them are not rewritten.'));
+  assert.ok(text.includes('We do not track them. Our emails carry no tracking pixel, and the links to other pages are not rewritten.'));
+  assert.ok(text.includes('other than with the provider below and the sub-processors it lists.'));
   assert.ok(text.includes('we delete your data within 30 days, unless the law requires us to keep it'));
-  // The one field left is the name of the controller.
-  assert.deepEqual(markerFields(text), ['data controller name']);
+  assert.ok(text.includes('If you sign up and never confirm, we delete the address within 40 days. Deleting means removing the record from the provider\'s database, not only hiding it.'));
+  assert.ok(text.includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${OWNER}. The same person is responsible for the messages sent to the contact addresses and for the request logs described in the next section. No postal address is published. The only contact is privacy@rulefiles.dev`));
+  assert.doesNotMatch(text, /anonymous non-professional publisher/, 'the privacy page no longer says the controller is anonymous');
+  assert.deepEqual(markerFields(text), []);
   const html = read('privacy/index.html');
+  assert.ok(text.includes('USA. Its data processing addendum covers transfers from the European Economic Area to the United States with the Standard Contractual Clauses and the EU-U.S. Data Privacy Framework, and its privacy policy applies to those logs.'));
+  assert.match(html, /href="https:\/\/www\.cloudflare\.com\/cloudflare-customer-dpa\/"/);
+  assert.match(html, /href="https:\/\/www\.cloudflare\.com\/privacypolicy\/"/);
   assert.match(html, /href="https:\/\/buttondown\.com\/legal\/data-processing-agreement"/);
   assert.match(html, /href="https:\/\/buttondown\.com\/legal\/subprocessors"/);
   assert.match(html, /href="https:\/\/docs\.buttondown\.com\/deleting-and-recovering-data"/);
   assert.match(html, /href="https:\/\/www\.cnil\.fr\/fr\/plaintes"/);
   assert.match(html, /<a href="mailto:privacy@rulefiles\.dev">privacy@rulefiles\.dev<\/a>/);
-  assert.deepEqual(emailsIn(text), ['privacy@rulefiles.dev']);
+  assert.ok(text.includes(`Messages you send us If you write to contact@rulefiles.dev, privacy@rulefiles.dev or sponsors@rulefiles.dev, your message reaches ${OWNER} through Cloudflare Email Routing and a private mailbox. We use it only to answer you, on the basis of our legitimate interest in answering (GDPR, article 6(1)(f)), and we keep it for 12 months after the exchange ends, then we delete it.`));
+  assert.ok(text.indexOf('Messages you send us') < text.indexOf('Your rights'));
+  assert.deepEqual(emailsIn(text), ['contact@rulefiles.dev', 'privacy@rulefiles.dev', 'sponsors@rulefiles.dev']);
+  assert.match(read('privacy/index.html'), /name="description" content="What data Rulefiles collects, who is responsible for it, and your rights\. The data planned is the email address you give for the newsletter and the messages you send us\."/);
+  assert.ok(textOf('legal/index.html').includes('The personal data planned is the email address of people who subscribe to the newsletter, and the messages people send to the contact addresses.'));
+  assert.doesNotMatch(textOf('legal/index.html') + textOf('privacy/index.html'), /only personal data|only data planned/);
 });
 
 test('the sponsors page says sponsorship is not open, promises no figure and shows the sponsors alias', () => {
@@ -396,6 +430,7 @@ test('the sponsors page says sponsorship is not open, promises no figure and sho
   assert.match(text, /Sponsorship is not open yet\. No rates are published and no sponsor is booked\./);
   assert.match(html, /<a href="mailto:sponsors@rulefiles\.dev">sponsors@rulefiles\.dev<\/a>/);
   assert.match(text, /Writing there does not book anything\./);
+  assert.ok(text.includes('A sponsor line is labeled as a sponsor line, names the sponsor it is paid for by, and sits apart from the digest items.'));
   assert.doesNotMatch(text, /[$€£]\s?\d|\d\s?(EUR|USD|euros?|dollars?)\b|per (month|week|issue)|\d+\s?%/i);
   assert.deepEqual(emailsIn(text), ['sponsors@rulefiles.dev']);
 });

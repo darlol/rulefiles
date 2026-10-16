@@ -20,7 +20,7 @@ Set `SITE_URL` to the preview URL before building so canonical links, the sitema
 SITE_URL=https://example-preview.pages.dev npm run build
 ```
 
-Build command for a preview on either provider: `npm run build`. It prints a `LAUNCH WARNING` for each placeholder and still succeeds. The build command for a release is `npm run build:strict`, which fails, and deletes `dist/`, while any `[[TODO-OWNER: ...]]` marker, older placeholder sentence or the placeholder domain remains. `RULEFILES_STRICT=1 npm run build` does the same. Output directory: `dist`. No install step is needed.
+Build command for a preview on either provider: `npm run build`. It prints a `LAUNCH WARNING` for each placeholder and still succeeds. The build command for a release is `npm run build:strict`, which fails, and deletes `dist/`, while any `[[TODO-OWNER: ...]]` marker or older placeholder sentence remains, or while the base URL is not `https://rulefiles.dev`. A preview build (`npm run build` with `SITE_URL` set) is not strict and is not affected. `RULEFILES_STRICT=1 npm run build` does the same. Output directory: `dist`. No install step is needed.
 
 ## Newsletter
 
@@ -38,7 +38,7 @@ The form stays off until an https form endpoint is set. Set `newsletter.formActi
 
 Done locally on 2026-10-16, with no write to GitHub:
 
-- `actionlint` 1.7.12 (checksum compared with the release's checksums file) finds nothing in the two workflows, and `shellcheck` 0.11.0 finds nothing in `scripts/open-watch-pr.sh`. `act` needs Docker, which is not installed on the box, so it was not run.
+- `actionlint` 1.7.12 (checksum compared with the release's checksums file) finds nothing in the two workflows, and `shellcheck` 0.11.0 finds nothing in `scripts/open-watch-pr.sh`. `act` needs Docker, which was not installed on the machine used for the checks, so it was not run.
 - `node scripts/watch.mjs` ran against the four real feeds with the polite fetcher: 10 requests the first time (robots.txt files and feeds), 4 cache hits and 0 requests the second time, 230 entries parsed, 15 new changes since 2026-10-06, two draft files written, `npm run validate` passed on them.
 - `scripts/open-watch-pr.sh` ran in a scratch clone whose remote was a local bare repository and whose `gh` was a stub. A dry run left the remote untouched and called nothing. A real run pushed `watch/2026-10-16-555-2`, called `gh pr create --draft --base main --head watch/2026-10-16-555-2`, and left no token and no extraheader in `.git/config`.
 - `tests/watch-workflow.test.mjs` repeats those cases in CI with a stub `gh`: nothing to commit, dry run, real run, three runs on one day, and a missing run id or token.
@@ -60,7 +60,7 @@ The weekly watch pushes branches named `watch/...` and opens a pull request, so 
 
 ## Launch checklist
 
-1. Settle every item in [LAUNCH-BLOCKERS.md](LAUNCH-BLOCKERS.md): license, publisher identity and legal notice, host, domain, contacts, newsletter list, sponsorship, repository settings.
-2. Run `npm run build:strict`. It must succeed, which means no marker, no placeholder sentence and no placeholder domain is left. Use the same command as the release build on the host.
+1. Settle every item in [LAUNCH-BLOCKERS.md](LAUNCH-BLOCKERS.md): license, publisher identity and legal notice, host, domain, contacts, newsletter list, sponsorship, repository settings. [LAUNCH.md](LAUNCH.md) says what the strict build reports today and what to do before the go.
+2. Run `npm run build:strict`. It must succeed, which means no marker and no placeholder sentence is left and the base URL is `https://rulefiles.dev`. Use the same command as the release build on the host.
 3. Re-verify every matrix cell dated more than 30 days ago.
 4. Read the terms of use of each source again before publishing.

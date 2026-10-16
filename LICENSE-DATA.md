@@ -48,7 +48,7 @@ This is a reading aid, taken from the legal code. If it differs from the legal c
 
 > Rulefiles data by Rulefiles contributors, https://rulefiles.dev/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Provided as is, without warranty. Quoted excerpts belong to their authors.
 
-The domain in this text is the provisional domain of `site.config.json`. The About page of the built site shows the domain set at build time.
+The domain in this text is the `baseUrl` of `site.config.json`. The About page of the built site shows the domain set at build time.
 
 ## Reporting a problem
 

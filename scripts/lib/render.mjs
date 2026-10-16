@@ -414,15 +414,21 @@ export function contentPage(ctx, file, pagePath) {
     attribution: DATA_ATTRIBUTION,
     contactEmail: config.contactEmail,
     privacyEmail: config.privacyEmail,
+    newsletterIntro: newsletterEnabled(config)
+      ? 'This section describes what applies when you subscribe.'
+      : 'The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.',
     sponsorContact: config.sponsorContact,
     hostName: config.host.name,
     hostAddress: config.host.address,
     hostPhone: config.host.phone
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
+  // A page can carry `updated: YYYY-MM-DD` in its front matter. The date is shown at the foot of the page.
+  if (meta.updated !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(meta.updated)) throw new Error(`${path.basename(file)}: "updated" must be a date written YYYY-MM-DD, got "${meta.updated}"`);
+  const updated = meta.updated ? `<p class="muted page-updated">Last updated: <time datetime="${meta.updated}">${meta.updated}</time></p>` : '';
   return layout(config, {
-    path: pagePath, title: meta.title, description: meta.description, body: `<div class="prose">${renderMarkdown(body, vars)}</div>`,
-    jsonLd: [{ '@type': type, name: meta.title, url: url(config, pagePath), description: meta.description, inLanguage: config.language }, breadcrumb(config, [['Home', '/'], [meta.title, pagePath]])]
+    path: pagePath, title: meta.title, description: meta.description, body: `<div class="prose">${renderMarkdown(body, vars)}${updated}</div>`,
+    jsonLd: [{ '@type': type, name: meta.title, url: url(config, pagePath), description: meta.description, inLanguage: config.language, ...(meta.updated ? { dateModified: meta.updated } : {}) }, breadcrumb(config, [['Home', '/'], [meta.title, pagePath]])]
   });
 }
 
@@ -443,23 +449,25 @@ ${hidden}
 <label for="nl-email">Email address</label>
 <input id="nl-email" name="email" type="email" disabled aria-describedby="nl-status">
 <button type="button" disabled>Subscribe</button>
-<p id="nl-status" class="notice" role="status">${icon('warn')}<span>Signup is switched off. No newsletter provider has been configured, so nothing can be submitted or sent.</span></p>
+<p id="nl-status" class="notice" role="status">${icon('warn')}<span>Signup is switched off until the publication. Nothing can be submitted or sent.</span></p>
 </form>`;
   const body = `<div class="prose">
 <h1>Newsletter</h1>
-<p class="lead">The weekly digest by email, once a provider is chosen and the list is set up.</p>
+<p class="lead">The weekly digest by email, sent through Buttondown.</p>
 ${form}
-<p>Until then, the <a href="/digest/feed.xml">Atom feed</a> carries every issue, and the <a href="/digest/">archive</a> has them all.</p>
-<h2>How signup will work</h2>
+<p>${enabled ? 'The' : 'Until the publication, the'} <a href="/digest/feed.xml">Atom feed</a> carries every issue, and the <a href="/digest/">archive</a> has them all.</p>
+<h2>How signup ${enabled ? 'works' : 'will work'}</h2>
 <ul>
 <li>One email per week with the digest. No other mailings.</li>
 <li>Double opt-in and a one-click unsubscribe link in every email.</li>
 <li>No tracking of opens or clicks.</li>
-<li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for your data.</li>
+<li>The <a href="/privacy/">privacy page</a> names the provider, says who is responsible for your data and how to reach them.</li>
 </ul>
 </div>`;
   return layout(config, {
-    path: '/newsletter/', title: 'Newsletter', description: 'Weekly email digest of what changed in AI coding tools. Signup is not open yet; the Atom feed works now.', body,
+    path: '/newsletter/', title: 'Newsletter', description: enabled
+      ? 'Weekly email digest of what changed in AI coding tools. Sign up by email, or follow the Atom feed.'
+      : 'Weekly email digest of what changed in AI coding tools. Signup is switched off until the publication; the Atom feed works now.', body,
     jsonLd: [{ '@type': 'WebPage', name: 'Newsletter', url: url(config, '/newsletter/'), description: 'Weekly email digest signup page.', inLanguage: config.language }, breadcrumb(config, [['Home', '/'], ['Newsletter', '/newsletter/']])]
   });
 }

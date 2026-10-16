@@ -1,6 +1,6 @@
 # Brand clearance
 
-This is a working note for the owner, not legal advice and not a trademark opinion. Nothing was bought, filed, reserved or created, and every check was read-only. A search by an industrial property attorney is the only way to rule out a conflict, and it is the recommended step before any filing or purchase.
+This is a working note for the owner, not legal advice and not a trademark opinion. During these checks nothing was bought, filed, reserved or created, and every check was read-only. Afterwards, on 2026-10-16, the owner bought `rulefiles.dev` at Cloudflare Registrar, with WHOIS privacy included (reported by the owner; no order or payment detail is kept here). Nothing was filed as a trademark. A search by an industrial property attorney is the only way to rule out a conflict, and it is the recommended step before any filing or purchase.
 
 The note has three parts. Part 1 is the clearance of the current name, "Rulefiles", checked on 2026-10-16 (second pass of that day, after the owner chose the name). Part 2 holds the reference material that applies to any name. Part 3 is the record of the former candidate, "Agent Diffs", kept as history.
 
@@ -23,8 +23,8 @@ What is verified: the registers and registries listed below were queried on 2026
 
 ### Recommendations
 
-1. Domain: `rulefiles.dev` is the natural choice. Porkbun lists it at 8.75 USD for the first year and 12.87 USD at renewal. `rulefiles.app` is the same price at registration and dearer at renewal (14.93 USD at Porkbun), and is only worth having to stop a copy. Do not buy `.ai` (82.70 USD a year at Porkbun) or `.io` for a project with no revenue. `rulefiles.com` is held by someone else; the owner could ask the registrar for a price, but that is a purchase decision and nothing was asked.
-2. Before buying, repeat the RDAP check the same day, and read the registrar's search result for a premium label (see "Domains").
+1. Domain: `rulefiles.dev` was the natural choice, and the owner bought it on 2026-10-16. Porkbun lists it at 8.75 USD for the first year and 12.87 USD at renewal. `rulefiles.app` is the same price at registration and dearer at renewal (14.93 USD at Porkbun), and is only worth having to stop a copy. Do not buy `.ai` (82.70 USD a year at Porkbun) or `.io` for a project with no revenue. `rulefiles.com` is held by someone else; the owner could ask the registrar for a price, but that is a purchase decision and nothing was asked.
+2. Done: the domain is bought. The RDAP and premium checks below are kept as the record of what was read before the purchase.
 3. Before any filing, a human should run the INPI search by hand and ask an attorney for a similarity search (steps in Part 2). Nice classes 41 and 42 are the likely ones. The attorney should say whether "Rulefiles" is registrable at all for a service about rule files.
 4. Claim the free handles in one sitting once the name is final: GitHub organization `rulefiles`, npm `rulefiles`, X (a variant, because `@Rulefiles` is taken), Bluesky, Buttondown. Nothing was claimed.
 5. Keep a visible gap from `thde/rulefiles` and `Rulesync` in the copy, so nobody reads the site as a fork or a rebrand of either.
@@ -276,7 +276,7 @@ Not checked: Bluesky (the lookup failed with a 400 for the handles tried), Linke
 This list was written before the owner chose "Rulefiles" on 2026-10-16. The decision is made, so nothing below is open.
 
 1. Keep "Agent Diffs". The domain `agentdiffs.dev` and the GitHub and package names look free. The risk is confusion with at least four existing "Agent Diff" or "AgentDiff" projects in the same field, and the existing X account. The professional search and a conversation with the attorney would tell how serious it is.
-2. Change the name before publication. The cost now is low, since the site is unpublished, no domain is bought and nothing is filed.
+2. Change the name before publication. When this was written on 2026-10-16, the cost was low, since the site was unpublished, no domain was bought and nothing was filed. The owner bought `rulefiles.dev` later that day, so the point is closed.
 3. Fallback already checked: "Rulefiles". On 2026-10-16: `rulefiles.dev`, `.app`, `.net` and `.ai` look unregistered, `rulefiles.com` and `.org` are registered, the npm, PyPI, crates.io and GitHub names are free, TMview returned no result for the word, and a web search found no project of that name (several tools with similar purposes, such as Rulesync and ai-rules, exist under other names). The X handle @Rulefiles belongs to a personal account. The name fits the matrix and the generator better than the weekly digest. Not searched in INPI or WIPO.
 4. "Agent Changelog" stays dropped: pages and repositories already use it (see `docs/BRAND.md`).
 

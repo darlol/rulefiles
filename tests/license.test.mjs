@@ -13,12 +13,50 @@ const root = new URL('..', import.meta.url).pathname;
 const text = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
 const TODAY = '2026-10-16';
 
-test('LICENSE is the MIT text with the year and the holder filled in', () => {
+// The MIT text as the SPDX license list gives it (https://spdx.org/licenses/MIT.html), with the year and the
+// holder filled in. Written out here so a change to LICENSE shows up as a difference in this test.
+const mitText = (year, holder) => `MIT License
+
+Copyright (c) ${year} ${holder}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`;
+const words = (s) => s.replace(/\s+/g, ' ').trim();
+const isMit = (lic) => words(lic) === words(mitText(2026, 'Rulefiles contributors'));
+
+test('LICENSE is the model MIT text, warranty clause included, with the year and the holder filled in', () => {
   const lic = text('LICENSE');
-  assert.match(lic, /^MIT License\n\nCopyright \(c\) 2026 Rulefiles contributors\n/);
-  assert.match(lic, /Permission is hereby granted, free of charge/);
+  assert.ok(isMit(lic), 'LICENSE differs from the model MIT text');
+  assert.ok(lic.includes('THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND'));
+  assert.ok(lic.includes('IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE'));
   assert.doesNotMatch(lic, /<year>|<copyright holder>|TODO/);
   assert.equal(JSON.parse(text('package.json')).license, 'MIT');
+});
+
+test('the MIT comparison fails when the warranty clause, the notice clause or the holder is changed', () => {
+  const lic = text('LICENSE');
+  const warranty = lic.slice(lic.indexOf('THE SOFTWARE IS PROVIDED'));
+  assert.equal(isMit(lic.replace(warranty, '')), false, 'warranty clause removed');
+  assert.equal(isMit(lic.replace('IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE', 'IN NO EVENT SHALL THE\nAUTHORS BE LIABLE')), false, 'liability wording changed');
+  assert.equal(isMit(lic.replace('The above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\n', '')), false, 'notice clause removed');
+  assert.equal(isMit(lic.replace('Rulefiles contributors', 'Someone else')), false, 'holder changed');
+  assert.equal(isMit(lic), true);
 });
 
 test('the CC BY 4.0 legal code is the unchanged official text, and LICENSE-DATA.md points to it', () => {
@@ -37,6 +75,7 @@ test('README and LICENSE-DATA.md state both licenses and the credit', () => {
   assert.match(readme, /Code: MIT, see \[LICENSE\]/);
   assert.match(readme, /Data and text: CC BY 4\.0, see \[LICENSE-DATA\.md\]/);
   assert.match(readme, /Suggested credit for reusing the data/);
+  assert.ok(readme.includes('By contributing, you license your contribution under the same terms: MIT for code, CC BY 4.0 for text and data.'));
 });
 
 test('matrix.json and every digest carry the license fields, with the one allowed value', () => {

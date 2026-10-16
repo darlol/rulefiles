@@ -1,11 +1,11 @@
 # Brand names and domains
 
-The first check was on 2026-10-15. The names, domains, handles, trademark databases, prices and fees were checked again on 2026-10-16, and the details are in `docs/BRAND-CLEARANCE.md`. Nothing was bought, filed or reserved.
+The first check was on 2026-10-15. The names, domains, handles, trademark databases, prices and fees were checked again on 2026-10-16, and the details are in `docs/BRAND-CLEARANCE.md`. During these checks nothing was bought, filed or reserved. The owner bought `rulefiles.dev` afterwards, on the same day.
 
 ## Where things stand
 
 - The name in use is "Rulefiles", set in `site.config.json`. The owner chose it on 2026-10-16. The clearance checks for it are in `docs/BRAND-CLEARANCE.md`.
-- The domain `rulefiles.dev` in `site.config.json` is provisional. It is not bought, and it is not known to be buyable.
+- The domain `rulefiles.dev` was bought by the owner on 2026-10-16 at Cloudflare Registrar, with WHOIS privacy included. It is the `baseUrl` in `site.config.json`.
 - Former candidate: "Agent Diffs". The owner had kept it earlier on 2026-10-16, then dropped it. The checks of that day found at least four software projects that already use "Agent Diff" or "AgentDiff" in the AI agent field, and an X account called `@agentdiffs` with a bio in the same field. The first check, which looked for the exact plural name only, did not see them. The details stay in `docs/BRAND-CLEARANCE.md` as history.
 - For the former candidate, `agentdiffs.dev`, `.app`, `.org`, `.net` and `.ai` looked unregistered on 2026-10-16, and `agentdiffs.com` was registered.
 

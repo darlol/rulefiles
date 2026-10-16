@@ -13,7 +13,6 @@ const LEGACY = [
 /** One unit of text around a placeholder: from the previous sentence end to the next one. */
 export const PLACEHOLDER_RE = new RegExp(String.raw`[^.!?\n]*(?:${[MARKER, ...LEGACY].join('|')})[^.!?\n]*[.!?]?`, 'g');
 export const MARKER_RE = /\[\[TODO-OWNER:\s*([^\]\n]*?)\s*\]\]/g;
-export const PLACEHOLDER_DOMAIN = 'https://rulefiles.dev';
 
 // Block elements end with a line break, so a heading and the sentence after it are not joined.
 const textOf = (html) => html
@@ -37,7 +36,7 @@ export const markerFields = (text) => [...String(text).matchAll(MARKER_RE)].map(
 
 /**
  * @param {{path: string, html: string}[]} pages built pages, with their site path
- * @param {{baseUrl: string}} config the site configuration
+ * @param {object} config the site configuration
  * @returns {string[]} one human-readable line per problem, without duplicates
  */
 export function launchWarnings(pages, config) {
@@ -50,6 +49,18 @@ export function launchWarnings(pages, config) {
   for (const [key, value] of strings(config)) {
     for (const hit of value.match(PLACEHOLDER_RE) || []) add(`site.config.json: ${key} still has a placeholder: "${hit.trim()}"`);
   }
-  if (config.baseUrl === PLACEHOLDER_DOMAIN) add(`site.config.json: baseUrl is the placeholder ${PLACEHOLDER_DOMAIN} (domain not bought), set SITE_URL or baseUrl once a domain is chosen`);
   return out;
+}
+
+/** The address of the released site. The strict build refuses to build for any other base URL. */
+export const RELEASE_URL = 'https://rulefiles.dev';
+
+/**
+ * Release-only check, run by the strict build and never by a preview build. A preview sets SITE_URL to its own
+ * address (a pages.dev address, for example) and is built without --strict, so it is not affected.
+ * @param {{baseUrl: string}} config the site configuration, after SITE_URL is applied
+ * @returns {string[]} one line per problem
+ */
+export function releaseProblems(config) {
+  return config.baseUrl === RELEASE_URL ? [] : [`site.config.json: baseUrl is ${JSON.stringify(config.baseUrl)}, and a release must use ${RELEASE_URL} (a preview sets SITE_URL and is built without --strict)`];
 }

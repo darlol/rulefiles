@@ -2,9 +2,9 @@
 
 A static website with two parts. The first is a weekly digest of dated, sourced changes in Cursor, Claude Code, Codex and GitHub Copilot. The second is a matrix of which agent reads which instruction file (`AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions), plus a generator for those files that runs in the browser.
 
-The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Rulefiles" is the chosen name, set in `site.config.json`. The domain `rulefiles.dev` in that file is provisional: it is not bought. The first candidate name, "Agent Diffs", was dropped on 2026-10-16.
+The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Rulefiles" is the chosen name, set in `site.config.json`. The domain `rulefiles.dev`, bought on 2026-10-16, is the `baseUrl` in that file. The first candidate name, "Agent Diffs", was dropped on 2026-10-16.
 
-Status: MVP, not published. Nothing here sends email, and no domain or hosting account has been bought or created.
+Status: MVP, not published. Nothing here sends email. The domain `rulefiles.dev` is bought and no hosting is set up yet. `npm run build:strict` passes. [docs/LAUNCH.md](docs/LAUNCH.md) lists what is still to validate before the go.
 
 ## Quick start
 
@@ -40,7 +40,9 @@ tests/                      node:test suites and fixtures
 docs/DESIGN.md              design tokens, the font, the mark and how the checks work
 docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
-docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public
+docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public, and what is still open
+docs/LAUNCH.md              launch decisions, publisher and host details, aliases, Buttondown settings, what the strict build reports
+docs/HISTORY-REWRITE.md     plan, not executed, to remove the personal email address from the commit history
 docs/NEWSLETTER.md          newsletter tools compared on vendor pages, with a recommendation
 docs/LICENSE-RECOMMENDATION.md  why MIT for the code and CC BY 4.0 for the data and text
 docs/licenses/              the license texts: MIT template and the CC BY 4.0 legal code
@@ -104,7 +106,9 @@ Release dates use the UTC date of the publication timestamp.
 - Excerpts quoted from official pages belong to their authors and are not licensed by this project. Product names and trademarks are not licensed either.
 - The font in `src/static/fonts/` is Hanken Grotesk under the SIL Open Font License 1.1.
 
-Suggested credit for reusing the data: "Rulefiles data by Rulefiles contributors, https://rulefiles.dev/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)." The domain is the provisional one.
+By contributing, you license your contribution under the same terms: MIT for code, CC BY 4.0 for text and data.
+
+Suggested credit for reusing the data: "Rulefiles data by Rulefiles contributors, https://rulefiles.dev/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)."
 
 ## Limits
 

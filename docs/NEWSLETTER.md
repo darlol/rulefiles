@@ -4,7 +4,7 @@ Checked on the vendors' own pages on 2026-10-15. The beehiiv row and everything 
 
 ## Decision
 
-The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form stays disabled: `newsletter.formAction` in `site.config.json` stays empty, so the site sends nothing and collects nothing. Nothing in this file has been executed.
+The owner retained Buttondown on 2026-10-16, with Kit as the fallback. The signup form stays disabled until the publication go: `newsletter.formAction` in `site.config.json` stays empty, so the site sends nothing and collects nothing. Nothing in this file has been executed.
 
 ## What the site needs
 
@@ -39,7 +39,7 @@ Buttondown, read on 2026-10-16:
 
 Not verified: whether Buttondown is certified under the EU-US Data Privacy Framework, whether its hosted pages (the subscribe and confirmation pages) set cookies, and which AWS region is used.
 
-Retention, read on 2026-10-16 at https://docs.buttondown.com/deleting-and-recovering-data and https://docs.buttondown.com/subscriber-cleanup: deleting a subscriber from the dashboard or by automatic cleanup removes them from the list but keeps a hidden record, so that an unsubscribed address is not added back by an import. A permanent deletion goes through the API (`DELETE /v1/subscribers/{id_or_email}`, API version 2024-09-30 or later). Permanently deleted data stays in the provider's backups for up to two days. The privacy page promises deletion within 30 days, so the routine has to use the permanent deletion.
+Retention, read on 2026-10-16 at https://docs.buttondown.com/deleting-and-recovering-data and https://docs.buttondown.com/subscriber-cleanup: deleting a subscriber from the dashboard or by automatic cleanup removes them from the list but keeps a hidden record, so that an unsubscribed address is not added back by an import. A permanent deletion goes through the API (`DELETE /v1/subscribers/{id_or_email}`, API version 2024-09-30 or later). Permanently deleted data stays in the provider's backups for up to two days. The privacy page promises deletion within 30 days after an unsubscription and within 40 days for a signup never confirmed. Only the permanent deletion keeps that promise, so a routine every 7 days has to use it, for the unsubscribed and blocked addresses and for those unconfirmed for more than 30 days.
 
 MailerLite states that its data centre is in the European Union and that it has GDPR controls (https://www.mailerlite.com/pricing). For Kit and the other tools, hosting location and data processing agreements were not checked.
 
@@ -68,14 +68,14 @@ Kit is the fallback if the list grows past 100 quickly. Its free plan goes to 10
 Not executed. Each step needs the owner, and the form stays disabled until the last one.
 
 1. Create the Buttondown account with the owner's own address, and pick the newsletter username. This creates the account, so it is the owner's act.
-2. In the newsletter settings, set the name, the description, the sender name and a reply-to address. Use the address that will go in the `privacy contact address` marker. Check what Buttondown adds to the footer of each email (sender identity and unsubscribe link), since French law requires the sender to be identifiable and to offer a way to stop receiving messages (code des postes et des communications électroniques, article L34-5).
+2. In the newsletter settings, set the name, the description, the sender name and a reply-to address. Use `privacy@rulefiles.dev`, the address on the privacy page. Check what Buttondown adds to the footer of each email (sender identity and unsubscribe link), since French law requires the sender to be identifiable and to offer a way to stop receiving messages (code des postes et des communications électroniques, article L34-5).
 3. Leave double opt-in on, which is the default. Do not ask for an exception.
 4. Opens and clicks are not tracked (decided on 2026-10-16, and stated on the privacy page). In the email settings, check that click tracking and open tracking are both off, and that the UTM add-on is off. Check that the web analytics add-on of the archive settings is off too. See `docs/LAUNCH.md` for the sources.
 5. Check the data processing terms and the sub-processor list in the account, then record the date. Check whether the hosted subscribe and confirmation pages set cookies, since the site claims none for itself and the privacy page says the confirmation page is Buttondown's.
 6. Send a test: subscribe an address the owner controls, confirm it, read the confirmation email, unsubscribe, export the list to CSV, then delete the test subscriber.
 7. If the sending domain is custom, add the DNS records Buttondown asks for (SPF, DKIM, DMARC) once the domain exists.
 8. Optional: create an API key under the API section of the settings and store it as a repository secret. Check on the account that the API works on the free plan before relying on it. The weekly draft script does not exist yet.
-9. Fill the last newsletter marker in `content/privacy.md` (the data controller's name), listed in `docs/LAUNCH-BLOCKERS.md`. Retention is decided: 30 days. Set up the deletion routine in `docs/LAUNCH.md`.
+9. The owner is named on the privacy page as the person responsible for the newsletter data and its publisher, by name only, with `privacy@rulefiles.dev` as the contact. Retention is decided: 30 days after an unsubscription, 40 days for an unconfirmed signup, with a deletion routine every 7 days. Set up the deletion routine in `docs/LAUNCH.md`.
 10. Last, enable the form (next section) and build with `npm run build:strict`.
 
 ## Enabling the form on the site
@@ -92,7 +92,7 @@ Buttondown documents an HTML form endpoint that accepts a plain form post (https
 }
 ```
 
-The `embed` field and the exact endpoint come from a search summary of Buttondown's documentation and were not seen in the fetched page text, so check them on the account's embed settings page. The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing.
+The `embed` field and the exact endpoint come from a search summary of Buttondown's documentation and were not seen in the fetched page text, so check them on the account's embed settings page. The build adds the form's origin to the `form-action` directive of the Content-Security-Policy header by itself. Set the value in `site.config.json`, or with `NEWSLETTER_FORM_ACTION` at build time, as described in `docs/OPERATIONS.md`. Left empty, the form stays disabled and the site sends nothing. Once the address is set, the newsletter page and the first sentence of the newsletter section on the privacy page stop saying that signup is off; update the `updated` date in `content/privacy.md` in the same pull request.
 
 ## Still not verified
 

@@ -5,12 +5,12 @@ import { ROOT, writeFile, todayIso } from './lib/util.mjs';
 import { loadData, publishedDigests } from './lib/data.mjs';
 import { validateConfig, validateMatrix, validateDigest } from './lib/validate.mjs';
 import * as r from './lib/render.mjs';
-import { launchWarnings } from './lib/placeholders.mjs';
+import { launchWarnings, releaseProblems } from './lib/placeholders.mjs';
 import { renderOgImage } from './lib/ogimage.mjs';
 
 /**
  * @param {{root?: string, outDir?: string, quiet?: boolean, strict?: boolean}} options
- *   strict makes the build throw, and removes outDir, while any launch placeholder remains.
+ *   strict makes the build throw, and removes outDir, while any launch placeholder remains or the base URL is not the release address.
  */
 export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = false, strict = false } = {}) {
   const data = loadData(root);
@@ -63,9 +63,10 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   for (const f of ['generator-core.js', 'matrix-filter.js']) fs.copyFileSync(path.join(root, 'src', 'js', f), path.join(outDir, 'assets', f));
 
   const warnings = launchWarnings(built, ctx.config);
-  if (strict && warnings.length) {
+  const problems = strict ? [...warnings, ...releaseProblems(ctx.config)] : [];
+  if (problems.length) {
     fs.rmSync(outDir, { recursive: true, force: true });
-    throw new Error(`Strict build failed: ${warnings.length} launch placeholder(s) remain. See docs/LAUNCH-BLOCKERS.md.\n` + warnings.map((w) => `- ${w}`).join('\n'));
+    throw new Error(`Strict build failed: ${problems.length} launch problem(s) remain. See docs/LAUNCH-BLOCKERS.md.\n` + problems.map((w) => `- ${w}`).join('\n'));
   }
   if (!quiet) {
     for (const w of warnings) console.warn(`LAUNCH WARNING: ${w}`);

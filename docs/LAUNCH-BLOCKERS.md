@@ -2,7 +2,9 @@
 
 The site must not go public until each item below is settled. Several were decided on 2026-10-16 and are recorded under their item, with what is still open. Nothing in the repository decides an open item in the owner's place. This is a list of decisions. It is not legal advice, and items 1, 2 and 3 should be confirmed with a legal adviser.
 
-Every field that only the owner can supply is marked in the copy as `[[TODO-OWNER: field]]`. `npm run build` prints a `LAUNCH WARNING` line for every marker still on a page, for older placeholder sentences such as "will be named here", and for the placeholder domain. The warnings do not stop that build. `npm run build:strict` (or `RULEFILES_STRICT=1`) makes the build fail, and removes `dist/`, while any of them remains. The release build uses strict mode. The list of markers is under "Fields to fill in" below, and a test keeps it in step with the files.
+The points still open for a lawyer are listed in `docs/LAUNCH.md`, under "To validate with an adviser". They should be confirmed before the publication go. They do not stop the build or the deploy, and no test fails on them. Whether they hold back the go itself is the owner's decision. The working assumption is that the site can go out with them open, and that choice is the owner's to confirm.
+
+Every field that only the owner can supply is marked in the copy as `[[TODO-OWNER: field]]`. `npm run build` prints a `LAUNCH WARNING` line for every marker still on a page and for older placeholder sentences such as "will be named here". The warnings do not stop that build. `npm run build:strict` (or `RULEFILES_STRICT=1`) makes the build fail, and removes `dist/`, while any of them remains. The release build uses strict mode. The list of markers is under "Fields to fill in" below, and a test keeps it in step with the files.
 
 ## 1. License for the code and the data
 
@@ -15,7 +17,7 @@ Still open:
 
 ## 2. Publisher identity, legal notice and GDPR (France)
 
-Decided on 2026-10-16: version 1 is a non-professional publication, with no income at opening. The publisher stays anonymous, as article 1-1, II of loi n° 2004-575 du 21 juin 2004 allows. The legal notice (`content/legal.md`) names no person and gives the host's name, address and phone number (item 3). The full text of the article, the duty to give the host the publisher's real identity, and the steps for a switch to a professional status are in `docs/LAUNCH.md`.
+Decided on 2026-10-16: version 1 is a non-professional publication, with no income at opening. The publisher gives only the host's details for the site, as article 1-1, II of loi n° 2004-575 du 21 juin 2004 allows. The legal notice (`content/legal.md`) names the owner, by name only, as publisher of the site and of the newsletter, publishes no postal address, and gives the host's name, address and phone number (item 3). The full text of the article, the duty to give the host the publisher's real identity, and the steps for a switch to a professional status are in `docs/LAUNCH.md`.
 
 About the numbering: the rule was article 6, III, 2 of the same law until the law of 21 May 2024 (n° 2024-449) moved it to article 1-1, II, in force since 23 May 2024. The consolidated text on Légifrance, "en vigueur au 16/10/2026", has it at article 1-1. The pages cite article 1-1.
 
@@ -28,7 +30,7 @@ What the texts rest on, read on 2026-10-16:
 
 Still open:
 
-- The name of the data controller, marker `[[TODO-OWNER: data controller name]]` in `content/privacy.md`. The GDPR asks for the controller's identity and contact details in the information given to subscribers. A named controller and an anonymous publisher do not sit well together, so the adviser should say how to do both.
+- The data controller. Decided on 2026-10-16: the owner, by name only and with no postal address, is the person responsible for the newsletter data and its publisher, with `privacy@rulefiles.dev` as the only contact. The name is on the privacy page and the legal notice. The legal notice names the same person as publisher of the site and shows the host. A lawyer should say whether article 1-1, II and III still fit with a name published and no postal address, and whether the owner, who is named as controller of the contact messages and the logs, is the right controller for the host's request logs (see `docs/LAUNCH.md`, "To validate with an adviser").
 - Whether a site with a newsletter and a sponsorship plan counts as non-professional. The sponsorship page says it is not open, and nothing is sold at opening.
 
 ## 3. Host
@@ -39,15 +41,15 @@ Still open: Cloudflare's website terms say its network services are "pass-throug
 
 ## 4. Name, domain and trademark
 
-Open: the domain and the trademark checks. The owner chose "Rulefiles" on 2026-10-16, after the first candidate, "Agent Diffs", turned out to collide with existing projects (see `docs/BRAND-CLEARANCE.md`). The clearance of "Rulefiles" is in the same document. The INPI database could not be searched automatically, so the manual INPI search there is still to do, and an industrial property attorney should run a similarity search before any filing. Nothing is bought, filed or reserved. The domain `rulefiles.dev` in `site.config.json` is a provisional value: it is not bought and is not known to be buyable. After the choice, set `baseUrl` in `site.config.json` (or `SITE_URL` at build time). The placeholder `https://rulefiles.dev` triggers a build warning.
+Domain bought on 2026-10-16, trademark checks open. The owner chose "Rulefiles" on 2026-10-16, after the first candidate, "Agent Diffs", turned out to collide with existing projects (see `docs/BRAND-CLEARANCE.md`). The clearance of "Rulefiles" is in the same document. The INPI database could not be searched automatically, so the manual INPI search there is still to do, and an industrial property attorney should run a similarity search before any filing. Nothing is bought, filed or reserved. The owner reports that `rulefiles.dev` was bought on 2026-10-16 at Cloudflare Registrar, with WHOIS privacy included. `baseUrl` in `site.config.json` is `https://rulefiles.dev`, and the build no longer treats it as a placeholder. Still open: the trademark checks above.
 
 ## 5. Contact addresses
 
-Decided on 2026-10-16: three public role addresses on the provisional domain, set in `site.config.json`: `contact@rulefiles.dev` (general contact, corrections, right of reply), `privacy@rulefiles.dev` (personal data) and `sponsors@rulefiles.dev` (sponsorship). They are aliases that do not exist yet. They are to be set up with Cloudflare Email Routing after the domain is bought, see `docs/LAUNCH.md`. If the domain changes, the three values change with it.
+Decided on 2026-10-16: three public role addresses on `rulefiles.dev`, set in `site.config.json`: `contact@rulefiles.dev` (general contact, corrections, right of reply), `privacy@rulefiles.dev` (personal data) and `sponsors@rulefiles.dev` (sponsorship). They are aliases. The owner reports that Cloudflare Email Routing forwards them since 2026-10-16, see `docs/LAUNCH.md`. Send a test message to each before publication. If the domain changes, the three values change with it.
 
 ## 6. Newsletter list
 
-Decided on 2026-10-16: Buttondown, with Kit as the fallback, and the form stays disabled. No tracking of opens or clicks. Subscriber data is deleted within 30 days of an unsubscription or a request, unless the law requires otherwise. `docs/NEWSLETTER.md` has the setup steps for the day the owner gives the publication go, none of them executed, and `docs/LAUNCH.md` lists the Buttondown settings to check before opening. Still open: the data controller's name (a marker in `content/privacy.md`), the data processing terms accepted in the account, and then the form address (`NEWSLETTER_FORM_ACTION`). If the provider changes, `content/privacy.md` has to change with it, since it names Buttondown. Until the form is on, the site sends nothing.
+Decided on 2026-10-16: Buttondown, with Kit as the fallback, and the form stays disabled until the publication go. No tracking of opens or clicks. Subscriber data is deleted within 30 days of an unsubscription or a request, and within 40 days for a signup never confirmed, unless the law requires otherwise. A routine every 7 days does the permanent deletion through the Buttondown API. `docs/NEWSLETTER.md` has the setup steps for the day the owner gives the publication go, none of them executed, and `docs/LAUNCH.md` lists the Buttondown settings to check before opening. The owner reports that the free Buttondown account `rulefiles` exists (newsletter "Rulefiles", nothing published and nothing sent). The owner is the controller and the newsletter publisher, named on the privacy page and the legal notice. Still open: the data processing terms accepted in the account, and then the form address (`NEWSLETTER_FORM_ACTION`). If the provider changes, `content/privacy.md` has to change with it, since it names Buttondown. Until the form is on, the site sends nothing.
 
 ## 7. Sponsorship
 
@@ -63,8 +65,4 @@ Before launch: re-read the cited official pages for every matrix cell, update `v
 
 ## Fields to fill in
 
-Each line is one marker, the file that holds it, and the item above it belongs to. Replace the whole `[[TODO-OWNER: ...]]` text with the real value. A test compares this list with the markers in `content/`, `scripts/lib/render.mjs` and `site.config.json`.
-
-- `[[TODO-OWNER: data controller name]]` in `content/privacy.md`, item 2.
-
-The placeholder domain is not a marker. The build reports `baseUrl` while it is still `https://rulefiles.dev`, the provisional domain that is not bought, item 4.
+None. No `[[TODO-OWNER: ...]]` marker is left in the sources, and `npm run build:strict` passes. A test compares this section with the markers in `content/`, `scripts/lib/render.mjs` and `site.config.json`. To add a marker on purpose, list it here as a line of the form ``- `[[TODO-OWNER: field]]` in `file`, item N.``, and add it to the expected list in `tests/launch.test.mjs`.

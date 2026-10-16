@@ -54,7 +54,7 @@ test('launchWarnings reports markers in pages and in the configuration, once eac
   assert.ok(w.some((l) => l.startsWith('site.config.json: newsletter.hiddenFields.a')), w.join('\n'));
   assert.equal(w.length, 3);
   assert.deepEqual(launchWarnings([{ path: '/x/', html: '<p>Done.</p>' }], cfg), []);
-  assert.equal(launchWarnings([], { baseUrl: 'https://rulefiles.dev' }).length, 1);
+  assert.deepEqual(launchWarnings([], { baseUrl: 'https://rulefiles.dev' }), [], 'the domain is bought, so baseUrl is not a launch warning');
 });
 
 /** A copy of the project inputs in a temporary folder, so a test can edit them. */
@@ -64,40 +64,39 @@ function scratchProject() {
   fs.copyFileSync(path.join(root, 'site.config.json'), path.join(dir, 'site.config.json'));
   return dir;
 }
+const addMarker = (dir) => fs.appendFileSync(path.join(dir, 'content', 'about.md'), '\nOwner: [[TODO-OWNER: test field]].\n');
 const fillMarkers = (dir) => {
   for (const f of fs.readdirSync(path.join(dir, 'content'))) {
     const p = path.join(dir, 'content', f);
     fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/\[\[TODO-OWNER:[^\]]*\]\]/g, 'filled in'));
   }
-  const cfgPath = path.join(dir, 'site.config.json');
-  const c = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-  c.baseUrl = 'https://real.example';
-  c.sponsorContact = 'sponsors@real.example';
-  fs.writeFileSync(cfgPath, JSON.stringify(c, null, 2));
 };
 
 test('strict build fails and leaves no dist while markers remain, the normal build only warns', () => {
   process.env.BUILD_DATE = '2026-10-16';
   const dir = scratchProject();
   try {
+    addMarker(dir);
     const outDir = path.join(dir, 'dist');
     const normal = build({ root: dir, outDir, quiet: true });
     assert.ok(normal.warnings.length > 0);
     assert.ok(fs.existsSync(path.join(outDir, 'index.html')));
     assert.throws(() => build({ root: dir, outDir, quiet: true, strict: true }), (e) => {
-      assert.match(e.message, /Strict build failed: \d+ launch placeholder\(s\) remain/);
-      assert.match(e.message, /TODO-OWNER: data controller name/);
-      assert.match(e.message, /placeholder https:\/\/rulefiles\.dev/);
+      assert.match(e.message, /Strict build failed: \d+ launch problem\(s\) remain/);
+      assert.match(e.message, /TODO-OWNER: test field/);
+      assert.doesNotMatch(e.message, /baseUrl/);
       return true;
     });
     assert.equal(fs.existsSync(outDir), false, 'dist is removed so a failed release cannot be deployed');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('strict build succeeds once every marker, the placeholder domain and the sponsor contact are filled', () => {
+test('strict build succeeds on the project as it is, and once a marker that was added is filled', () => {
   process.env.BUILD_DATE = '2026-10-16';
   const dir = scratchProject();
   try {
+    assert.deepEqual(build({ root: dir, outDir: path.join(dir, 'dist0'), quiet: true, strict: true }).warnings, []);
+    addMarker(dir);
     fillMarkers(dir);
     const outDir = path.join(dir, 'dist');
     const r = build({ root: dir, outDir, quiet: true, strict: true });
@@ -123,6 +122,7 @@ test('the command line honours --strict and RULEFILES_STRICT, and the default ru
     const run = (args, env = {}) => spawnSync(process.execPath, [path.join(dir, 'scripts', 'build.mjs'), ...args], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, BUILD_DATE: '2026-10-16', SITE_URL: '', RULEFILES_STRICT: '', ...env }
     });
+    addMarker(dir);
     const plain = run([]);
     assert.equal(plain.status, 0, plain.stderr);
     assert.match(plain.stderr, /LAUNCH WARNING/);
@@ -146,6 +146,5 @@ test('every marker in the sources is listed in docs/LAUNCH-BLOCKERS.md, and ever
   const inSources = new Set(sources.flatMap((f) => markerFields(fs.readFileSync(path.join(root, f), 'utf8'))));
   const doc = fs.readFileSync(path.join(root, 'docs', 'LAUNCH-BLOCKERS.md'), 'utf8');
   const listed = new Set([...doc.matchAll(/^- `\[\[TODO-OWNER: ([^\]]+)\]\]`/gm)].map((m) => m[1]));
-  assert.ok(inSources.size >= 1);
   assert.deepEqual([...inSources].sort(), [...listed].sort());
 });
