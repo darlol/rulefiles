@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseRss, parseGithubReleases, firstSentence, contentLines, entryDate, groupDrafts } from '../scripts/lib/parsers.mjs';
 import { createFetcher, RobotsError, HARD_MAX_BYTES } from '../scripts/lib/fetcher.mjs';
-import { run, skippedSummary } from '../scripts/watch.mjs';
+import { spawnSync } from 'node:child_process';
+import { run, skippedSummary, skippedNotice, writeSkippedNotice } from '../scripts/watch.mjs';
 import { validateDigest, validateWatchSources } from '../scripts/lib/validate.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 
@@ -526,4 +527,46 @@ test('entry dates: a link two days away is ignored, a link one day ahead wins, l
   // Month and year boundaries.
   assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-31-x'), '2026-12-31');
   assert.equal(entryDate(at('Fri, 01 Jan 2027 01:00:00 GMT'), 'https://github.blog/changelog/2026-12-30-x'), '2027-01-01');
+});
+
+test('watch: the pull request notice is one visible line with each skipped source and its reason', () => {
+  assert.equal(skippedNotice([]), '');
+  assert.equal(skippedNotice([{ id: 'a', reason: 'too big' }, { id: 'b', reason: 'HTTP 500\nsecond line' }]), '⚠ Sources skipped: a (too big); b (HTTP 500 second line)');
+});
+
+test('watch: the notice file is written when a source is skipped and removed when none is', () => {
+  const dir = tmp();
+  const file = path.join(dir, 'cache', 'skipped-sources.txt');
+  writeSkippedNotice(file, [{ id: 'codex-releases', reason: 'larger than 5000000 bytes' }]);
+  assert.equal(fs.readFileSync(file, 'utf8'), '⚠ Sources skipped: codex-releases (larger than 5000000 bytes)\n');
+  writeSkippedNotice(file, []);
+  assert.ok(!fs.existsSync(file), 'an old notice does not stay after a clean run');
+  writeSkippedNotice(file, []);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('watch CLI: a skipped source writes the notice and keeps exit 0, a clean run removes it, four skips with nothing listed still exit 3', () => {
+  const dir = tmp();
+  const notice = path.join(dir, 'skipped-sources.txt');
+  const fixtures = path.join(dir, 'fixtures');
+  fs.mkdirSync(fixtures);
+  const mk = (n) => ({ sources: Array.from({ length: n }, (_, i) => ({ ...src('cursor-changelog'), id: `s${i}` })) });
+  const cli = (srcs, extra = []) => {
+    const f = path.join(dir, 'sources.json');
+    fs.writeFileSync(f, JSON.stringify(srcs));
+    return spawnSync(process.execPath, [path.join(FIX, '..', '..', 'scripts', 'watch.mjs'), '--offline', fixtures, '--sources', f, '--out', path.join(dir, 'out'), '--no-state', '--today', '2026-10-15', '--since', '2026-10-01', ...extra], { encoding: 'utf8', env: { ...process.env, WATCH_SKIPPED_FILE: notice } });
+  };
+  fs.writeFileSync(path.join(fixtures, 's0.xml'), fx('cursor-changelog.xml'));
+  const partial = cli(mk(2));
+  assert.equal(partial.status, 0, partial.stderr);
+  assert.match(fs.readFileSync(notice, 'utf8'), /^⚠ Sources skipped: s1 \(fixture .*s1\.xml not found\)\n$/);
+  fs.writeFileSync(path.join(fixtures, 's1.xml'), fx('cursor-changelog.xml'));
+  assert.equal(cli(mk(2)).status, 0);
+  assert.ok(!fs.existsSync(notice), 'the clean run removed the notice');
+  fs.rmSync(path.join(fixtures, 's0.xml'));
+  fs.rmSync(path.join(fixtures, 's1.xml'));
+  const four = cli(mk(4));
+  assert.equal(four.status, 3);
+  assert.match(fs.readFileSync(notice, 'utf8'), /^⚠ Sources skipped: s0 \(.*\); s1 \(.*\); s2 \(.*\); s3 \(/);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

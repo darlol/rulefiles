@@ -102,10 +102,27 @@ export function skippedSummary(skipped, sourceCount) {
   return `WARNING: ${skipped.length} of ${sourceCount} source(s) skipped: ${skipped.map((s) => `${s.id} (${s.reason})`).join('; ')}`;
 }
 
+/**
+ * The line for the top of the draft pull request body: a skip is otherwise only in the run log, which nobody
+ * reads on a green run. The reasons are error messages, so any line break is flattened to keep it one line.
+ */
+export function skippedNotice(skipped) {
+  if (!skipped.length) return '';
+  return `⚠ Sources skipped: ${skipped.map((s) => `${s.id} (${String(s.reason).replace(/\s+/g, ' ').trim()})`).join('; ')}`;
+}
+
+/** scripts/open-watch-pr.sh reads this file. It is written on every run, and removed when nothing was skipped, so an old notice never stays. */
+export function writeSkippedNotice(file, skipped) {
+  const notice = skippedNotice(skipped);
+  if (notice) writeFile(file, notice + '\n');
+  else fs.rmSync(file, { force: true });
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
     const res = await run(process.argv.slice(2));
     const summary = skippedSummary(res.skipped, res.sourceCount);
+    writeSkippedNotice(process.env.WATCH_SKIPPED_FILE || path.join(ROOT, '.cache', 'watch', 'skipped-sources.txt'), res.skipped);
     if (summary) {
       console.error(summary);
       if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Watch source skipped::${summary.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
