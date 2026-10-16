@@ -4,7 +4,7 @@ A static website with two parts. The first is a weekly digest of dated, sourced 
 
 The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Rulefiles" is the chosen name, set in `site.config.json`. The domain `rulefiles.dev`, bought on 2026-10-16, is the `baseUrl` in that file. The first candidate name, "Agent Diffs", was dropped on 2026-10-16.
 
-Status: MVP, not published. Nothing here sends email. The domain `rulefiles.dev` is bought and no hosting is set up yet. `npm run build:strict` passes. [docs/LAUNCH.md](docs/LAUNCH.md) lists what is still to validate before the go.
+Status: online at `https://rulefiles.dev` on Cloudflare Pages since 2026-10-16. The newsletter signup form posts to Buttondown. The site itself sends no email, and no issue has been sent yet. `npm run build:strict` passes. [docs/LAUNCH.md](docs/LAUNCH.md) lists what is still to validate.
 
 ## Quick start
 
