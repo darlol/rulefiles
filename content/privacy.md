@@ -19,12 +19,12 @@ The company that hosts the site may log requests, including IP addresses, as any
 
 {{newsletterIntro}}
 
-- What we collect. The email address you type. Our provider also records the IP address and referrer-level details of your signup.
+- What we collect. The email address you type. {{nlRecords}}
 - Why. To send you the weekly digest of changes in AI coding tools. We do not use the address for anything else, we do not sell it and we do not share it, other than with the provider below and the sub-processors it lists.
 - Legal basis. Your consent (GDPR, article 6(1)(a)). You give it by submitting the form and confirming through the link in the first email, which is a double opt-in. You get nothing before you confirm.
-- Withdrawing. Every email carries an unsubscribe link. You can also write to {{privacyEmail}}. Withdrawing does not affect what was done before.
-- Provider. Buttondown, LLC, in the United States, sends the emails and stores the list on our behalf. Its [data processing agreement](https://buttondown.com/legal/data-processing-agreement) uses the European Commission's Standard Contractual Clauses for transfers from the European Economic Area, and its [sub-processors](https://buttondown.com/legal/subprocessors) are listed on its site. The signup and confirmation pages are hosted by Buttondown, and its own policies apply to them.
-- Opens and clicks. We do not track them. Our emails carry no tracking pixel, and the links to other pages are not rewritten.
+- Withdrawing. {{nlCarries}} You can also write to {{privacyEmail}}. Withdrawing does not affect what was done before.
+- Provider. Buttondown, LLC, in the United States, {{nlProviderRole}}. Its [data processing agreement](https://buttondown.com/legal/data-processing-agreement) uses the European Commission's Standard Contractual Clauses for transfers from the European Economic Area, and its [sub-processors](https://buttondown.com/legal/subprocessors) are listed on its site. {{nlHostedPages}}
+- Opens and clicks. We do not track them. {{nlNoTracking}}
 - How long. We keep your address for as long as you stay subscribed. When you unsubscribe, or earlier if you ask us, we delete your data within 30 days, unless the law requires us to keep it. If you sign up and never confirm, we delete the address within 40 days. Deleting means removing the record from the provider's database, not only hiding it. Copies in the provider's backups expire on its own schedule, which its [documentation](https://docs.buttondown.com/deleting-and-recovering-data) gives as up to two days.
 
 ## Messages you send us

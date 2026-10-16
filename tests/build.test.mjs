@@ -18,6 +18,11 @@ delete process.env.NEWSLETTER_FORM_ACTION;
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist-'));
 // The default build follows site.config.json. The wording about the data depends on whether the form address is set,
 // so the tests that read it expect the word of the branch that is built. Both branches are tested in the newsletter test.
+// The statements of fact about the newsletter on the privacy page: future while the form is closed, present once it is open.
+const NL_TEXT = {
+  off: ['Once the signup is open, our provider will also record the IP address and referrer-level details of each signup.', 'Every email will carry an unsubscribe link.', 'will send the emails and store the list on our behalf.', 'The signup and confirmation pages will be hosted by Buttondown, and its own policies will apply to them.', 'Our emails will carry no tracking pixel, and the links to other pages will not be rewritten.'],
+  on: ['Our provider also records the IP address and referrer-level details of your signup.', 'Every email carries an unsubscribe link.', 'sends the emails and stores the list on our behalf.', 'The signup and confirmation pages are hosted by Buttondown, and its own policies apply to them.', 'Our emails carry no tracking pixel, and the links to other pages are not rewritten.']
+};
 const DATA_WORD = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).newsletter.formAction ? 'collected' : 'planned';
 const read = (rel) => fs.readFileSync(path.join(out, rel), 'utf8');
 const unescapeAttr = (s) => s.replace(/&#39;/g, "'");
@@ -221,6 +226,8 @@ test('newsletter form is disabled without a provider and enabled with one', () =
   assert.match(html, /name="description" content="Weekly email digest of what changed in AI coding tools\. Signup is switched off until the publication; the Atom feed works now\."/);
   assert.ok(textOf('index.html').replace(/\s+([).,])/g, '$1').includes('A weekly email with the digest is planned. Signup status. The Atom feed works today.'));
   assert.ok(textOf('legal/index.html').includes('The personal data planned is the email address of people who subscribe'));
+  for (const s of NL_TEXT.off) assert.ok(textOf('privacy/index.html').includes(s), `closed: ${s}`);
+  for (const s of NL_TEXT.on) assert.equal(textOf('privacy/index.html').includes(s), false, `closed, not present: ${s}`);
   assert.ok(textOf('privacy/index.html').includes('The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.'));
   const out2 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist2-'));
   process.env.NEWSLETTER_FORM_ACTION = 'https://news.example.com/subscribe';
@@ -238,6 +245,9 @@ test('newsletter form is disabled without a provider and enabled with one', () =
     const privOn = fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     assert.ok(privOn.includes('This section describes what applies when you subscribe.'));
     assert.doesNotMatch(privOn, /switched off/);
+    for (const s of NL_TEXT.on) assert.ok(privOn.includes(s), `open: ${s}`);
+    for (const s of NL_TEXT.off) assert.equal(privOn.includes(s), false, `open, not future: ${s}`);
+    assert.doesNotMatch(privOn, /\bwill (also )?(record|send|carry|be hosted|apply)\b/);
     const flat = (f) => fs.readFileSync(path.join(out2, f), 'utf8').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/\s+([).,])/g, '$1');
     assert.ok(flat('index.html').includes('A weekly email with the digest is open for signup. Subscribe. The Atom feed carries the same issues.'));
     assert.doesNotMatch(flat('index.html'), /is planned|Signup status/);
@@ -415,7 +425,9 @@ test('the privacy page covers controller, basis, provider, tracking, retention, 
   for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies', 'The host is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.']) {
     assert.ok(text.includes(needle), needle);
   }
-  assert.ok(text.includes('We do not track them. Our emails carry no tracking pixel, and the links to other pages are not rewritten.'));
+  for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'on' : 'off']) assert.ok(text.includes(s), s);
+  for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'off' : 'on']) assert.equal(text.includes(s), false, `the other branch is not shown: ${s}`);
+  assert.ok(text.includes('We do not track them.'));
   assert.ok(text.includes('other than with the provider below and the sub-processors it lists.'));
   assert.ok(text.includes('we delete your data within 30 days, unless the law requires us to keep it'));
   assert.ok(text.includes('If you sign up and never confirm, we delete the address within 40 days. Deleting means removing the record from the provider\'s database, not only hiding it.'));

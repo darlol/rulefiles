@@ -162,6 +162,7 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(launch.includes('3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan.'));
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
+  assert.ok(launch.includes('which say "will" while the form is closed'));
   assert.ok(launch.includes('the callout on the home page') && launch.includes('`{{dataStatus}}`'));
   assert.ok(launch.includes('Treat any income as a trigger: switch to the full notice (next section) before the first sponsor is booked, paid or invoiced, and before any affiliate link, advertising or paid plan goes live.'));
   assert.ok(launch.includes('Article 1-1 does not define the term.'));
