@@ -44,6 +44,7 @@ function render() {
   out.replaceChildren();
   if (!files.length) {
     const p = document.createElement('p');
+    p.className = 'muted';
     p.textContent = 'Select at least one file to generate.';
     out.append(p);
     return;
@@ -62,8 +63,10 @@ function render() {
     pre.tabIndex = 0;
     pre.textContent = f.content;
     const actions = document.createElement('p');
+    actions.className = 'gen-actions';
     const copy = document.createElement('button');
     copy.type = 'button';
+    copy.className = 'btn btn-primary';
     copy.textContent = 'Copy';
     copy.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(f.content); copy.textContent = 'Copied'; }
@@ -83,7 +86,7 @@ function render() {
       a.remove();
       URL.revokeObjectURL(a.href);
     });
-    actions.append(copy, ' ', dl);
+    actions.append(copy, dl);
     section.append(h, note, pre, actions);
     out.append(section);
   }

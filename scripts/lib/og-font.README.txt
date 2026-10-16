@@ -1,0 +1,5 @@
+og-font.json: outlines of Hanken Grotesk at weight 720 (ASCII plus a few punctuation marks), as quadratic paths in font units.
+Copyright 2021 The Hanken Grotesk Project Authors (https://github.com/marcologous/hanken-grotesk)
+Licensed under the SIL Open Font License 1.1, see src/static/fonts/OFL.txt.
+Used only by scripts/lib/ogimage.mjs to draw text into og.png without a dependency or a system font.
+Rebuilt with fonttools: instantiate wght=720, read each glyph with a recording pen, write M/L/Q/Z paths.

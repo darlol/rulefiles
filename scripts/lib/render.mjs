@@ -20,6 +20,10 @@ const STATUS_HELP = {
   'not-read': 'The official page says the tool does not read this file.',
   unverified: 'We could not confirm this on the cited official page on the date shown.'
 };
+/** Status badge: colour, icon and text together, so the status never depends on colour alone. */
+export function statusBadge(status) {
+  return `<span class="badge badge-${status}">${icon(status)}${h(STATUS_LABEL[status])}</span>`;
+}
 export const TOOL_NAME = { cursor: 'Cursor', 'claude-code': 'Claude Code', codex: 'Codex', 'github-copilot': 'GitHub Copilot' };
 
 /** Escapes text for HTML, then turns `code` spans into <code>. The escaping runs first, so no markup can get through. */
@@ -38,12 +42,40 @@ function csp(config) {
     "script-src 'self'",
     "style-src 'self'",
     "img-src 'self'",
+    "font-src 'self'",
     "connect-src 'none'",
     "base-uri 'none'",
     `form-action ${formAction}`
   ].join('; ');
 }
 export const cspFor = csp;
+
+
+const ICON_PATHS = {
+  reads: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  'reads-conditionally': '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
+  configurable: '<path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/>',
+  'migration-only': '<path d="M4 12h11M11 7l5 5-5 5M20 5v14"/>',
+  'not-read': '<path d="M6 6l12 12M18 6L6 18"/>',
+  unverified: '<circle cx="12" cy="12" r="8.5" stroke-dasharray="3 3"/><path d="M9.7 9.6a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.1.9-1.1 1.7M12 17h.01"/>',
+  external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'
+};
+
+/** Inline SVG icon that points at the sprite. layout() adds the sprite to any page whose body uses an icon. */
+export function icon(name) {
+  return `<svg class="ic" aria-hidden="true" focusable="false"><use href="#ic-${name}"/></svg>`;
+}
+
+function iconSprite() {
+  return `<svg class="sprite" aria-hidden="true" focusable="false">${Object.entries(ICON_PATHS).map(([k, v]) => `<symbol id="ic-${k}" viewBox="0 0 24 24">${v}</symbol>`).join('')}</svg>`;
+}
+
+/** The site mark: a page with one highlighted line. It carries no text, so it survives a rename. */
+const MARK = '<svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
+
+export const THEME_COLOR = { light: '#f5f6fa', dark: '#0d1018' };
 
 export function layout(config, page) {
   const canonical = url(config, page.path);
@@ -67,25 +99,45 @@ ${page.noindex ? '<meta name="robots" content="noindex">\n' : `<link rel="canoni
 ${page.noindex ? '' : `<meta property="og:url" content="${h(canonical)}">\n`}<meta property="og:image" content="${h(image)}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="${h(config.name)} logo">
+<meta property="og:image:alt" content="${h(`${config.name}: ${HERO_TITLE}`)}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="${THEME_COLOR.light}" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="${THEME_COLOR.dark}" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/atom+xml" title="${h(config.name)} digest" href="/digest/feed.xml">
 <link rel="stylesheet" href="/assets/style.css">
 ${ld}
 </head>
 <body>
-<a class="skip" href="#main">Skip to content</a>
+${page.body.includes('href="#ic-') ? iconSprite() + '\n' : ''}<a class="skip" href="#main">Skip to content</a>
 <header class="site-header"><div class="wrap">
-<a class="brand" href="/">${h(config.name)}</a>
+<a class="brand" href="/">${MARK}<span>${h(config.name)}</span></a>
 <nav aria-label="Main">${nav}</nav>
 </div></header>
 <main id="main" class="wrap">
 ${page.body}
 </main>
-<footer class="site-footer"><div class="wrap">
+<footer class="site-footer"><div class="wrap footer-grid">
+<div class="footer-brand">
+<a class="brand" href="/">${MARK}<span>${h(config.name)}</span></a>
 <p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies, no trackers.</p>
-<p><a href="/digest/feed.xml">Atom feed</a> · <a href="/llms.txt">llms.txt</a> · <a href="/data/matrix.json">matrix.json</a> · <a href="/sponsors/">Sponsors</a> · <a href="/privacy/">Privacy</a> · <a href="/legal/">Legal notice</a></p>
+</div>
+<nav aria-label="Explore"><h2>Explore</h2><ul>
+<li><a href="/matrix/">Matrix</a></li>
+<li><a href="/generator/">Generator</a></li>
+<li><a href="/digest/">Digest</a></li>
+<li><a href="/newsletter/">Newsletter</a></li>
+<li><a href="/about/">About</a></li>
+</ul></nav>
+<nav aria-label="Data and legal"><h2>Data and legal</h2><ul>
+<li><a href="/digest/feed.xml">Atom feed</a></li>
+<li><a href="/llms.txt">llms.txt</a></li>
+<li><a href="/data/matrix.json">matrix.json</a></li>
+<li><a href="/sponsors/">Sponsors</a></li>
+<li><a href="/privacy/">Privacy</a></li>
+<li><a href="/legal/">Legal notice</a></li>
+</ul></nav>
 </div></footer>
 ${page.script ? `<script type="module" src="${page.script}"></script>` : ''}
 </body>
@@ -102,32 +154,64 @@ function breadcrumb(config, trail) {
 
 const publisher = (config) => ({ '@type': 'Organization', name: config.name, url: config.baseUrl });
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "2026-10-07" becomes "7 Oct 2026". The machine-readable date stays in the datetime attribute. */
+export function shortDate(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : iso;
+}
+
 export function itemHtml(it) {
-  const meta = [it.version ? `version ${h(it.version)}` : '', it.figure ? h(it.figure) : ''].filter(Boolean).join(' · ');
+  const version = it.version ? `<span class="tag tag-quiet">version ${h(it.version)}</span>` : '';
+  const figure = it.figure ? `<span class="item-figure">${h(it.figure)}</span> ` : '';
   return `<li class="item" id="${h(it.id)}">
-<p class="item-head"><time datetime="${h(it.date)}">${h(it.date)}</time> <span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span> <strong>${inlineHtml(it.title)}</strong></p>
+<p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span>${version}</p>
+<h3 class="item-title">${inlineHtml(it.title)}</h3>
 <p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
-<p class="item-meta">${meta ? `${meta} · ` : ''}Source: <a href="${h(it.sourceUrl)}" rel="noopener">${h(it.sourceLabel)}</a></p>
+<p class="item-foot">${figure}<a class="src" href="${h(it.sourceUrl)}" rel="noopener">Source: ${h(it.sourceLabel)}${icon('external')}</a></p>
 </li>`;
 }
+
+/** The promise on the home page. The share image reuses it. */
+export const HERO_TITLE = 'What changed in AI coding tools, with sources.';
 
 export function homePage(ctx) {
   const { config, matrix, digests } = ctx;
   const latest = digests[0];
   const stats = matrixStats(matrix);
   const digestBlock = latest
-    ? `<section aria-labelledby="latest"><h2 id="latest">Latest digest</h2>
-<p><a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>: ${latest.items.length} dated items from official sources.</p>
-<ul class="items">${latest.items.slice(0, 4).map(itemHtml).join('\n')}</ul>
-<p><a href="/digest/">All issues</a></p></section>` : '';
-  const body = `<h1>${h(config.name)}</h1>
-<p class="lead">${h(config.tagline)}</p>
-<p>${h(config.description)}</p>
+    ? `<section class="home-section" aria-labelledby="latest"><h2 id="latest">Latest digest</h2>
+<p>${`<a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>`}: ${latest.items.length} dated items from official sources.</p>
+<ul class="items items-grid">${latest.items.slice(0, 4).map(itemHtml).join('\n')}</ul>
+<p class="section-link"><a href="/digest/">All issues</a></p></section>` : '';
+  const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
+  const tiles = matrix.files.map((f) => matrix.tools.map((t, col) => {
+    const c = cellMap.get(`${t.id}/${f.id}`);
+    return `<span class="tile tile-${c.status} c${col}">${icon(c.status)}</span>`;
+  }).join('')).join('');
+  const heads = matrix.tools.map((t) => `<span class="specimen-tool">${h(t.name)}</span>`).join('');
+  const statusCounts = Object.keys(STATUS_LABEL).filter((k) => stats.byStatus[k]).map((k) => `<li>${statusBadge(k)} <span class="status-count">${stats.byStatus[k]}</span></li>`).join('');
+  const specimenFoot = `${matrix.cells.length} cells, each with an official source and a check date.`;
+  const body = `<section class="hero" aria-labelledby="hero-title">
+<div class="hero-copy">
+<h1 id="hero-title">${h(HERO_TITLE)}</h1>
+<p class="lead">${h(config.description)}</p>
+<p class="cta"><a class="btn btn-primary" href="/matrix/">Open the matrix${icon('arrow')}</a><a class="btn" href="/generator/">Try the generator</a><a class="btn" href="/digest/">Read the digest</a></p>
+</div>
+<a class="specimen" href="/matrix/">
+<span class="sr">Open the full matrix. Preview of ${matrix.files.length} file types by ${matrix.tools.length} tools.</span>
+<span class="specimen-heads" aria-hidden="true">${heads}</span>
+<span class="specimen-grid" aria-hidden="true">${tiles}</span>
+<span class="specimen-foot">${specimenFoot}</span>
+</a>
+</section>
 ${digestBlock}
-<section aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
+<section class="home-section" aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
+<ul class="status-counts" aria-label="Cells by status">${statusCounts}</ul>
 <p>The <a href="/matrix/">instruction file matrix</a> covers ${matrix.tools.length} tools and ${matrix.files.length} file types. Each of its ${matrix.cells.length} cells links to an official page and shows the date it was checked. ${stats.unverified} of them are marked unverified because the cited official page does not mention the file, and ${stats.byStatus['migration-only']} are marked migration only. The data was last reviewed on ${h(matrix.lastReviewed)}.</p>
 <p>The <a href="/generator/">generator</a> writes a first version of those files from a short form, in your browser.</p></section>
-<section aria-labelledby="news"><h2 id="news">Newsletter</h2>
+<section class="home-section callout" aria-labelledby="news"><h2 id="news">Newsletter</h2>
 <p>A weekly email with the digest is planned. <a href="/newsletter/">Signup status</a>. The <a href="/digest/feed.xml">Atom feed</a> works today.</p></section>`;
   return layout(config, {
     path: '/', title: config.name, description: config.description, body,
@@ -139,22 +223,32 @@ export function matrixPage(ctx) {
   const { config, matrix, today } = ctx;
   const stale = new Set(staleCells(matrix, today, config.staleAfterDays).map((c) => `${c.tool}/${c.file}`));
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
-  const head = matrix.tools.map((t) => `<th scope="col"><a href="${h(t.docsUrl)}" rel="noopener">${h(t.name)}</a>${t.scope ? `<span class="muted block">${h(t.scope)}</span>` : ''}</th>`).join('');
+  const head = matrix.tools.map((t) => `<th scope="col" data-tool="${h(t.id)}"><a href="${h(t.docsUrl)}" rel="noopener">${h(t.name)}</a>${t.scope ? `<span class="muted block">${h(t.scope)}</span>` : ''}</th>`).join('');
   const rows = matrix.files.map((f) => {
     const cells = matrix.tools.map((t) => {
       const c = cellMap.get(`${t.id}/${f.id}`);
       const isStale = stale.has(`${t.id}/${f.id}`);
-      return `<td class="st-${c.status}"><span class="badge badge-${c.status}">${h(STATUS_LABEL[c.status])}</span>${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}
+      return `<td class="st-${c.status}" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}"><div class="cell">
+<p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
-<p class="muted"><a href="${h(c.sourceUrl)}" rel="noopener">Source</a> · checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time>${isStale ? ' · <strong>check again</strong>' : ''}</p></td>`;
+<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
     }).join('');
-    return `<tr><th scope="row"><code>${h(f.path)}</code><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
+    return `<tr data-file="${h(f.id)}"><th scope="row"><code>${h(f.path)}</code><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
-  const legend = Object.keys(STATUS_LABEL).map((k) => `<li><span class="badge badge-${k}">${h(STATUS_LABEL[k])}</span> ${h(STATUS_HELP[k])}</li>`).join('');
+  const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
   const counts = Object.keys(STATUS_LABEL).map((k) => `${STATUS_LABEL[k]}: ${matrix.cells.filter((c) => c.status === k).length}`).join(', ');
+  const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
+  const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
+  const filters = `<div class="filters" id="matrix-filters" hidden>
+<fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
+<fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
+<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div>
+</div>`;
   const body = `<h1>Which coding agent reads which instruction file</h1>
 <p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
-<p>Each cell cites an official page and the date we checked it. A cell reads "unverified" when the page we checked does not mention the file. We then have no source, which says nothing about whether the tool reads it. A cell reads "migration only" when the page mentions the file only as input to a migration command such as /init. Counts: ${h(counts)}.</p>
+<p class="intro">Each cell cites an official page and the date we checked it. A cell reads "unverified" when the page we checked does not mention the file. We then have no source, which says nothing about whether the tool reads it. A cell reads "migration only" when the page mentions the file only as input to a migration command such as /init. Counts: ${h(counts)}.</p>
+${filters}
+<p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>
 <thead><tr><th scope="col">File</th>${head}</tr></thead>
@@ -170,7 +264,7 @@ ${rows}
   return layout(config, {
     path: '/matrix/', title: 'Which coding agent reads which instruction file',
     description: `Matrix of ${matrix.tools.length} AI coding tools and ${matrix.files.length} instruction file types, with an official source and a check date for each cell.`,
-    body,
+    body, script: '/assets/matrix.js',
     jsonLd: [
       { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
       breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/']])
@@ -251,7 +345,15 @@ ${field('pr', 'Commits and pull requests', '', 2)}
 
 export function digestIndexPage(ctx) {
   const { config, digests } = ctx;
-  const list = digests.map((d) => `<li><a href="/digest/${h(d.week)}/">${h(d.title)}</a> <span class="muted">${d.items.length} items, checked ${h(d.verifiedOn)}</span></li>`).join('\n');
+  const list = digests.map((d, i) => {
+    const tools = [...new Set(d.items.map((it) => it.tool))].filter((t) => TOOL_NAME[t]).map((t) => `<span class="tag">${h(TOOL_NAME[t])}</span>`).join('');
+    return `<li class="issue">
+<p class="issue-week"><time datetime="${h(d.start)}">${h(shortDate(d.start))}</time> to <time datetime="${h(d.end)}">${h(shortDate(d.end))}</time>${i === 0 ? '<span class="tag tag-mark">Latest</span>' : ''}</p>
+<h2 class="issue-title"><a class="stretch" href="/digest/${h(d.week)}/">${h(d.title)}</a></h2>
+<p class="issue-meta muted">${d.items.length} dated items, checked ${h(shortDate(d.verifiedOn))}</p>
+<p class="issue-tools">${tools}</p>
+</li>`;
+  }).join('\n');
   const body = `<h1>Digest archive</h1>
 <p class="lead">One page per ISO week. Each item has a date and a link to the official page it came from.</p>
 <ul class="archive">${list}</ul>
@@ -269,12 +371,12 @@ export function digestWeekPage(ctx, digest) {
   const { config } = ctx;
   const sorted = [...digest.items].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? -1 : 1));
   const byTool = Object.keys(TOOL_NAME).map((t) => ({ t, items: sorted.filter((i) => i.tool === t) })).filter((g) => g.items.length);
-  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(TOOL_NAME[g.t])}</h2><ul class="items">${g.items.map(itemHtml).join('\n')}</ul></section>`).join('\n');
+  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(TOOL_NAME[g.t])} <span class="count">${g.items.length}</span></h2><ul class="items items-rail">${g.items.map(itemHtml).join('\n')}</ul></section>`).join('\n');
   const body = `<h1>${h(digest.title)}</h1>
-<p class="lead">${h(digest.week)}, ${h(digest.start)} to ${h(digest.end)}. Checked against the sources on ${h(digest.verifiedOn)}.</p>
-<p>${inlineHtml(digest.summary)}</p>
+<p class="lead">${h(digest.week)}, <time class="nw" datetime="${h(digest.start)}">${h(shortDate(digest.start))}</time> to <time class="nw" datetime="${h(digest.end)}">${h(shortDate(digest.end))}</time>. Checked against the sources on <time class="nw" datetime="${h(digest.verifiedOn)}">${h(shortDate(digest.verifiedOn))}</time>.</p>
+<p class="summary">${inlineHtml(digest.summary)}</p>
 ${sections}
-<p><a href="/digest/">Back to the archive</a></p>`;
+<p class="back"><a href="/digest/">Back to the archive</a></p>`;
   const cites = [...new Set(digest.items.map((i) => i.sourceUrl))];
   return layout(config, {
     path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => TOOL_NAME[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
@@ -297,7 +399,7 @@ export function contentPage(ctx, file, pagePath) {
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
   return layout(config, {
-    path: pagePath, title: meta.title, description: meta.description, body: renderMarkdown(body, vars),
+    path: pagePath, title: meta.title, description: meta.description, body: `<div class="prose">${renderMarkdown(body, vars)}</div>`,
     jsonLd: [{ '@type': type, name: meta.title, url: url(config, pagePath), description: meta.description, inLanguage: config.language }, breadcrumb(config, [['Home', '/'], [meta.title, pagePath]])]
   });
 }
@@ -319,9 +421,10 @@ ${hidden}
 <label for="nl-email">Email address</label>
 <input id="nl-email" name="email" type="email" disabled aria-describedby="nl-status">
 <button type="button" disabled>Subscribe</button>
-<p id="nl-status" class="notice" role="status">Signup is switched off. No newsletter provider has been configured, so nothing can be submitted or sent.</p>
+<p id="nl-status" class="notice" role="status">${icon('warn')}<span>Signup is switched off. No newsletter provider has been configured, so nothing can be submitted or sent.</span></p>
 </form>`;
-  const body = `<h1>Newsletter</h1>
+  const body = `<div class="prose">
+<h1>Newsletter</h1>
 <p class="lead">The weekly digest by email, once a provider is chosen and the list is set up.</p>
 ${form}
 <p>Until then, the <a href="/digest/feed.xml">Atom feed</a> carries every issue, and the <a href="/digest/">archive</a> has them all.</p>
@@ -330,7 +433,8 @@ ${form}
 <li>One email per week with the digest. No other mailings.</li>
 <li>Double opt-in and a one-click unsubscribe link in every email.</li>
 <li>The <a href="/privacy/">privacy page</a> names the provider and the person responsible for your data.</li>
-</ul>`;
+</ul>
+</div>`;
   return layout(config, {
     path: '/newsletter/', title: 'Newsletter', description: 'Weekly email digest of what changed in AI coding tools. Signup is not open yet; the Atom feed works now.', body,
     jsonLd: [{ '@type': 'WebPage', name: 'Newsletter', url: url(config, '/newsletter/'), description: 'Weekly email digest signup page.', inLanguage: config.language }, breadcrumb(config, [['Home', '/'], ['Newsletter', '/newsletter/']])]
@@ -341,7 +445,7 @@ export function notFoundPage(ctx) {
   const { config } = ctx;
   return layout(config, {
     path: '/404.html', title: 'Page not found', description: 'This page does not exist.', noindex: true,
-    body: `<h1>Page not found</h1><p>Try the <a href="/matrix/">matrix</a>, the <a href="/digest/">digest archive</a> or the <a href="/">home page</a>.</p>`
+    body: `<div class="prose"><h1>Page not found</h1><p>Try the <a href="/matrix/">matrix</a>, the <a href="/digest/">digest archive</a> or the <a href="/">home page</a>.</p></div>`
   });
 }
 
@@ -463,7 +567,7 @@ export function renderHeaders(config) {
 `;
 }
 
-export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#1f2937"/><path d="M9 8v16M9 16h8M23 8l-5 8 5 8" fill="none" stroke="#f9fafb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#3a3fd8}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5aaff}.l{fill:#0d1018}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
 `;
 
 export { path, daysBetween };

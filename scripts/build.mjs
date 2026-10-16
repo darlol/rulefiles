@@ -53,16 +53,14 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   put('llms-full.txt', r.renderLlmsFull(ctx));
   put('_headers', r.renderHeaders(ctx.config));
   put('favicon.svg', r.FAVICON);
-  put('og.png', renderOgImage());
+  put('og.png', renderOgImage({ name: ctx.config.name, title: r.HERO_TITLE, caption: `${ctx.matrix.cells.length} cells, each with an official source and a check date.`, matrix: ctx.matrix }));
   put('data/matrix.json', JSON.stringify(ctx.matrix, null, 2) + '\n');
   put('data/digests.json', JSON.stringify(ctx.digests, null, 2) + '\n');
 
-  // Static assets. generator-core.js is shared with the tests and is copied unchanged.
+  // Static assets. generator-core.js and matrix-filter.js are shared with the tests and are copied unchanged.
   fs.mkdirSync(path.join(outDir, 'assets'), { recursive: true });
-  for (const f of fs.readdirSync(path.join(root, 'src', 'static'))) {
-    fs.copyFileSync(path.join(root, 'src', 'static', f), path.join(outDir, 'assets', f));
-  }
-  fs.copyFileSync(path.join(root, 'src', 'js', 'generator-core.js'), path.join(outDir, 'assets', 'generator-core.js'));
+  fs.cpSync(path.join(root, 'src', 'static'), path.join(outDir, 'assets'), { recursive: true });
+  for (const f of ['generator-core.js', 'matrix-filter.js']) fs.copyFileSync(path.join(root, 'src', 'js', f), path.join(outDir, 'assets', f));
 
   const warnings = launchWarnings(built, ctx.config);
   if (strict && warnings.length) {

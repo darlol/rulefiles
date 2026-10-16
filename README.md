@@ -31,9 +31,11 @@ data/watch-state.json       entries the watch script already listed
 data/allowed-source-hosts.json  hosts accepted as official sources
 content/*.md                prose for About, Sponsors, Privacy and the legal notice
 src/js/generator-core.js    generator logic, shared by the browser and the tests
-src/static/                 CSS and the generator UI script
+src/js/matrix-filter.js     matrix filter logic, shared by the browser and the tests
+src/static/                 CSS, the generator and matrix scripts, the font
 scripts/                    build, validation, link check, watch, preview
 tests/                      node:test suites and fixtures
+docs/DESIGN.md              design tokens, the font, the mark and how the checks work
 docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
 docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public

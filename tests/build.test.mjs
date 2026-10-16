@@ -170,8 +170,9 @@ test('matrix page shows every cell with its source link and date', () => {
 test('digest pages show sourced items', () => {
   const html = read('digest/2026-W41/index.html');
   assert.equal((html.match(/class="item"/g) || []).length, 11);
-  assert.equal((html.match(/Source: <a href="https:\/\//g) || []).length, 11);
-  assert.match(html, /<h2 id="t-claude-code">Claude Code<\/h2>/);
+  assert.equal((html.match(/<a class="src" href="https:\/\/[^"]+" rel="noopener">Source: /g) || []).length, 11);
+  assert.equal((html.match(/<time datetime="\d{4}-\d\d-\d\d">\d{1,2} [A-Z][a-z]{2} \d{4}<\/time><span class="tag">/g) || []).length, 11, 'every item shows a date and a tool badge');
+  assert.match(html, /<h2 id="t-claude-code">Claude Code <span class="count">4<\/span><\/h2>/);
 });
 
 test('no cookies, no external scripts, fonts, images or trackers anywhere in the output', () => {
@@ -187,7 +188,7 @@ test('no cookies, no external scripts, fonts, images or trackers anywhere in the
 
 test('Content-Security-Policy meta tag locks scripts, styles and connections to self', () => {
   const html = unescapeAttr(read('index.html'));
-  assert.match(html, /http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'self'"/);
+  assert.match(html, /http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'self'"/);
   assert.match(read('_headers'), /Content-Security-Policy: default-src 'none'/);
   assert.match(cspFor({ newsletter: { formAction: 'https://buttondown.com/api/emails/embed-subscribe/x' } }), /form-action 'self' https:\/\/buttondown\.com/);
 });
