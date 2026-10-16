@@ -33,7 +33,18 @@ function* walk(dir) {
 const FULL_NAME = ['Tho', 'mas', ' ', 'Ram', 'baut'].join('');
 const NAME_PAGES = ['content/privacy.md', 'content/legal.md'];
 const NAME_BUILT_PAGES = ['dist/privacy/index.html', 'dist/legal/index.html'];
-const FIRST = new RegExp('\\b' + ['Tho', 'mas'].join('') + '\\b', 'i');
+// The first name is refused whatever the case, with or without accents, joined to other characters by an
+// underscore or a digit, or written as an HTML entity. A letter on either side means another word, so a longer
+// name that starts with the same letters does not match. The cases are built from parts in the test below.
+const FIRST = new RegExp('(?<![A-Za-z])' + ['Tho', 'mas'].join('') + '(?![A-Za-z])', 'i');
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+/** Text as a reader would see it: entities decoded and accents removed, so a pattern cannot be dodged by spelling. */
+const plain = (s) => s
+  .replace(/&#x([0-9a-f]+);?/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+  .replace(/&#(\d+);?/g, (_, d) => String.fromCodePoint(Number(d)))
+  .replace(/&([a-z]+);/gi, (m, n) => (ENTITIES[n.toLowerCase()] ?? m))
+  .normalize('NFD').replace(/\p{M}/gu, '')
+  .replace(/&([A-Za-z])(?:acute|grave|circ|uml|tilde|ring|cedil|caron);/g, '$1');
 const SURNAME = new RegExp(['Ram', 'baut'].join(''), 'i');
 const HANDLE = new RegExp(['dar', 'lol'].join(''), 'i');
 // The workflow bot's own noreply address is not personal. Any other numbered noreply address is.
@@ -41,12 +52,15 @@ const NOREPLY = new RegExp('\\d+\\+(?!github-actions)[A-Za-z0-9-]+@' + ['users',
 /** What a file says about the owner's identity, apart from the full name on the two pages that may carry it. */
 function identityHits(rel, body, allowedFiles) {
   const hits = [];
-  const rest = allowedFiles.includes(rel) ? body.split(FULL_NAME).join('') : body;
-  for (const [name, re, text] of [['handle', HANDLE, body], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, body]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
+  const rest = plain(allowedFiles.includes(rel) ? body.split(FULL_NAME).join('') : body);
+  const all = plain(body);
+  for (const [name, re, text] of [['handle', HANDLE, all], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, all]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
   return hits;
 }
-const TEXT_FILE = /\.(md|mjs|js|json|css|yml|yaml|txt|sh|html|xml|svg)$|^(LICENSE|\.gitignore)$/;
-const files = () => [...walk(root)].filter((f) => TEXT_FILE.test(path.basename(f)) && path.basename(f) !== 'package-lock.json').map((f) => [path.relative(root, f), fs.readFileSync(f, 'utf8')]);
+// Every text file is scanned, whatever its name or extension: a file with no extension (LICENSE), a dotfile and
+// package-lock.json included. A file is binary if its first 8000 bytes hold a NUL byte, and is skipped.
+const isBinary = (buf) => buf.subarray(0, 8000).includes(0);
+const files = () => [...walk(root)].map((f) => [path.relative(root, f), fs.readFileSync(f)]).filter(([, buf]) => !isBinary(buf)).map(([rel, buf]) => [rel, buf.toString('utf8')]);
 
 function strictFindings() {
   process.env.BUILD_DATE = '2026-10-16';
@@ -138,7 +152,14 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(launch.includes('the owner, named, is also responsible for the messages sent to the three addresses and for the request logs'));
   assert.ok(launch.includes('the legitimate interest in answering (GDPR, article 6(1)(f))') && launch.includes('both are to be confirmed by a lawyer'));
   assert.ok(launch.includes('The texts that say the signup is off follow `newsletterEnabled(config)`'));
-  assert.ok(launch.includes('change the `updated` date of `content/privacy.md`'));
+  assert.ok(launch.includes('Also change the `updated` dates of `content/privacy.md` and `content/legal.md`'));
+  assert.ok(launch.includes('update the two tests that describe the off state') && launch.includes('Content-Security-Policy meta tag locks scripts, styles and connections to self') && launch.includes('newsletter form is disabled without a provider and enabled with one'));
+  assert.ok(launch.includes('item 5 of "Before the publication go" tests it') && launch.includes('5. Check the deletion call on the real Buttondown account.') && launch.includes('create a test subscriber') && launch.includes('call `DELETE /v1/subscribers/{email}`') && launch.includes('switch off the automatic cleanup of the account'));
+  assert.ok(launch.includes('these two are the only tests that fail, because the assertions on the privacy and legal wording follow the configuration'));
+  assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
+  assert.ok(text('docs/NEWSLETTER.md').includes('has to be tried on a test subscriber before the go'));
+  for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
+  assert.ok(launch.includes('the callout on the home page') && launch.includes('`{{dataStatus}}`'));
   assert.ok(launch.includes('Treat any income as a trigger: switch to the full notice (next section) before the first sponsor is booked, paid or invoiced, and before any affiliate link, advertising or paid plan goes live.'));
   assert.ok(launch.includes('Article 1-1 does not define the term.'));
   for (const needle of ['https://www.cloudflare.com/trust-hub/abuse-approach/', 'decision n° 2026-1210 QPC of 25 June 2026', 'https://www.conseil-constitutionnel.fr/decision/2026/20261210QPC.htm', 'Whether French law applies.', 'article 27 of the GDPR', 'L113-6', 'Rulefiles contributors']) assert.ok(launch.includes(needle), needle);
@@ -246,7 +267,7 @@ test('the full name appears on the privacy page and the legal notice and nowhere
   assert.deepEqual(NAME_PAGES.filter((rel) => !text(rel).includes(FULL_NAME)), [], 'both pages carry the name');
   // The privacy page says it is the controller and the publisher of the newsletter, with no postal address.
   assert.ok(text('content/privacy.md').includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${FULL_NAME}. The same person is responsible for the messages sent to the contact addresses and for the request logs described in the next section. No postal address is published.`));
-  assert.ok(text('content/legal.md').includes(`The publisher of the site and of the newsletter is ${FULL_NAME}, who is also responsible for the personal data of the newsletter (see [Privacy](/privacy/)). No postal address is published.`));
+  assert.ok(text('content/legal.md').includes(`The publisher of the site and of the newsletter is ${FULL_NAME}, who is also responsible for the personal data of the newsletter (see [Privacy](/privacy/)).`));
   const tracked = files().map(([rel]) => rel);
   assert.deepEqual(where(tracked, text).sort(), [...NAME_PAGES].sort(), 'every other tracked text file is free of the name');
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-name-'));
@@ -255,14 +276,30 @@ test('the full name appears on the privacy page and the legal notice and nowhere
     const built = [...walk(outDir)].filter((f) => /\.(html|xml|txt|json|svg|js|css)$/.test(f)).map((f) => 'dist/' + path.relative(outDir, f));
     assert.deepEqual(where(built, (rel) => fs.readFileSync(path.join(outDir, rel.slice(5)), 'utf8')).sort(), [...NAME_BUILT_PAGES].sort());
   } finally { fs.rmSync(outDir, { recursive: true, force: true }); }
-  // Commit messages of the commits that are not on origin/main yet. The older commits on main still carry the old
-  // marker name in their messages: docs/HISTORY-REWRITE.md plans their rewrite. A checkout with no origin/main (an
-  // export, or a shallow clone) has no range to check, and the check is skipped.
-  const log = spawnSync('git', ['log', 'origin/main..HEAD', '--format=%an%n%cn%n%B'], { cwd: root, encoding: 'utf8' });
-  if (log.status === 0) {
-    assert.equal(log.stdout.includes(FULL_NAME), false, 'a commit message or an author name holds the full name');
-    assert.equal(FIRST.test(log.stdout.replace(/TODO-OWNER/g, '')), false, 'a commit message holds the first name');
-  }
+});
+
+test('the commits that are not on origin/main yet hold neither the full name nor the first name', (t) => {
+  // The older commits on main still carry the old marker name in their messages: docs/HISTORY-REWRITE.md plans
+  // their rewrite, so only the range origin/main..HEAD is read. The check needs a clone that has origin/main and the
+  // whole history. In the CI workflow, actions/checkout fetches one commit and no origin/main, and a checkout of
+  // main itself has an empty range: in those cases the test is reported as skipped, not passed.
+  const git = (...args) => spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+  if (git('rev-parse', '--git-dir').status !== 0) return t.skip('not a git checkout (an export has no commits to read)');
+  if (git('rev-parse', '--is-shallow-repository').stdout.trim() === 'true') return t.skip('shallow clone: origin/main..HEAD cannot be trusted (the CI checkout is shallow)');
+  if (git('rev-parse', '--verify', '--quiet', 'origin/main').status !== 0) return t.skip('no origin/main in this checkout');
+  const log = git('log', 'origin/main..HEAD', '--format=%an%n%cn%n%B');
+  assert.equal(log.status, 0, 'git log origin/main..HEAD runs');
+  if (log.stdout.trim() === '') return t.skip('HEAD is on origin/main: no new commit to read');
+  assert.equal(log.stdout.includes(FULL_NAME), false, 'a commit message or an author name holds the full name');
+  assert.equal(FIRST.test(plain(log.stdout).replace(/TODO-OWNER/g, '')), false, 'a commit message holds the first name');
+});
+
+test('the scan reads every text file: files with no extension, dotfiles and package-lock.json included, and skips binary files', () => {
+  const rels = files().map(([rel]) => rel);
+  for (const rel of ['LICENSE', '.gitignore', 'package-lock.json', 'README.md', '.github/workflows/ci.yml']) assert.ok(rels.includes(rel), `${rel} is scanned`);
+  assert.ok(!rels.some((rel) => /\.(png|ico|woff2?)$/.test(rel)), 'binary files are skipped');
+  assert.equal(isBinary(Buffer.from([65, 0, 66])), true);
+  assert.equal(isBinary(Buffer.from('plain text')), false);
 });
 
 test('the identity patterns catch an upper-case first name and a handle in a page, and allow only the exact full name on the two pages', () => {
@@ -271,6 +308,20 @@ test('the identity patterns catch an upper-case first name and a handle in a pag
   assert.ok(HANDLE.test('github.com/' + ['Dar', 'lol'].join('')));
   assert.ok(FIRST.test('[[TODO-' + ['THO', 'MAS'].join('') + ': field]]'), 'the old marker name is refused too');
   assert.equal(FIRST.test('[[TODO-OWNER: field]]'), false, 'the marker is called TODO-OWNER');
+  // Spelling tricks: accents, an underscore or a digit next to the name, and HTML entities.
+  const first = ['Tho', 'mas'].join('');
+  const hit = (body) => identityHits('docs/x.md', body, NAME_PAGES);
+  assert.deepEqual(hit(`Ask ${['Tho', 'más'].join('')}.`), ['docs/x.md: first name'], 'an accent does not hide the first name');
+  assert.deepEqual(hit(`Ask ${['THO', 'MÀS'].join('')}.`), ['docs/x.md: first name']);
+  assert.deepEqual(hit(`${first}_x`), ['docs/x.md: first name'], 'a trailing underscore does not hide it');
+  assert.deepEqual(hit(`x_${first}`), ['docs/x.md: first name'], 'a leading underscore does not hide it');
+  assert.deepEqual(hit(`${first}2`), ['docs/x.md: first name'], 'a digit does not hide it');
+  assert.deepEqual(hit(['Tho', '&#109;', 'as'].join('')), ['docs/x.md: first name'], 'a decimal entity does not hide it');
+  assert.deepEqual(hit(['Tho', '&#x6d;', 'as'].join('')), ['docs/x.md: first name'], 'a hexadecimal entity does not hide it');
+  assert.deepEqual(hit(['Tho', 'm&aacute;s'].join('')), ['docs/x.md: first name'], 'a named accent entity does not hide it');
+  assert.deepEqual(hit(['Tho', 'm&#225;s'].join('')), ['docs/x.md: first name']);
+  assert.deepEqual(hit(`${first}ton and ${first}ine`), [], 'another word that starts with the same letters is not the first name');
+  assert.deepEqual(hit(`${['Ram', 'bàut'].join('')}`), ['docs/x.md: surname'], 'an accent does not hide the surname');
   // On the two pages the full name passes. The first name alone, the surname alone and the full name elsewhere do not.
   assert.deepEqual(identityHits('content/privacy.md', `is ${FULL_NAME}.`, NAME_PAGES), []);
   assert.deepEqual(identityHits('content/privacy.md', `is ${FULL_NAME}. Ask ${['Tho', 'mas'].join('')}.`, NAME_PAGES), ['content/privacy.md: first name']);
@@ -294,6 +345,7 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.ok(plan.includes('--replace-message') && plan.includes('--replace-text') && plan.includes('OLD_MARKER'), 'the plan also rewrites the old marker name');
   assert.ok(plan.includes('only after the bundle of step 2 is verified'));
   const ops = text('docs/OPERATIONS.md');
+  assert.ok(ops.includes('reported as skipped with its reason, not passed'), 'the skipped commit-message check is documented');
   assert.doesNotMatch(ops, /assistant|this box|\bbox\b/i, 'no internal wording in docs/OPERATIONS.md');
   assert.ok(ops.includes('which was not installed on the machine used for the checks, so it was not run'));
   assert.ok(plan.includes("grep -o 'TODO-[A-Z][A-Z]*'"), 'the old marker pattern cannot match an empty name');
@@ -301,7 +353,10 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.ok(plan.includes('unless the old commit held that name'));
   assert.ok(plan.includes('A `TREE DIFFERS` line may appear only for a commit whose files held the old marker name. For each one, `git diff <old> <new>` must show that line and nothing else.'));
   assert.doesNotMatch(plan, /No `TREE DIFFERS` line may appear/);
-  assert.ok(plan.includes('`git rev-list --count origin/main` gives 11 commits'));
+  assert.ok(plan.includes('`git rev-list --count origin/main` gives 15 commits'));
+  assert.ok(plan.includes('so count again before the rewrite'));
+  assert.ok(plan.includes('Once every pull request branch is deleted, `origin/main` is the only remote branch and `git log --remotes` gives the same 15 commits.'));
+  assert.doesNotMatch(plan, /33 \+ 7|33 on all remote branches|Pull requests #1 to #8/);
   assert.doesNotMatch(plan, /\| 52 \|/, 'the count comes from origin/main, not from the local clone');
 });
 

@@ -6,19 +6,20 @@ This file holds no personal address. Commands read the old and the new address f
 
 ## What was found
 
-At commit `4534eaa` (`origin/main` after pull request #7), `git rev-list --count origin/main` gives 11 commits, and `git log origin/main --format='%an <%ae> | %cn <%ce>' | sort | uniq -c` gives two identities. The count on all remote branches, which include the open pull request branches, was 33 + 7 on 2026-10-16 (`git log --remotes`) and grows with each new commit, so count again before the rewrite:
+At commit `2d07358` (`origin/main` after pull request #11, checked on 2026-10-16), `git rev-list --count origin/main` gives 15 commits, and `git log origin/main --format='%an <%ae> | %cn <%ce>' | sort | uniq -c` gives three identities. The branches of pull requests #8 to #11 were deleted after the squash merges. Once every pull request branch is deleted, `origin/main` is the only remote branch and `git log --remotes` gives the same 15 commits. While another branch exists, it gives more: 25 on 2026-10-16, with the 10 commits of `origin/fix/launch-nits`. The numbers grow with each new commit, so count again before the rewrite:
 
 | Commits | Author | Committer |
 | --- | --- | --- |
-| 4 on `origin/main` (33 on all remote branches) | the owner, with the GitHub noreply address (`<id>+<login>@users.noreply.github.com`) | the same |
-| 7 on `origin/main` and on every remote branch | the owner, with the personal address | `GitHub <noreply@github.com>`, commits signed by GitHub |
+| 4 | the owner, with the GitHub noreply address (`<id>+<login>@users.noreply.github.com`) | the same |
+| 4 | the owner, with the GitHub noreply address | `GitHub <noreply@github.com>`, squash merges of pull requests #8 to #11, signed by GitHub |
+| 7 | the owner, with the personal address | `GitHub <noreply@github.com>`, squash merges of pull requests #1 to #7, signed by GitHub |
 
-The seven are the squash merges of pull requests #1 to #7, made on github.com. The address appears nowhere else: `git log --all -S'<personal address>'` and `git grep` over every revision (`git grep -I -i -F "$OLD_EMAIL" $(git rev-list --all)`) find nothing in file contents or commit messages. The messages of the squash merges on `main` also carry the old name of the placeholder marker, which was built on the owner's first name, and so do earlier versions of the files. The rewrite has to replace it too (step 4). There are no tags, notes or stashes. The next squash merge (pull request #8, and the pull requests of the launch branches) adds one more such commit each, unless the GitHub setting below is on before it is merged.
+The seven in the last row are the squash merges of pull requests #1 to #7, made on github.com. The four squash merges of #8 to #11 carry the noreply address, because the GitHub setting was on when they were merged (`git log origin/main -4 --format='%ae | %ce'`, 2026-10-16). The personal address appears nowhere else: `git log --all -S'<personal address>'` and `git grep` over every revision (`git grep -I -i -F "$OLD_EMAIL" $(git rev-list --all)`) find nothing in file contents or commit messages. The messages of the squash merges on `main` also carry the old name of the placeholder marker, which was built on the owner's first name, and so do earlier versions of the files. The rewrite has to replace it too (step 4). There are no tags, notes or stashes. Any later squash merge adds one more commit with the noreply address only if the GitHub setting stays on.
 
 ## Preconditions
 
 1. Done on 2026-10-16 (reported by the owner): the two settings are on, in GitHub under Settings, Emails: "Keep my email addresses private" and "Block command line pushes that expose my email". Keep both on while the launch pull requests are merged, so no new commit carries the personal address. After a merge, check it: `git fetch && git log -1 --format='%ae' origin/main`.
-2. Pull request #8 and the launch pull requests are merged, or the owner decided to drop them. A rewrite changes every commit id after the first rewritten one, so open branches have to be rebased or recreated afterwards.
+2. Pull requests #8 to #11 are merged (done on 2026-10-16). Any pull request opened later is merged first, or dropped. A rewrite changes every commit id after the first rewritten one, so open branches have to be rebased or recreated afterwards.
 3. The owner has validated one of the two publication options below. The second one needs the owner's explicit approval and is run by the owner only.
 4. The noreply address to use is the one in the local git configuration: `git config user.email` must end with `@users.noreply.github.com`.
 5. The author and committer names are checked too (`git log --all --format='%an%n%cn' | sort -u`) and the name in `git config user.name` is the name the owner accepts to publish. The plan removes the address, not the name. The login in the noreply address (`<id>+<login>@...`) stays visible. Checked on 2026-10-16 on all refs of the working clone: there is one author name, the same in every commit, and it is the GitHub login, not a civil name. The committer name is that login, or `GitHub` for the squash merges made on github.com. The owner's civil name is now published on the legal notice and the privacy page, as publisher of the newsletter and data controller. The history no longer has to hide it, but a reader can now link the login to the civil name. The owner accepts that by publishing both. Option A, a new clean repository with the noreply address, stays the recommended path.
@@ -76,7 +77,7 @@ done
 ```
 
 A `TREE DIFFERS` line may appear only for a commit whose files held the old marker name. For each one, `git diff <old> <new>` must show that line and nothing else. Run `npm ci && npm run ci` in a checkout of the rewritten `main`. Run `gitleaks git -v` on it too.
-6. Known side effect: all seven squash commits carry a signature made by GitHub (checked with `git cat-file -p` on 2026-10-16). A signature depends on the commit id, so a rewrite invalidates it. The GitHub page cited under option B says `git-filter-repo` removes signatures, including on commits before the first changed one unless `--refs` limits the rewrite. Expect the "Verified" badge to go.
+6. Known side effect: all eleven squash commits (#1 to #11) carry a signature made by GitHub (checked with `git cat-file -p` on 2026-10-16). A signature depends on the commit id, so a rewrite invalidates it. The GitHub page cited under option B says `git-filter-repo` removes signatures, including on commits before the first changed one unless `--refs` limits the rewrite. Expect the "Verified" badge to go.
 
 ## Option A, without force-push: a new private repository (recommended)
 
@@ -88,7 +89,7 @@ A `TREE DIFFERS` line may appear only for a commit whose files held the old mark
 
 Consequences:
 
-- Pull requests #1 to #8 and their review comments stay in the old repository. The new repository starts at pull request #1, so the "(#N)" at the end of the squash commit titles then points at different pull requests, or at none. The titles can be left as they are, or rewritten in step 4 with a message callback. Both are acceptable.
+- Pull requests #1 to #11 and their review comments stay in the old repository. The new repository starts at pull request #1, so the "(#N)" at the end of the squash commit titles then points at different pull requests, or at none. The titles can be left as they are, or rewritten in step 4 with a message callback. Both are acceptable.
 - Issues, if any, do not move.
 - Links to the old repository stop working once it is deleted. None is in the site. `repoUrl` in `site.config.json` is empty, so nothing on the site changes.
 - Cloudflare Pages: the preview project was created from an uploaded zip, so it is not linked to the repository. If a Git integration is added later, it uses the new repository.
@@ -104,7 +105,7 @@ Consequences:
 Risks:
 
 - It rewrites history that every clone and every open branch is based on. Anything not rebased reintroduces the old commits at the next push.
-- Pull requests #1 to #8 stay in place and keep pointing at the old commits. GitHub can keep those commits reachable by their id, and keeps the hidden `refs/pull/*` refs. The old address can stay readable in them, and the repository can still hold it after the push. This cannot be checked from here.
+- Pull requests #1 to #11 stay in place and keep pointing at the old commits. GitHub can keep those commits reachable by their id, and keeps the hidden `refs/pull/*` refs. The old address can stay readable in them, and the repository can still hold it after the push. This cannot be checked from here.
 - It can only be undone from the bundle of step 2.
 - GitHub's page on removing sensitive data (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository, read on 2026-10-16) says that after a rewrite and force-push the old commits may still be reachable in clones and forks, directly by their SHA in cached views on GitHub, and through pull requests that reference them. Only GitHub Support can remove cached views and pull request references, and the page says Support only helps with sensitive data where the risk cannot be reduced by rotating credentials. An email address is not a credential, so Support may decline. That is why option A is the safer one: an address that cannot be purged from the old repository has to be left behind with it.
 
@@ -120,7 +121,7 @@ Risks:
 ## Order of work
 
 1. Owner: turn on the two GitHub email settings.
-2. Merge pull request #8, then the launch pull requests, in the order in their descriptions.
+2. Done on 2026-10-16: pull requests #8 to #11 are merged. Merge any later pull request before the rewrite.
 3. Owner: choose option A or B.
 4. Run the common steps, then the chosen option.
 5. Verify again on the published repository with the three verification commands, before it becomes public.

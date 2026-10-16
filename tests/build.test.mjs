@@ -16,6 +16,9 @@ process.env.BUILD_DATE = '2026-10-16';
 delete process.env.SITE_URL;
 delete process.env.NEWSLETTER_FORM_ACTION;
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist-'));
+// The default build follows site.config.json. The wording about the data depends on whether the form address is set,
+// so the tests that read it expect the word of the branch that is built. Both branches are tested in the newsletter test.
+const DATA_WORD = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).newsletter.formAction ? 'collected' : 'planned';
 const read = (rel) => fs.readFileSync(path.join(out, rel), 'utf8');
 const unescapeAttr = (s) => s.replace(/&#39;/g, "'");
 let result;
@@ -216,6 +219,8 @@ test('newsletter form is disabled without a provider and enabled with one', () =
   assert.ok(off.includes('How signup will work'));
   assert.doesNotMatch(off, /No newsletter provider has been configured|once a provider is chosen/);
   assert.match(html, /name="description" content="Weekly email digest of what changed in AI coding tools\. Signup is switched off until the publication; the Atom feed works now\."/);
+  assert.ok(textOf('index.html').replace(/\s+([).,])/g, '$1').includes('A weekly email with the digest is planned. Signup status. The Atom feed works today.'));
+  assert.ok(textOf('legal/index.html').includes('The personal data planned is the email address of people who subscribe'));
   assert.ok(textOf('privacy/index.html').includes('The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.'));
   const out2 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist2-'));
   process.env.NEWSLETTER_FORM_ACTION = 'https://news.example.com/subscribe';
@@ -233,6 +238,13 @@ test('newsletter form is disabled without a provider and enabled with one', () =
     const privOn = fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
     assert.ok(privOn.includes('This section describes what applies when you subscribe.'));
     assert.doesNotMatch(privOn, /switched off/);
+    const flat = (f) => fs.readFileSync(path.join(out2, f), 'utf8').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/\s+([).,])/g, '$1');
+    assert.ok(flat('index.html').includes('A weekly email with the digest is open for signup. Subscribe. The Atom feed carries the same issues.'));
+    assert.doesNotMatch(flat('index.html'), /is planned|Signup status/);
+    assert.ok(flat('legal/index.html').includes('The personal data collected is the email address of people who subscribe'));
+    assert.doesNotMatch(flat('legal/index.html'), /data planned/);
+    assert.match(fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8'), /name="description" content="What data Rulefiles collects, who is responsible for it, and your rights\. The data collected is the email address you give for the newsletter and the messages you send us\."/);
+    assert.match(fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8'), /"description":"What data Rulefiles collects, who is responsible for it, and your rights\. The data collected is/);
     assert.match(unescapeAttr(fs.readFileSync(path.join(out2, 'index.html'), 'utf8')), /form-action 'self' https:\/\/news\.example\.com/);
   } finally {
     delete process.env.NEWSLETTER_FORM_ACTION;
@@ -377,7 +389,10 @@ test('the legal notice names the publisher of the site and of the newsletter, gi
   assert.match(text, /loi n° 2004-575 du 21 juin 2004, article 1-1/);
   assert.ok(text.includes('It is sent by registered letter with acknowledgment of receipt, or by any other means that proves who sent it and that it was received (décret n° 2007-1527 du 24 octobre 2007), and it says which message and which passages are concerned and what the reply says.'));
   assert.match(text, /published by a private individual, on a non-professional basis/);
-  assert.ok(text.replace(/\s+([).,])/g, '$1').includes(`The publisher of the site and of the newsletter is ${OWNER}, who is also responsible for the personal data of the newsletter (see Privacy). No postal address is published.`));
+  assert.ok(text.replace(/\s+([).,])/g, '$1').includes(`The publisher of the site and of the newsletter is ${OWNER}, who is also responsible for the personal data of the newsletter (see Privacy).`));
+  const publisherSection = text.slice(text.indexOf('Publisher The site is published'), text.indexOf('Host Name:'));
+  assert.ok(publisherSection.length > 100, 'the Publisher section was found');
+  assert.equal((publisherSection.match(/no postal address/gi) || []).length, 1, 'the Publisher section says once that no postal address is published');
   assert.ok(text.includes('Article 1-1, II of the law allows a person who publishes on a non-professional basis to give only the name and address of the host. The publisher uses that option for the site: no postal address and no phone number are published.'));
   assert.doesNotMatch(text, /anonymous|anonymity/i, 'the legal notice no longer says the publisher is anonymous');
   assert.match(text, /Name: Cloudflare, Inc\./);
@@ -419,8 +434,8 @@ test('the privacy page covers controller, basis, provider, tracking, retention, 
   assert.ok(text.includes(`Messages you send us If you write to contact@rulefiles.dev, privacy@rulefiles.dev or sponsors@rulefiles.dev, your message reaches ${OWNER} through Cloudflare Email Routing and a private mailbox. We use it only to answer you, on the basis of our legitimate interest in answering (GDPR, article 6(1)(f)), and we keep it for 12 months after the exchange ends, then we delete it.`));
   assert.ok(text.indexOf('Messages you send us') < text.indexOf('Your rights'));
   assert.deepEqual(emailsIn(text), ['contact@rulefiles.dev', 'privacy@rulefiles.dev', 'sponsors@rulefiles.dev']);
-  assert.match(read('privacy/index.html'), /name="description" content="What data Rulefiles collects, who is responsible for it, and your rights\. The data planned is the email address you give for the newsletter and the messages you send us\."/);
-  assert.ok(textOf('legal/index.html').includes('The personal data planned is the email address of people who subscribe to the newsletter, and the messages people send to the contact addresses.'));
+  assert.ok(read('privacy/index.html').includes(`name="description" content="What data Rulefiles collects, who is responsible for it, and your rights. The data ${DATA_WORD} is the email address you give for the newsletter and the messages you send us."`));
+  assert.ok(textOf('legal/index.html').includes(`The personal data ${DATA_WORD} is the email address of people who subscribe to the newsletter, and the messages people send to the contact addresses.`));
   assert.doesNotMatch(textOf('legal/index.html') + textOf('privacy/index.html'), /only personal data|only data planned/);
 });
 

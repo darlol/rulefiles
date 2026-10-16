@@ -92,22 +92,53 @@ test('the content pages hold no publisher address, phone or registration field, 
   for (const f of ['legal.md', 'privacy.md']) assert.ok(fs.readFileSync(path.join(root, 'content', f), 'utf8').includes(owner), `${f} names the publisher of the site and of the newsletter`);
 });
 
-test('the legal notice, privacy and sponsors pages show "Last updated: 2026-10-16", the about page does not', () => {
+// What would be a publisher's postal address or phone number written into the prose: a postal code, a street word, a
+// phone number in a French or an international format, or the words "phone", "téléphone" and "postal address".
+const ADDRESS_WORDS = /\b\d{5}(?:-\d{4})?\b|\b(?:rue|avenue|boulevard|bd|street|road|lane|chemin|all[ée]e|impasse|place)\b|\bt[ée]l(?:[ée]phone)?\b|\bphone\b|\bfax\b|\+\d[\d .()-]{7,}|\b0[1-9](?:[ .-]?\d{2}){4}\b|\bpostal\b|\bcode postal\b/i;
+// The notice may say that no address and no phone number are published, and shows the host's phone line from the configuration.
+const HOST_LINES = ['- Name: {{hostName}}', '- Address: {{hostAddress}}', '- Phone: {{hostPhone}}'];
+// Only these three lines are exempt, and only when the whole line is exactly that: an address written after the variable still counts.
+const proseOf = (md) => md.split('\n').filter((l) => !HOST_LINES.includes(l.trimEnd())).join('\n')
+  .replace(/(?:[Nn]o|[Aa]s no) postal address(?: and no phone number)?(?: (?:is|are) published)?/g, '');
+
+test('the content prose holds no postal code, street, phone number or registration number, and the checker catches them', () => {
+  for (const f of ['legal.md', 'privacy.md', 'about.md', 'sponsors.md']) {
+    const prose = proseOf(fs.readFileSync(path.join(root, 'content', f), 'utf8'));
+    assert.doesNotMatch(prose, ADDRESS_WORDS, `${f} holds an address or a phone number`);
+    assert.doesNotMatch(prose, /\b(?:SIRET|SIREN|RCS|TVA)\b/, `${f} holds a registration number`);
+  }
+  for (const bad of ['Write to 12 rue de la Paix, 75002 Paris.', '10 Downing Street', '1 Example Road', 'Call +33 1 23 45 67 89', 'Appelez le 01 23 45 67 89', 'Phone: 0123456789', 'Our postal address is below', 'Téléphone : 01 02 03 04 05', 'ZIP 94107']) {
+    assert.match(proseOf(bad), ADDRESS_WORDS, bad);
+  }
+  assert.doesNotMatch(proseOf('No postal address is published.'), ADDRESS_WORDS);
+  assert.doesNotMatch(proseOf('The publisher uses that option for the site: no postal address and no phone number are published.'), ADDRESS_WORDS);
+  assert.doesNotMatch(proseOf('- Phone: {{hostPhone}}'), ADDRESS_WORDS);
+  assert.doesNotMatch(proseOf(HOST_LINES.join('\n')), ADDRESS_WORDS, 'the three host lines pass');
+  // Mutations: an address or a phone number written on one of the host lines is not exempt.
+  for (const bad of ['- Address: {{hostAddress}} 12 rue de la Paix', '- Address: 12 rue de la Paix, 75002 Paris', '- Address: 1 Example Road', '- Phone: {{hostPhone}} or +33 1 23 45 67 89', '- Phone: 01 23 45 67 89', '- Name: {{hostName}}, 12 rue de la Paix', '- Address: {{hostAddress}}, 94107']) {
+    assert.match(proseOf(bad), ADDRESS_WORDS, bad);
+  }
+});
+
+test('the legal notice, privacy and sponsors pages show the "updated" date of their own front matter, the about page shows none', () => {
   process.env.BUILD_DATE = '2026-10-16';
   delete process.env.SITE_URL;
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-updated-'));
   try {
     build({ root, outDir, quiet: true });
     for (const page of ['legal', 'privacy', 'sponsors']) {
+      const md = fs.readFileSync(path.join(root, 'content', `${page}.md`), 'utf8');
+      const updated = md.match(/^updated: (\d{4}-\d{2}-\d{2})$/m)?.[1];
+      assert.ok(updated, `${page}.md has an "updated: YYYY-MM-DD" line`);
       const html = fs.readFileSync(path.join(outDir, page, 'index.html'), 'utf8');
-      assert.ok(html.includes('<p class="muted page-updated">Last updated: <time datetime="2026-10-16">2026-10-16</time></p>'), page);
-      assert.equal(textOf(html).match(/Last updated: 2026-10-16/g)?.length, 1, page);
-      assert.match(html, /"dateModified":"2026-10-16"/, page);
-      assert.match(fs.readFileSync(path.join(root, 'content', `${page}.md`), 'utf8'), /^updated: 2026-10-16$/m, page);
+      assert.ok(html.includes(`<p class="muted page-updated">Last updated: <time datetime="${updated}">${updated}</time></p>`), page);
+      assert.equal(textOf(html).match(new RegExp(`Last updated: ${updated}`, 'g'))?.length, 1, page);
+      assert.ok(html.includes(`"dateModified":"${updated}"`), page);
     }
     const about = fs.readFileSync(path.join(outDir, 'about', 'index.html'), 'utf8');
     assert.doesNotMatch(about, /Last updated:/);
     assert.doesNotMatch(about, /dateModified/);
+    assert.doesNotMatch(fs.readFileSync(path.join(root, 'content', 'about.md'), 'utf8'), /^updated:/m);
   } finally { fs.rmSync(outDir, { recursive: true, force: true }); }
 });
 

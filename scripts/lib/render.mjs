@@ -226,7 +226,9 @@ ${digestBlock}
 <p>The <a href="/matrix/">instruction file matrix</a> covers ${matrix.tools.length} tools and ${matrix.files.length} file types. Each of its ${matrix.cells.length} cells links to an official page and shows the date it was checked. ${stats.unverified} of them are marked unverified because the cited official page does not mention the file, and ${stats.byStatus['migration-only']} are marked migration only. The data was last reviewed on ${h(matrix.lastReviewed)}.</p>
 <p>The <a href="/generator/">generator</a> writes a first version of those files from a short form, in your browser.</p></section>
 <section class="home-section callout" aria-labelledby="news"><h2 id="news">Newsletter</h2>
-<p>A weekly email with the digest is planned. <a href="/newsletter/">Signup status</a>. The <a href="/digest/feed.xml">Atom feed</a> works today.</p></section>`;
+${newsletterEnabled(config)
+  ? '<p>A weekly email with the digest is open for signup. <a href="/newsletter/">Subscribe</a>. The <a href="/digest/feed.xml">Atom feed</a> carries the same issues.</p>'
+  : '<p>A weekly email with the digest is planned. <a href="/newsletter/">Signup status</a>. The <a href="/digest/feed.xml">Atom feed</a> works today.</p>'}</section>`;
   return layout(config, {
     path: '/', title: config.name, description: config.description, body,
     jsonLd: [{ '@type': 'WebSite', name: config.name, url: config.baseUrl, description: config.description, inLanguage: config.language, publisher: publisher(config) }]
@@ -414,6 +416,7 @@ export function contentPage(ctx, file, pagePath) {
     attribution: DATA_ATTRIBUTION,
     contactEmail: config.contactEmail,
     privacyEmail: config.privacyEmail,
+    dataStatus: newsletterEnabled(config) ? 'collected' : 'planned',
     newsletterIntro: newsletterEnabled(config)
       ? 'This section describes what applies when you subscribe.'
       : 'The signup form is switched off until the newsletter opens. This section describes what will apply once it is on.',
@@ -426,9 +429,11 @@ export function contentPage(ctx, file, pagePath) {
   // A page can carry `updated: YYYY-MM-DD` in its front matter. The date is shown at the foot of the page.
   if (meta.updated !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(meta.updated)) throw new Error(`${path.basename(file)}: "updated" must be a date written YYYY-MM-DD, got "${meta.updated}"`);
   const updated = meta.updated ? `<p class="muted page-updated">Last updated: <time datetime="${meta.updated}">${meta.updated}</time></p>` : '';
+  // The description takes the same {{variables}} as the body.
+  const description = meta.description === undefined ? undefined : String(meta.description).replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
   return layout(config, {
-    path: pagePath, title: meta.title, description: meta.description, body: `<div class="prose">${renderMarkdown(body, vars)}${updated}</div>`,
-    jsonLd: [{ '@type': type, name: meta.title, url: url(config, pagePath), description: meta.description, inLanguage: config.language, ...(meta.updated ? { dateModified: meta.updated } : {}) }, breadcrumb(config, [['Home', '/'], [meta.title, pagePath]])]
+    path: pagePath, title: meta.title, description, body: `<div class="prose">${renderMarkdown(body, vars)}${updated}</div>`,
+    jsonLd: [{ '@type': type, name: meta.title, url: url(config, pagePath), description, inLanguage: config.language, ...(meta.updated ? { dateModified: meta.updated } : {}) }, breadcrumb(config, [['Home', '/'], [meta.title, pagePath]])]
   });
 }
 

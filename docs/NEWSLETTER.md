@@ -97,7 +97,7 @@ The `embed` field and the exact endpoint come from a search summary of Buttondow
 ## Still not verified
 
 - Buttondown price beyond 100 subscribers.
-- Whether the API works on the free plan (the features page and a docs tag disagree).
+- Whether the API works on the free plan (the features page and a docs tag disagree). The deletion call `DELETE /v1/subscribers/{email}` has to be tried on a test subscriber before the go (`docs/LAUNCH.md`, "Before the publication go", item 5), and the result written here.
 - Buttondown cookies on its hosted pages, Data Privacy Framework status and AWS region.
 - The exact form fields above.
 - Kit: double opt-in, export, data processing terms, and prices.

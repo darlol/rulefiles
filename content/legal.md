@@ -13,7 +13,7 @@ The site is published by a private individual, on a non-professional basis. The 
 
 Article 1-1, II of the law allows a person who publishes on a non-professional basis to give only the name and address of the host. The publisher uses that option for the site: no postal address and no phone number are published.
 
-The publisher of the site and of the newsletter is Thomas Rambaut, who is also responsible for the personal data of the newsletter (see [Privacy](/privacy/)). No postal address is published.
+The publisher of the site and of the newsletter is Thomas Rambaut, who is also responsible for the personal data of the newsletter (see [Privacy](/privacy/)).
 
 ## Host
 
@@ -35,4 +35,4 @@ Digest items and matrix notes quote short excerpts from official pages. Each one
 
 ## Personal data and cookies
 
-The site sets no cookies. The personal data planned is the email address of people who subscribe to the newsletter, and the messages people send to the contact addresses. The [Privacy](/privacy/) page says who is responsible for it, why it is used, how long it is kept and how to use your rights.
+The site sets no cookies. The personal data {{dataStatus}} is the email address of people who subscribe to the newsletter, and the messages people send to the contact addresses. The [Privacy](/privacy/) page says who is responsible for it, why it is used, how long it is kept and how to use your rights.

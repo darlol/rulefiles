@@ -1,6 +1,6 @@
 ---
 title: Privacy
-description: What data Rulefiles collects, who is responsible for it, and your rights. The data planned is the email address you give for the newsletter and the messages you send us.
+description: What data Rulefiles collects, who is responsible for it, and your rights. The data {{dataStatus}} is the email address you give for the newsletter and the messages you send us.
 updated: 2026-10-16
 ---
 # Privacy
