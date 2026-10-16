@@ -82,7 +82,7 @@ test('matrix page: filter bar is hidden until the script runs, and every control
 test('every status badge carries an icon and the status text, never colour alone', () => {
   const html = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
   for (const [k, label] of Object.entries(STATUS_LABEL)) {
-    assert.match(html, new RegExp(`<span class="badge badge-${k}"><svg class="ic" aria-hidden="true" focusable="false"><use href="#ic-${k}"/></svg>${label}</span>`), k);
+    assert.match(html, new RegExp(`<span class="badge badge-${k}"><svg class="ic" width="20" height="20" aria-hidden="true" focusable="false"><use href="#ic-${k}"/></svg>${label}</span>`), k);
     assert.match(html, new RegExp(`<symbol id="ic-${k}"`), `sprite has ${k}`);
   }
 });

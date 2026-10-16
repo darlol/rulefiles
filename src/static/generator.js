@@ -41,7 +41,7 @@ function values() {
 function render() {
   const { data, targets, options } = values();
   const files = generateFiles(data, targets, options);
-  out.replaceChildren();
+  out.textContent = '';
   if (!files.length) {
     const p = document.createElement('p');
     p.className = 'muted';

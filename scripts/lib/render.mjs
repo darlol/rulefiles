@@ -63,17 +63,21 @@ const ICON_PATHS = {
   warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'
 };
 
-/** Inline SVG icon that points at the sprite. layout() adds the sprite to any page whose body uses an icon. */
+/**
+ * Inline SVG icon that points at the sprite. layout() adds the sprite to any page whose body uses an icon.
+ * width and height are attributes on purpose: an SVG without them fills its container, so an icon would
+ * render huge whenever style.css is missing, blocked or an old cached copy. The stylesheet overrides them.
+ */
 export function icon(name) {
-  return `<svg class="ic" aria-hidden="true" focusable="false"><use href="#ic-${name}"/></svg>`;
+  return `<svg class="ic" width="20" height="20" aria-hidden="true" focusable="false"><use href="#ic-${name}"/></svg>`;
 }
 
 function iconSprite() {
-  return `<svg class="sprite" aria-hidden="true" focusable="false">${Object.entries(ICON_PATHS).map(([k, v]) => `<symbol id="ic-${k}" viewBox="0 0 24 24">${v}</symbol>`).join('')}</svg>`;
+  return `<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">${Object.entries(ICON_PATHS).map(([k, v]) => `<symbol id="ic-${k}" viewBox="0 0 24 24">${v}</symbol>`).join('')}</svg>`;
 }
 
 /** The site mark: a page with one highlighted line. It carries no text, so it survives a rename. */
-const MARK = '<svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
+const MARK = '<svg class="mark" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
 
 export const THEME_COLOR = { light: '#f5f6fa', dark: '#0d1018' };
 
@@ -162,6 +166,14 @@ export function shortDate(iso) {
   return m ? `${Number(m[3])} ${MONTHS[Number(m[2]) - 1]} ${m[1]}` : iso;
 }
 
+/**
+ * Accessible name of an item's source link. Several items share one source label, so the name adds the
+ * item title to make each link unique out of context. It starts with the visible text, as WCAG 2.5.3 asks.
+ */
+export function sourceLinkName(it) {
+  return `Source: ${it.sourceLabel} — ${String(it.title).replace(/`/g, '')}`;
+}
+
 export function itemHtml(it) {
   const version = it.version ? `<span class="tag tag-quiet">version ${h(it.version)}</span>` : '';
   const figure = it.figure ? `<span class="item-figure">${h(it.figure)}</span> ` : '';
@@ -169,7 +181,7 @@ export function itemHtml(it) {
 <p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span>${version}</p>
 <h3 class="item-title">${inlineHtml(it.title)}</h3>
 <p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
-<p class="item-foot">${figure}<a class="src" href="${h(it.sourceUrl)}" rel="noopener">Source: ${h(it.sourceLabel)}${icon('external')}</a></p>
+<p class="item-foot">${figure}<a class="src" href="${h(it.sourceUrl)}" rel="noopener" aria-label="${h(sourceLinkName(it))}">Source: ${h(it.sourceLabel)}${icon('external')}</a></p>
 </li>`;
 }
 
@@ -563,7 +575,7 @@ export function renderHeaders(config) {
   Referrer-Policy: no-referrer
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 /assets/*
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=0, must-revalidate
 `;
 }
 

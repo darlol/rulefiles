@@ -45,8 +45,8 @@ export function buildBody(input) {
  * A lone surrogate becomes U+FFFD, because YAML has no escape for it.
  */
 export function yamlQuote(value) {
-  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim()
-    .replace(/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g, '\ufffd');
+  const oneLine = String(value == null ? '' : value).replace(/\s+/g, ' ').trim()
+    .replace(/[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g, (m) => (m.length === 2 ? m : '\ufffd'));
   return JSON.stringify(oneLine).replace(/[\u007f-\u009f\ufffe\uffff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0'));
 }
 
@@ -56,7 +56,7 @@ const PLAIN_RESERVED = /^(true|false|null|yes|no|on|off|y|n|~|[-+]?(\d[\d_]*)?\.
 
 /** Plain when that is safe and readable, double-quoted otherwise. */
 export function yamlScalar(value) {
-  const oneLine = String(value ?? '').replace(/\s+/g, ' ').trim();
+  const oneLine = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
   if (oneLine && PLAIN_SAFE.test(oneLine) && !PLAIN_RESERVED.test(oneLine) && !/^-( |$)/.test(oneLine)) return oneLine;
   return yamlQuote(oneLine);
 }
