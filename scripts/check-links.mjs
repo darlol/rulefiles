@@ -47,8 +47,8 @@ async function checkExternal(urls, { delayMs = 1000 } = {}) {
   const bad = [];
   for (const u of urls) {
     try {
-      let res = await fetch(u, { method: 'HEAD', redirect: 'follow', headers: { 'user-agent': 'AgentDiffsLinkCheck/0.1' }, signal: AbortSignal.timeout(20000) });
-      if (res.status === 405 || res.status === 403) res = await fetch(u, { method: 'GET', redirect: 'follow', headers: { 'user-agent': 'AgentDiffsLinkCheck/0.1' }, signal: AbortSignal.timeout(20000) });
+      let res = await fetch(u, { method: 'HEAD', redirect: 'follow', headers: { 'user-agent': 'RulefilesLinkCheck/0.1' }, signal: AbortSignal.timeout(20000) });
+      if (res.status === 405 || res.status === 403) res = await fetch(u, { method: 'GET', redirect: 'follow', headers: { 'user-agent': 'RulefilesLinkCheck/0.1' }, signal: AbortSignal.timeout(20000) });
       console.log(`${res.status} ${u}`);
       if (res.status >= 400) bad.push(`${res.status} ${u}`);
     } catch (e) {

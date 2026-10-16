@@ -1,6 +1,6 @@
 ---
 title: Legal notice
-description: Who publishes Agent Diffs, who hosts it, how to reach the publisher, and how names and quotations are handled.
+description: Who publishes Rulefiles, who hosts it, how to reach the publisher, and how names and quotations are handled.
 ---
 # Legal notice (mentions légales)
 
@@ -30,7 +30,7 @@ The site is hosted by [[TODO-OWNER: host name, address and phone number]].
 
 ## Names, quotations and independence
 
-Agent Diffs is an independent project. It is not affiliated with Cursor, Anthropic, OpenAI, GitHub or Google. Product names belong to their owners and are used only to say which tool a line is about.
+Rulefiles is an independent project. It is not affiliated with Cursor, Anthropic, OpenAI, GitHub or Google. Product names belong to their owners and are used only to say which tool a line is about.
 
 Digest items and matrix notes quote short excerpts from official pages. Each one names the source and links to it. The quoted words belong to their authors. The terms for reusing the data and the code are on the [About](/about/) page.
 

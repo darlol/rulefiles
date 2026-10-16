@@ -1,8 +1,8 @@
-# Agent Diffs
+# Rulefiles
 
 A static website with two parts. The first is a weekly digest of dated, sourced changes in Cursor, Claude Code, Codex and GitHub Copilot. The second is a matrix of which agent reads which instruction file (`AGENTS.md`, `CLAUDE.md`, Cursor rules, Copilot instructions), plus a generator for those files that runs in the browser.
 
-The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Agent Diffs" is a working name, set in `site.config.json`.
+The site has no runtime dependencies and is built by plain Node scripts. The only dev dependency is `yaml`, which the tests use. Bots update the site by editing JSON files, never code. "Rulefiles" is the chosen name, set in `site.config.json`. The domain `rulefiles.dev` in that file is provisional: it is not bought. The first candidate name, "Agent Diffs", was dropped on 2026-10-16.
 
 Status: MVP, not published. Nothing here sends email, and no domain or hosting account has been bought or created.
 
@@ -58,8 +58,8 @@ The full schema is in [docs/DATA.md](docs/DATA.md).
 
 `scripts/watch.mjs` lists changes. It does not write summaries: each draft item holds the title, date and link from the source, and the first line of the release notes in the source's own words.
 
-- It identifies itself with a User-Agent that starts with `AgentDiffsWatch/0.1`.
-- It reads `robots.txt` for every host before any request, including hosts reached by redirect. It follows up to five redirects when fetching `robots.txt`. It treats a 404, 410 or 403 as no restrictions, and stays out when `robots.txt` answers 429 or 5xx, cannot be followed, or disallows the path. A group in `robots.txt` applies when its user-agent value is `AgentDiffsWatch` or a leading part of it.
+- It identifies itself with a User-Agent that starts with `RulefilesWatch/0.1`.
+- It reads `robots.txt` for every host before any request, including hosts reached by redirect. It follows up to five redirects when fetching `robots.txt`. It treats a 404, 410 or 403 as no restrictions, and stays out when `robots.txt` answers 429 or 5xx, cannot be followed, or disallows the path. A group in `robots.txt` applies when its user-agent value is `RulefilesWatch` or a leading part of it.
 - It waits 1.5 seconds between network requests, caches responses on disk, sends conditional requests, and does not hit the network again within six hours.
 - For GitHub it calls the REST API. It does not read `releases.atom`, because `github.com/robots.txt` disallows `*.atom`.
 - `npm run watch:offline` runs against the fixtures in `tests/fixtures` with no network.

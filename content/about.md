@@ -1,10 +1,10 @@
 ---
 title: About
-description: What Agent Diffs tracks, how each line is sourced, and what the project does not do.
+description: What Rulefiles tracks, how each line is sourced, and what the project does not do.
 ---
-# About Agent Diffs
+# About Rulefiles
 
-Agent Diffs follows two things for people who work with AI coding tools. One is the weekly list of changes in Cursor, Claude Code, Codex and GitHub Copilot. The other is a matrix of which instruction file each tool reads, such as `AGENTS.md`, `CLAUDE.md` or `.github/copilot-instructions.md`.
+Rulefiles follows two things for people who work with AI coding tools. One is the weekly list of changes in Cursor, Claude Code, Codex and GitHub Copilot. The other is a matrix of which instruction file each tool reads, such as `AGENTS.md`, `CLAUDE.md` or `.github/copilot-instructions.md`.
 
 ## How the data is made
 

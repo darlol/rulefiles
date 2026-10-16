@@ -5,7 +5,7 @@ Read on 2026-10-16 on the vendors' own pages. This is a working note for the own
 ## What the project does with the sources
 
 - The watch script (`scripts/watch.mjs`) reads four public feeds listed in `data/watch-sources.json`: the Cursor changelog RSS, the GitHub REST API for the releases of `anthropics/claude-code`, the Codex changelog RSS, and the GitHub changelog feed filtered on the Copilot label. It does not fetch HTML pages.
-- It identifies itself with the User-Agent `AgentDiffsWatch/0.1`, checks `robots.txt` on every host, waits 1,500 ms between requests, and caches responses on disk. It runs once a week.
+- It identifies itself with the User-Agent `RulefilesWatch/0.1`, checks `robots.txt` on every host, waits 1,500 ms between requests, and caches responses on disk. It runs once a week.
 - A digest item keeps a title, a date, a link and one short excerpt of the source wording. A matrix cell keeps a status, a link to an official page, a date, and a short note that can quote one sentence.
 - The matrix pages were read one by one by hand on 2026-10-16. No crawler fetched them.
 - The site uses no vendor logo. Product names appear as text.

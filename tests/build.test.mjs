@@ -14,7 +14,7 @@ import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
 process.env.BUILD_DATE = '2026-10-16';
 delete process.env.SITE_URL;
 delete process.env.NEWSLETTER_FORM_ACTION;
-const out = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-dist-'));
+const out = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist-'));
 const read = (rel) => fs.readFileSync(path.join(out, rel), 'utf8');
 const unescapeAttr = (s) => s.replace(/&#39;/g, "'");
 let result;
@@ -41,7 +41,7 @@ test('every page has a unique title, one h1, description, canonical, Open Graph 
     assert.match(html, /<meta name="description" content="[^"]{20,}"/);
     const indexable = !/<meta name="robots" content="noindex">/.test(html);
     if (indexable) {
-      assert.match(html, /<link rel="canonical" href="https:\/\/agentdiffs\.dev\//, p);
+      assert.match(html, /<link rel="canonical" href="https:\/\/rulefiles\.dev\//, p);
       assert.match(html, /property="og:url"/, p);
     }
     for (const og of ['og:title', 'og:description', 'og:type', 'og:site_name', 'og:image']) assert.match(html, new RegExp(`property="${og}"`), `${p} ${og}`);
@@ -63,7 +63,7 @@ test('titles stay short: the home title is at most 60 characters and no title pa
 
 test('og:image points at a built 1200x630 PNG', () => {
   const html = read('index.html');
-  assert.match(html, /<meta property="og:image" content="https:\/\/agentdiffs\.dev\/og\.png">/);
+  assert.match(html, /<meta property="og:image" content="https:\/\/rulefiles\.dev\/og\.png">/);
   assert.match(html, /<meta property="og:image:width" content="1200">/);
   assert.match(html, /<meta name="twitter:card" content="summary_large_image">/);
   const png = fs.readFileSync(path.join(out, 'og.png'));
@@ -74,9 +74,9 @@ test('og:image points at a built 1200x630 PNG', () => {
 });
 
 test('canonical URL matches the page path', () => {
-  assert.match(read('matrix/index.html'), /rel="canonical" href="https:\/\/agentdiffs\.dev\/matrix\/"/);
-  assert.match(read('digest/2026-W41/index.html'), /rel="canonical" href="https:\/\/agentdiffs\.dev\/digest\/2026-W41\/"/);
-  assert.match(read('index.html'), /rel="canonical" href="https:\/\/agentdiffs\.dev\/"/);
+  assert.match(read('matrix/index.html'), /rel="canonical" href="https:\/\/rulefiles\.dev\/matrix\/"/);
+  assert.match(read('digest/2026-W41/index.html'), /rel="canonical" href="https:\/\/rulefiles\.dev\/digest\/2026-W41\/"/);
+  assert.match(read('index.html'), /rel="canonical" href="https:\/\/rulefiles\.dev\/"/);
 });
 
 test('JSON-LD blocks parse and carry the expected types', () => {
@@ -97,7 +97,7 @@ test('sitemap lists every indexable page and not the 404', () => {
   const xml = read('sitemap.xml');
   const locs = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]);
   assert.equal(locs.length, PAGES.length - 1);
-  assert.ok(locs.includes('https://agentdiffs.dev/matrix/'));
+  assert.ok(locs.includes('https://rulefiles.dev/matrix/'));
   assert.ok(!locs.some((l) => l.includes('404')));
   assert.match(xml, /<lastmod>2026-10-15<\/lastmod>/);
   for (const l of locs) {
@@ -115,10 +115,10 @@ test('sitemap and robots generators escape and point at the sitemap', () => {
 
 test('llms.txt follows the llms.txt layout and links resolve to built pages', () => {
   const txt = read('llms.txt');
-  assert.match(txt, /^# Agent Diffs\n\n> /);
+  assert.match(txt, /^# Rulefiles\n\n> /);
   assert.match(txt, /\n## Data\n/);
   assert.match(txt, /\n## Digest\n/);
-  const links = [...txt.matchAll(/\]\((https:\/\/agentdiffs\.dev[^)]*)\)/g)].map((m) => new URL(m[1]).pathname);
+  const links = [...txt.matchAll(/\]\((https:\/\/rulefiles\.dev[^)]*)\)/g)].map((m) => new URL(m[1]).pathname);
   assert.ok(links.length >= 8);
   for (const p of links) {
     const file = p.endsWith('/') ? path.join(p, 'index.html') : p;
@@ -146,8 +146,8 @@ test('Atom feed is well formed and has one entry per issue', () => {
   assert.match(xml, /<updated>2026-10-15T00:00:00Z<\/updated>/);
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
-  assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Agent Diffs<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');
-  assert.equal((xml.match(/<author><name>Agent Diffs<\/name><\/author>/g) || []).length, 3, 'feed plus one per entry');
+  assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');
+  assert.equal((xml.match(/<author><name>Rulefiles<\/name><\/author>/g) || []).length, 3, 'feed plus one per entry');
   assert.doesNotMatch(xml, /<email>|<uri>/, 'no personal data in the author element');
   const one = renderFeed({ config: data.config, digests: [] });
   assert.match(one, /<updated>1970-01-01T00:00:00Z<\/updated>/);
@@ -202,7 +202,7 @@ test('newsletter form is disabled without a provider and enabled with one', () =
   assert.match(html, /<input id="nl-email" name="email" type="email" disabled/);
   assert.match(html, /<button type="button" disabled>Subscribe<\/button>/);
   assert.doesNotMatch(html, /<form[^>]+action=/);
-  const out2 = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-dist2-'));
+  const out2 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist2-'));
   process.env.NEWSLETTER_FORM_ACTION = 'https://news.example.com/subscribe';
   try {
     build({ outDir: out2, quiet: true });
@@ -217,7 +217,7 @@ test('newsletter form is disabled without a provider and enabled with one', () =
 });
 
 test('SITE_URL changes canonical URLs, sitemap and llms.txt', () => {
-  const out3 = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-dist3-'));
+  const out3 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist3-'));
   process.env.SITE_URL = 'https://preview.example.pages.dev/';
   try {
     build({ outDir: out3, quiet: true });
@@ -231,7 +231,7 @@ test('SITE_URL changes canonical URLs, sitemap and llms.txt', () => {
 });
 
 test('the build refuses invalid data', () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-root-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-root-'));
   fs.cpSync(new URL('..', import.meta.url).pathname, root, { recursive: true, filter: (s) => !/node_modules|\/dist|\.git(\/|$)|\.cache/.test(s) });
   const m = JSON.parse(fs.readFileSync(path.join(root, 'data/matrix.json'), 'utf8'));
   m.cells[0].sourceUrl = 'https://example.com/not-official';
@@ -241,7 +241,7 @@ test('the build refuses invalid data', () => {
 });
 
 test('build output is deterministic', () => {
-  const out4 = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-dist4-'));
+  const out4 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist4-'));
   build({ outDir: out4, quiet: true });
   for (const f of listFiles(out)) {
     const rel = path.relative(out, f);
@@ -317,7 +317,7 @@ test('the build warns, without failing, about every TODO marker and the placehol
   assert.ok(warnings.some((w) => w.startsWith('/sponsors/:') && w.includes('[[TODO-OWNER: sponsorship contact address]]')), warnings.join('\n'));
   assert.ok(warnings.some((w) => w.startsWith('/privacy/:') && w.includes('[[TODO-OWNER: data controller]]')), warnings.join('\n'));
   assert.ok(!warnings.some((w) => w.startsWith('/newsletter/:')), 'the newsletter page carries no marker');
-  assert.ok(warnings.some((w) => w.includes('placeholder https://agentdiffs.dev')));
+  assert.ok(warnings.some((w) => w.includes('placeholder https://rulefiles.dev')));
 });
 
 test('about page does not invite reuse while no license is chosen, and the JSON-LD names no license', () => {
@@ -379,6 +379,17 @@ test('every page links the legal notice and the privacy page, and the sitemap an
     assert.match(html, /<a href="\/privacy\/">Privacy<\/a>/, p);
     assert.match(html, /<a href="\/legal\/">Legal notice<\/a>/, p);
   }
-  assert.match(read('sitemap.xml'), /<loc>https:\/\/agentdiffs\.dev\/legal\/<\/loc>/);
-  assert.match(read('llms.txt'), /\[Legal notice\]\(https:\/\/agentdiffs\.dev\/legal\/\)/);
+  assert.match(read('sitemap.xml'), /<loc>https:\/\/rulefiles\.dev\/legal\/<\/loc>/);
+  assert.match(read('llms.txt'), /\[Legal notice\]\(https:\/\/rulefiles\.dev\/legal\/\)/);
+});
+
+test('the old name does not appear anywhere in the built site', () => {
+  const old = /agent(?:\s|&nbsp;|&#160;|&#xa0;|[_\-.·])*diffs?/i;
+  const names = ['site.config.json', 'package.json'];
+  assert.match('Agent&nbsp;Diffs Agent  Diffs Agent·Diffs agent_diff AgentDiffs', old);
+  for (const n of names) assert.doesNotMatch(fs.readFileSync(new URL(`../${n}`, import.meta.url), 'utf8'), old, n);
+  for (const f of listFiles(out)) {
+    if (/\.(html|xml|txt|json|js|css|svg)$/.test(f)) assert.doesNotMatch(fs.readFileSync(f, 'utf8'), old, `${path.relative(out, f)} carries the former name`);
+  }
+  assert.equal(JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).name, 'Rulefiles');
 });

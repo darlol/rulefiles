@@ -54,12 +54,12 @@ test('launchWarnings reports markers in pages and in the configuration, once eac
   assert.ok(w.some((l) => l.startsWith('site.config.json: newsletter.hiddenFields.a')), w.join('\n'));
   assert.equal(w.length, 3);
   assert.deepEqual(launchWarnings([{ path: '/x/', html: '<p>Done.</p>' }], cfg), []);
-  assert.equal(launchWarnings([], { baseUrl: 'https://agentdiffs.dev' }).length, 1);
+  assert.equal(launchWarnings([], { baseUrl: 'https://rulefiles.dev' }).length, 1);
 });
 
 /** A copy of the project inputs in a temporary folder, so a test can edit them. */
 function scratchProject() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-strict-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-strict-'));
   for (const d of ['data', 'content', 'src', 'scripts']) fs.cpSync(path.join(root, d), path.join(dir, d), { recursive: true });
   fs.copyFileSync(path.join(root, 'site.config.json'), path.join(dir, 'site.config.json'));
   return dir;
@@ -87,7 +87,7 @@ test('strict build fails and leaves no dist while markers remain, the normal bui
     assert.throws(() => build({ root: dir, outDir, quiet: true, strict: true }), (e) => {
       assert.match(e.message, /Strict build failed: \d+ launch placeholder\(s\) remain/);
       assert.match(e.message, /TODO-OWNER: host name, address and phone number/);
-      assert.match(e.message, /placeholder https:\/\/agentdiffs\.dev/);
+      assert.match(e.message, /placeholder https:\/\/rulefiles\.dev/);
       return true;
     });
     assert.equal(fs.existsSync(outDir), false, 'dist is removed so a failed release cannot be deployed');
@@ -117,11 +117,11 @@ test('strict build also fails on an older-style placeholder sentence', () => {
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('the command line honours --strict and AGENT_DIFFS_STRICT, and the default run exits 0 with warnings', () => {
+test('the command line honours --strict and RULEFILES_STRICT, and the default run exits 0 with warnings', () => {
   const dir = scratchProject();
   try {
     const run = (args, env = {}) => spawnSync(process.execPath, [path.join(dir, 'scripts', 'build.mjs'), ...args], {
-      cwd: dir, encoding: 'utf8', env: { ...process.env, BUILD_DATE: '2026-10-16', SITE_URL: '', AGENT_DIFFS_STRICT: '', ...env }
+      cwd: dir, encoding: 'utf8', env: { ...process.env, BUILD_DATE: '2026-10-16', SITE_URL: '', RULEFILES_STRICT: '', ...env }
     });
     const plain = run([]);
     assert.equal(plain.status, 0, plain.stderr);
@@ -131,8 +131,8 @@ test('the command line honours --strict and AGENT_DIFFS_STRICT, and the default 
     assert.equal(flag.status, 1);
     assert.match(flag.stderr, /Strict build failed/);
     assert.equal(fs.existsSync(path.join(dir, 'dist')), false);
-    for (const v of ['1', 'true', 'yes']) assert.equal(run([], { AGENT_DIFFS_STRICT: v }).status, 1, v);
-    assert.equal(run([], { AGENT_DIFFS_STRICT: '0' }).status, 0);
+    for (const v of ['1', 'true', 'yes']) assert.equal(run([], { RULEFILES_STRICT: v }).status, 1, v);
+    assert.equal(run([], { RULEFILES_STRICT: '0' }).status, 0);
     fillMarkers(dir);
     assert.equal(run(['--strict']).status, 0);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }

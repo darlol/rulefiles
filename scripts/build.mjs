@@ -78,7 +78,7 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  // Strict mode: --strict or AGENT_DIFFS_STRICT=1 (also true or yes).
-  const strict = process.argv.includes('--strict') || /^(1|true|yes)$/i.test(process.env.AGENT_DIFFS_STRICT || '');
+  // Strict mode: --strict or RULEFILES_STRICT=1 (also true or yes).
+  const strict = process.argv.includes('--strict') || /^(1|true|yes)$/i.test(process.env.RULEFILES_STRICT || '');
   try { build({ strict }); } catch (e) { console.error(e.message); process.exit(1); }
 }

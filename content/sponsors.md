@@ -1,6 +1,6 @@
 ---
 title: Sponsors
-description: Sponsorship policy for Agent Diffs. Sponsorship is not open yet and no rates are published.
+description: Sponsorship policy for Rulefiles. Sponsorship is not open yet and no rates are published.
 ---
 # Sponsors
 

@@ -2,7 +2,7 @@
 
 The site must not go public until each item below has an answer from the owner. None of them has been decided, and nothing in the repository decides them in the owner's place. This is a list of open decisions. It is not legal advice, and items 1 and 2 should be confirmed with a legal adviser.
 
-Every field that only the owner can supply is marked in the copy as `[[TODO-OWNER: field]]`. `npm run build` prints a `LAUNCH WARNING` line for every marker still on a page, for older placeholder sentences such as "will be named here", and for the placeholder domain. The warnings do not stop that build. `npm run build:strict` (or `AGENT_DIFFS_STRICT=1`) makes the build fail, and removes `dist/`, while any of them remains. The release build uses strict mode. The list of markers is under "Fields to fill in" below, and a test keeps it in step with the files.
+Every field that only the owner can supply is marked in the copy as `[[TODO-OWNER: field]]`. `npm run build` prints a `LAUNCH WARNING` line for every marker still on a page, for older placeholder sentences such as "will be named here", and for the placeholder domain. The warnings do not stop that build. `npm run build:strict` (or `RULEFILES_STRICT=1`) makes the build fail, and removes `dist/`, while any of them remains. The release build uses strict mode. The list of markers is under "Fields to fill in" below, and a test keeps it in step with the files.
 
 ## 1. License for the code and the data
 
@@ -37,7 +37,7 @@ Open: where the site is served from. `docs/OPERATIONS.md` compares GitHub Pages,
 
 ## 4. Name, domain and trademark
 
-Open: the domain, and what to do about the name. The owner retained "Agent Diffs" on 2026-10-16. `docs/BRAND-CLEARANCE.md` (checks of 2026-10-16) found at least four software projects already called "Agent Diff" or "AgentDiff" in the same field, so the name needs a decision with open eyes. The INPI and WIPO databases could not be searched automatically, so the manual searches in that document are still to do, and an industrial property attorney should run a similarity search before any filing. Nothing is bought, filed or reserved. After the choice, set `baseUrl` in `site.config.json` (or `SITE_URL` at build time). The placeholder `https://agentdiffs.dev` triggers a build warning.
+Open: the domain and the trademark checks. The owner chose "Rulefiles" on 2026-10-16, after the first candidate, "Agent Diffs", turned out to collide with existing projects (see `docs/BRAND-CLEARANCE.md`). The clearance of "Rulefiles" is in the same document. The INPI database could not be searched automatically, so the manual INPI search there is still to do, and an industrial property attorney should run a similarity search before any filing. Nothing is bought, filed or reserved. The domain `rulefiles.dev` in `site.config.json` is a provisional value: it is not bought and is not known to be buyable. After the choice, set `baseUrl` in `site.config.json` (or `SITE_URL` at build time). The placeholder `https://rulefiles.dev` triggers a build warning.
 
 ## 5. Contact address and correction channel
 
@@ -79,4 +79,4 @@ Each line is one marker, the file that holds it, and the item above it belongs t
 - `[[TODO-OWNER: retention period after unsubscription]]` in `content/privacy.md`, item 6.
 - `[[TODO-OWNER: sponsorship contact address]]` in `scripts/lib/render.mjs`. The Sponsors page shows it until `sponsorContact` is set in `site.config.json`, item 5.
 
-The placeholder domain is not a marker. The build reports `baseUrl` while it is still `https://agentdiffs.dev`, item 4.
+The placeholder domain is not a marker. The build reports `baseUrl` while it is still `https://rulefiles.dev`, the provisional domain that is not bought, item 4.

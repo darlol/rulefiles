@@ -1,5 +1,5 @@
 {
-  "name": "agent-diffs",
+  "name": "rulefiles",
   "version": "0.1.0",
   "private": true,
   "description": "Static site and weekly digest: what changed in AI coding tools, and which instruction file each agent reads.",
@@ -15,7 +15,7 @@
     "check-links": "node scripts/check-links.mjs",
     "check-links:external": "node scripts/check-links.mjs --external",
     "watch": "node scripts/watch.mjs",
-    "watch:offline": "node scripts/watch.mjs --offline tests/fixtures --out /tmp/agent-diffs-drafts",
+    "watch:offline": "node scripts/watch.mjs --offline tests/fixtures --out /tmp/rulefiles-drafts",
     "preview": "node scripts/preview.mjs",
     "ci": "npm run validate && npm run build && npm test && npm run check-links"
   },

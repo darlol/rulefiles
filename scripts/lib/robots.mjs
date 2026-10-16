@@ -42,7 +42,7 @@ function matchLength(ruleToken, ourToken) {
   return t.length > 0 && ourToken.startsWith(t) ? t.length : 0;
 }
 
-/** @param {string} productToken the product token of our User-Agent, for example "AgentDiffsWatch" */
+/** @param {string} productToken the product token of our User-Agent, for example "RulefilesWatch" */
 export function isAllowed(groups, productToken, pathWithQuery) {
   const token = productToken.toLowerCase();
   let best = -1;

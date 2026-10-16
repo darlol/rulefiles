@@ -25,7 +25,7 @@ CC BY 4.0, for the data and the text (points taken from the legal code in `docs/
 - Section 2(a)(1): worldwide, royalty-free, non-exclusive and irrevocable. Once published under it, the data cannot be taken back for people who already have it.
 - Section 3(a): anyone who shares the data must keep the creator's identification (a pseudonym is allowed, Section 3(a)(1)(A)(i)), a copyright notice, a notice that refers to the license, the license link, and an indication of any change they made. Section 3(a)(2) lets them do this in any reasonable way for the medium, for example with a link.
 - Section 2(a)(6): no endorsement. Reusers may not suggest the project backs them.
-- Section 2(b)(2): patent and trademark rights are not licensed. The name "Agent Diffs" stays out of the grant.
+- Section 2(b)(2): patent and trademark rights are not licensed. The name "Rulefiles" stays out of the grant.
 - Section 2(a)(2): where a legal exception or limitation applies to a reuse, the license does not apply to it and the reuser owes no attribution. That is the case for the short-quotation exception.
 - Section 4: database rights are covered, so reuse of the data files as a database is covered too.
 - Section 2(a)(5)(b): no additional terms and no technical measure that restricts what a recipient may do with the data.
@@ -36,7 +36,7 @@ Whether the matrix and the digests are protected by copyright or by the database
 
 Text a reuser can copy, to publish on the About page once the license is chosen:
 
-> Agent Diffs data (matrix.json, digests.json) by <name or pseudonym>, https://<domain>/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Quoted excerpts belong to their authors.
+> Rulefiles data (matrix.json, digests.json) by <name or pseudonym>, https://<domain>/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Quoted excerpts belong to their authors.
 
 In the JSON-LD Dataset block, `license` takes a URL: `https://creativecommons.org/licenses/by/4.0/`. The SPDX identifiers are `MIT` and `CC-BY-4.0`.
 

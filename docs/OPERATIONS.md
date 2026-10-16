@@ -1,5 +1,7 @@
 # Operations
 
+The GitHub repository is still called `darlol/agent-diffs`, from the project's first name. The owner may rename it later; GitHub redirects the old address, but the links in this file, the checks in the branch ruleset and any clone remote then need a look. Nothing in the code depends on the repository name.
+
 ## Hosting
 
 The build output is plain files in `dist/`. Any static host works. Facts below come from the providers' pages, checked on 2026-10-15.
@@ -18,7 +20,7 @@ Set `SITE_URL` to the preview URL before building so canonical links, the sitema
 SITE_URL=https://example-preview.pages.dev npm run build
 ```
 
-Build command for a preview on either provider: `npm run build`. It prints a `LAUNCH WARNING` for each placeholder and still succeeds. The build command for a release is `npm run build:strict`, which fails, and deletes `dist/`, while any `[[TODO-OWNER: ...]]` marker, older placeholder sentence or the placeholder domain remains. `AGENT_DIFFS_STRICT=1 npm run build` does the same. Output directory: `dist`. No install step is needed.
+Build command for a preview on either provider: `npm run build`. It prints a `LAUNCH WARNING` for each placeholder and still succeeds. The build command for a release is `npm run build:strict`, which fails, and deletes `dist/`, while any `[[TODO-OWNER: ...]]` marker, older placeholder sentence or the placeholder domain remains. `RULEFILES_STRICT=1 npm run build` does the same. Output directory: `dist`. No install step is needed.
 
 ## Newsletter
 

@@ -3,7 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { parseRobots, isAllowed } from './robots.mjs';
 
-export const PRODUCT_TOKEN = 'AgentDiffsWatch';
+export const PRODUCT_TOKEN = 'RulefilesWatch';
 export const DEFAULT_USER_AGENT = `${PRODUCT_TOKEN}/0.1 (changelog watcher; honest bot; see repository README)`;
 const MAX_BYTES = 5_000_000;
 const MAX_REDIRECTS = 4;

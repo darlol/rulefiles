@@ -13,7 +13,7 @@ const FIX = new URL('./fixtures/', import.meta.url).pathname;
 const fx = (n) => fs.readFileSync(path.join(FIX, n), 'utf8');
 const sources = JSON.parse(fs.readFileSync(new URL('../data/watch-sources.json', import.meta.url), 'utf8'));
 const src = (id) => sources.sources.find((s) => s.id === id);
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-test-'));
+const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-test-'));
 
 test('cursor RSS parses titles, dates and links without inventing text', () => {
   const e = parseRss(fx('cursor-changelog.xml'), src('cursor-changelog'));
@@ -139,7 +139,7 @@ test('fetcher: honest User-Agent, robots.txt first, cache on the second call, co
   const a = await f.get('https://example.org/feed.xml');
   assert.equal(a.body, '<rss/>');
   assert.deepEqual(calls.map((c) => c.url), ['https://example.org/robots.txt', 'https://example.org/feed.xml']);
-  assert.match(calls[0].ua, /^AgentDiffsWatch\/0\.1/);
+  assert.match(calls[0].ua, /^RulefilesWatch\/0\.1/);
   const b = await f.get('https://example.org/feed.xml');
   assert.equal(b.fromCache, true);
   assert.equal(calls.length, 2);

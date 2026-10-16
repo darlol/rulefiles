@@ -13,7 +13,7 @@ const LEGACY = [
 /** One unit of text around a placeholder: from the previous sentence end to the next one. */
 export const PLACEHOLDER_RE = new RegExp(String.raw`[^.!?\n]*(?:${[MARKER, ...LEGACY].join('|')})[^.!?\n]*[.!?]?`, 'g');
 export const MARKER_RE = /\[\[TODO-OWNER:\s*([^\]\n]*?)\s*\]\]/g;
-export const PLACEHOLDER_DOMAIN = 'https://agentdiffs.dev';
+export const PLACEHOLDER_DOMAIN = 'https://rulefiles.dev';
 
 // Block elements end with a line break, so a heading and the sentence after it are not joined.
 const textOf = (html) => html
@@ -50,6 +50,6 @@ export function launchWarnings(pages, config) {
   for (const [key, value] of strings(config)) {
     for (const hit of value.match(PLACEHOLDER_RE) || []) add(`site.config.json: ${key} still has a placeholder: "${hit.trim()}"`);
   }
-  if (config.baseUrl === PLACEHOLDER_DOMAIN) add(`site.config.json: baseUrl is the placeholder ${PLACEHOLDER_DOMAIN}, set SITE_URL or baseUrl once a domain is chosen`);
+  if (config.baseUrl === PLACEHOLDER_DOMAIN) add(`site.config.json: baseUrl is the placeholder ${PLACEHOLDER_DOMAIN} (domain not bought), set SITE_URL or baseUrl once a domain is chosen`);
   return out;
 }

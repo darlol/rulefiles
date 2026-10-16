@@ -1,6 +1,6 @@
 ---
 title: Privacy
-description: What data Agent Diffs collects, who is responsible for it, and your rights. The only data planned is the email address you choose to give for the newsletter.
+description: What data Rulefiles collects, who is responsible for it, and your rights. The only data planned is the email address you choose to give for the newsletter.
 ---
 # Privacy
 

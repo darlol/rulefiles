@@ -19,7 +19,7 @@ const sh = (cmd, args, opts = {}) => {
  * Nothing here talks to GitHub: the remote is a folder and gh is a stub.
  */
 function scratch() {
-  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-diffs-watchpr-'));
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-watchpr-'));
   const remote = path.join(base, 'remote.git');
   const work = path.join(base, 'work');
   const bin = path.join(base, 'bin');
