@@ -11,6 +11,7 @@ All content comes from JSON files in `data/`. `npm run validate` checks every ru
 ```
 {
   "schemaVersion": 1,
+  "license": "CC-BY-4.0", "licenseUrl": "https://creativecommons.org/licenses/by/4.0/", "attribution": "Rulefiles contributors",
   "lastReviewed": "2026-10-15",
   "tools": [ { "id": "cursor", "name": "Cursor", "docsUrl": "https://...", "scope": "optional note" } ],
   "files": [ { "id": "agents-md", "path": "AGENTS.md", "description": "..." } ],
@@ -21,6 +22,7 @@ All content comes from JSON files in `data/`. `npm run validate` checks every ru
 
 Rules:
 
+- `license`, `licenseUrl` and `attribution` are required and the first two have one allowed value each, set in `scripts/lib/license.mjs`. The same three fields are required in every digest, draft included, and the watch script writes them.
 - There is exactly one cell for every tool and file pair.
 - `status` is one of `reads`, `reads-conditionally`, `configurable`, `migration-only`, `not-read`, `unverified`.
 - `note` is required, at most 400 characters, and states only what the cited page says.
@@ -35,6 +37,7 @@ Rules:
 ```
 {
   "schemaVersion": 1,
+  "license": "CC-BY-4.0", "licenseUrl": "https://creativecommons.org/licenses/by/4.0/", "attribution": "Rulefiles contributors",
   "week": "2026-W41", "start": "2026-10-05", "end": "2026-10-11",
   "status": "published",
   "verifiedOn": "2026-10-15",

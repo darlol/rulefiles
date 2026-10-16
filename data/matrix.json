@@ -1,5 +1,8 @@
 {
   "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
   "lastReviewed": "2026-10-16",
   "tools": [
     {

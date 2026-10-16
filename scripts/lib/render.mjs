@@ -3,6 +3,7 @@ import path from 'node:path';
 import { escapeHtml as h, escapeXml as x, daysBetween } from './util.mjs';
 import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats } from './validate.mjs';
+import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 
 export const STATUS_LABEL = {
   reads: 'Reads',
@@ -126,6 +127,7 @@ ${page.body}
 <div class="footer-brand">
 <a class="brand" href="/">${MARK}<span>${h(config.name)}</span></a>
 <p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies, no trackers.</p>
+<p class="footer-license">Code under the <a href="/about/">MIT license</a>. Data and text under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>.</p>
 </div>
 <nav aria-label="Explore"><h2>Explore</h2><ul>
 <li><a href="/matrix/">Matrix</a></li>
@@ -278,7 +280,7 @@ ${rows}
     description: `Matrix of ${matrix.tools.length} AI coding tools and ${matrix.files.length} instruction file types, with an official source and a check date for each cell.`,
     body, script: '/assets/matrix.js',
     jsonLd: [
-      { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
+      { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
       breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/']])
     ]
   });
@@ -393,7 +395,7 @@ ${sections}
   return layout(config, {
     path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => TOOL_NAME[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
     jsonLd: [
-      { '@type': 'Article', headline: digest.title, datePublished: digest.verifiedOn, dateModified: digest.verifiedOn, inLanguage: config.language, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, `/digest/${digest.week}/`), citation: cites },
+      { '@type': 'Article', headline: digest.title, datePublished: digest.verifiedOn, dateModified: digest.verifiedOn, inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, `/digest/${digest.week}/`), citation: cites },
       breadcrumb(config, [['Home', '/'], ['Digest', '/digest/'], [digest.week, `/digest/${digest.week}/`]])
     ]
   });
@@ -407,6 +409,9 @@ export function contentPage(ctx, file, pagePath) {
     migrationOnly: matrixStats(matrix).byStatus['migration-only'],
     cells: matrix.cells.length,
     lastReviewed: matrix.lastReviewed,
+    siteUrl: config.baseUrl,
+    licenseUrl: DATA_LICENSE_URL,
+    attribution: DATA_ATTRIBUTION,
     sponsorContact: config.sponsorContact ? `Contact: ${config.sponsorContact}` : 'Contact: [[TODO-OWNER: sponsorship contact address]]'
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
@@ -522,6 +527,7 @@ export function renderLlmsTxt(ctx) {
     `- [matrix.json](${url(config, '/data/matrix.json')}): the same matrix as JSON`,
     `- [digests.json](${url(config, '/data/digests.json')}): all digest issues as JSON`,
     `- [llms-full.txt](${url(config, '/llms-full.txt')}): matrix and digests as one Markdown file`,
+    `- [License](${DATA_LICENSE_URL}): the data and the text are CC BY 4.0, credit "${DATA_ATTRIBUTION}" and link ${url(config, '/')}; quoted excerpts belong to their authors; the code is MIT`,
     '',
     '## Digest',
     '',

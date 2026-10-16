@@ -1,6 +1,6 @@
 # License recommendation
 
-Prepared on 2026-10-16 for the owner to validate. This is a working note, not legal advice. Nothing here is active: there is no `LICENSE` file, the About page names no license, and the JSON-LD has no `license` property. The decision is the owner's, and a lawyer should confirm the points marked "to confirm".
+Prepared on 2026-10-16. This is a working note, not legal advice. The recommendation was accepted on 2026-10-16 and is now in force: `LICENSE` (MIT), `LICENSE-DATA.md` (CC BY 4.0), the `license` fields in the data files, the About page and the JSON-LD all state it. The copyright holder named in `LICENSE` is "Rulefiles contributors", which the owner still has to confirm as the name to use. A lawyer should confirm the points marked "to confirm".
 
 ## Recommendation
 
@@ -10,7 +10,7 @@ Prepared on 2026-10-16 for the owner to validate. This is a working note, not le
 | Data and text: `data/` (`matrix.json`, the digests), the published `matrix.json` and `digests.json`, `content/`, `docs/` | CC BY 4.0 | Allows any reuse, including commercial use and use by AI tools, on one condition: credit the project and link the license. It also covers database rights (Section 4 of the legal code). |
 | Quoted excerpts of official pages | Not licensed by this project | The text belongs to the vendors. See "What the data license cannot cover". |
 
-Ready-to-use texts are in `docs/licenses/` and are inactive. `MIT.txt` is the standard MIT text with `<year>` and `<copyright holder>` left blank. `CC-BY-4.0.txt` is the Creative Commons legal code, copied unchanged from https://creativecommons.org/licenses/by/4.0/legalcode.txt on 2026-10-16 (SHA-256 `9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411`). Neither file is named `LICENSE`, so GitHub does not detect either as the repository license.
+The texts are in `docs/licenses/`. `MIT.txt` is the standard MIT text with `<year>` and `<copyright holder>` left blank. `CC-BY-4.0.txt` is the Creative Commons legal code, copied unchanged from https://creativecommons.org/licenses/by/4.0/legalcode.txt on 2026-10-16 (SHA-256 `9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411`). Neither file is named `LICENSE`. The root `LICENSE` file is the MIT text with the year and holder filled in.
 
 ## What each choice means
 
@@ -34,9 +34,9 @@ Whether the matrix and the digests are protected by copyright or by the database
 
 ## Attribution wording
 
-Text a reuser can copy, to publish on the About page once the license is chosen:
+Text a reuser can copy, published on the About page:
 
-> Rulefiles data (matrix.json, digests.json) by <name or pseudonym>, https://<domain>/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Quoted excerpts belong to their authors.
+> Rulefiles data by Rulefiles contributors, https://<domain>/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Quoted excerpts belong to their authors.
 
 In the JSON-LD Dataset block, `license` takes a URL: `https://creativecommons.org/licenses/by/4.0/`. The SPDX identifiers are `MIT` and `CC-BY-4.0`.
 
@@ -71,10 +71,10 @@ Vendor trademarks: the product names are used to say which tool a line is about.
 
 Contributions: with MIT and CC BY 4.0, an outside contribution is normally taken under the same license as the file it changes. A short line in a future `CONTRIBUTING.md` can say so. To confirm.
 
-## To activate, once the owner validates
+## What was done to activate it
 
-1. Copy `docs/licenses/MIT.txt` to `LICENSE` at the repository root, with the year and the holder filled in.
-2. Add a `LICENSE-DATA` (or a section in the README) that points to `docs/licenses/CC-BY-4.0.txt`, with the attribution text above.
-3. Set `"license": "MIT"` in `package.json`.
-4. Replace the license marker in `content/about.md` with the sentence naming both licenses, and add `license` to the Dataset JSON-LD in `scripts/lib/render.mjs`.
-5. Remove the item from the `docs/LAUNCH-BLOCKERS.md` list of fields to fill in, and run `npm run build:strict`.
+1. `docs/licenses/MIT.txt` became `LICENSE`, with the year 2026 and the holder "Rulefiles contributors".
+2. `LICENSE-DATA.md` states the scope of CC BY 4.0, a reading aid taken from the legal code, and the suggested credit. It points to `docs/licenses/CC-BY-4.0.txt`.
+3. `package.json` has `"license": "MIT"`.
+4. The About page names both licenses and gives the suggested credit, the Dataset and Article JSON-LD carry `license`, and the site footer states both licenses.
+5. `matrix.json` and every digest carry `license`, `licenseUrl` and `attribution`. The validators and the watch script enforce them.

@@ -324,11 +324,13 @@ test('the build warns, without failing, about every TODO marker and the placehol
   assert.ok(warnings.some((w) => w.includes('placeholder https://rulefiles.dev')));
 });
 
-test('about page does not invite reuse while no license is chosen, and the JSON-LD names no license', () => {
-  const about = read('about/index.html').replace(/<[^>]+>/g, ' ');
-  assert.doesNotMatch(about, /reuse a line|you can reuse|free to (use|reuse|copy)/i);
-  assert.match(about, /The license for the data and the code is \[\[TODO-OWNER: license of the data and the code\]\]/);
-  assert.doesNotMatch(read('matrix/index.html'), /"license"/);
+test('about page names both licenses and the suggested credit, and the JSON-LD names the data license', () => {
+  const about = read('about/index.html').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  assert.match(about, /The code is under the MIT license\./);
+  assert.match(about, /are under CC BY 4\.0/);
+  assert.match(about, /Suggested credit: &quot;Rulefiles data by Rulefiles contributors, https:\/\/rulefiles\.dev\/, licensed under CC BY 4\.0 \(https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/\)\.&quot;/);
+  assert.match(about, /excerpts quoted from official pages belong to their authors/);
+  assert.match(read('matrix/index.html'), /"license":"https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/"/);
   assert.ok(fs.existsSync(new URL('../docs/LAUNCH-BLOCKERS.md', import.meta.url)));
 });
 

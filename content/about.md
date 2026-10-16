@@ -20,7 +20,15 @@ It is an independent project. It is not affiliated with Cursor, Anthropic, OpenA
 
 ## Data files
 
-The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers. The license for the data and the code is [[TODO-OWNER: license of the data and the code]].
+The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers.
+
+## License
+
+The code is under the MIT license. The data (the matrix and the digests, in the JSON files above) and the text of this site are under [CC BY 4.0]({{licenseUrl}}). You can copy, share and adapt them, including for commercial use or with AI tools, if you credit the project, link the license and say what you changed.
+
+Suggested credit: "Rulefiles data by {{attribution}}, {{siteUrl}}/, licensed under CC BY 4.0 ({{licenseUrl}})."
+
+The license covers what this project adds: the selection, the dates, the statuses, the notes and the structure. The excerpts quoted from official pages belong to their authors, and the product names belong to their owners. Neither is licensed here.
 
 ## Corrections
 

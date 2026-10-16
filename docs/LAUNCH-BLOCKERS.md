@@ -6,16 +6,12 @@ Every field that only the owner can supply is marked in the copy as `[[TODO-OWNE
 
 ## 1. License for the code and the data
 
-Open: the license of the code, and the license of the data in `data/` (`matrix.json`, the digests, and the published `matrix.json` and `digests.json`). These can differ.
+Decided on 2026-10-16: MIT for the code, CC BY 4.0 for the data and the text. See `LICENSE`, `LICENSE-DATA.md` and `docs/LICENSE-RECOMMENDATION.md`.
 
-State today:
+Still open:
 
-- There is no `LICENSE` file in the repository.
-- `content/about.md` does not invite anyone to reuse the data. It says the terms are not set yet.
-- The JSON-LD Dataset block on the matrix page has no `license` property. Add it only once the license is chosen.
-- The digest items quote wording from official pages. Whether those quotes can be republished under a data license, and under what conditions, is part of the question.
-
-Once chosen: add `LICENSE`, state both licenses on the About page, add `license` to the Dataset JSON-LD in `scripts/lib/render.mjs`, and mention it in `README.md`.
+- The name in the copyright line of `LICENSE` and in the `attribution` field of the data files is "Rulefiles contributors". The owner has to confirm it, or give another name. The value sits in `LICENSE`, `scripts/lib/license.mjs`, the data files and the About page template.
+- The digest items quote wording from official pages. The license does not cover those quotes, and the pages say so. Whether the quoting stays inside the French short-quotation exception is a question for the adviser (see `docs/LICENSE-RECOMMENDATION.md`).
 
 ## 2. Publisher identity, legal notice and GDPR (France)
 
@@ -63,7 +59,6 @@ Before launch: re-read the cited official pages for every matrix cell, update `v
 
 Each line is one marker, the file that holds it, and the item above it belongs to. Replace the whole `[[TODO-OWNER: ...]]` text with the real value. A test compares this list with the markers in `content/`, `scripts/lib/render.mjs` and `site.config.json`.
 
-- `[[TODO-OWNER: license of the data and the code]]` in `content/about.md`, item 1.
 - `[[TODO-OWNER: correction channel]]` in `content/about.md`, item 5.
 - `[[TODO-OWNER: publisher name]]` in `content/legal.md`, item 2.
 - `[[TODO-OWNER: publisher status]]` in `content/legal.md`, item 2. Individual not acting professionally, sole trader, or company.

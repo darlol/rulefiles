@@ -2,6 +2,7 @@
   "name": "rulefiles",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Static site and weekly digest: what changed in AI coding tools, and which instruction file each agent reads.",
   "type": "module",
   "engines": {

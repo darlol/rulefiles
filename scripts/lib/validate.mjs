@@ -1,4 +1,5 @@
 import { isIsoDate, isoWeekRange, daysBetween } from './util.mjs';
+import { licenseProblems } from './license.mjs';
 
 export const MATRIX_STATUSES = ['reads', 'reads-conditionally', 'configurable', 'migration-only', 'not-read', 'unverified'];
 
@@ -41,6 +42,7 @@ export function validateMatrix(matrix, hosts, today) {
   const errors = [];
   const warnings = [];
   if (matrix.schemaVersion !== 1) errors.push('matrix.json: schemaVersion must be 1');
+  errors.push(...licenseProblems(matrix, 'matrix.json'));
   if (!isIsoDate(matrix.lastReviewed)) errors.push('matrix.json: lastReviewed must be YYYY-MM-DD');
   const toolIds = new Set();
   for (const t of matrix.tools || []) {
@@ -89,6 +91,7 @@ export function validateDigest(digest, hosts, today, fileName = '') {
   const errors = [];
   const label = `digest ${digest.week || fileName}`;
   if (digest.schemaVersion !== 1) errors.push(`${label}: schemaVersion must be 1`);
+  errors.push(...licenseProblems(digest, label));
   if (!/^\d{4}-W\d{2}$/.test(digest.week || '')) errors.push(`${label}: week must look like 2026-W41`);
   else {
     const range = isoWeekRange(digest.week);

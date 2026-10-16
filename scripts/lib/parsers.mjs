@@ -1,4 +1,5 @@
 import { isoWeekId, isoWeekRange } from './util.mjs';
+import { licenseFields } from './license.mjs';
 
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '\u2026', rsquo: '\u2019', lsquo: '\u2018', ldquo: '\u201c', rdquo: '\u201d', ndash: '\u2013', mdash: '\u2014' };
 
@@ -118,7 +119,7 @@ export function groupDrafts(entries, today) {
     const seen = new Map();
     for (const it of items) { const n = (seen.get(it.id) || 0) + 1; seen.set(it.id, n); if (n > 1) it.id += `-${n}`; }
     drafts.push({
-      schemaVersion: 1, week, start, end, status: 'draft', verifiedOn: today,
+      schemaVersion: 1, ...licenseFields(), week, start, end, status: 'draft', verifiedOn: today,
       title: `Draft for ${start} to ${end}`,
       summary: 'Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.',
       items

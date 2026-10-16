@@ -22,6 +22,8 @@ npm run ci            # validate, build, test and check links in one go
 ## Layout
 
 ```
+LICENSE                     MIT license for the code
+LICENSE-DATA.md             CC BY 4.0 for the data and the text, scope and suggested credit
 site.config.json            name, base URL, newsletter form settings
 data/matrix.json            instruction file matrix, one cell per tool and file
 data/digest/YYYY-Www.json   one published digest per ISO week
@@ -40,8 +42,8 @@ docs/DATA.md                data schema and the update workflow for bots
 docs/OPERATIONS.md          hosting, newsletter, CI and launch checklist
 docs/LAUNCH-BLOCKERS.md     decisions the owner has to make before the site goes public
 docs/NEWSLETTER.md          newsletter tools compared on vendor pages, with a recommendation
-docs/LICENSE-RECOMMENDATION.md  recommended licenses for the code and the data, not active
-docs/licenses/              license texts, kept inactive until the owner decides
+docs/LICENSE-RECOMMENDATION.md  why MIT for the code and CC BY 4.0 for the data and text
+docs/licenses/              the license texts: MIT template and the CC BY 4.0 legal code
 docs/SOURCE-TERMS.md        what the project takes from each source and the clauses that matter
 docs/BRAND.md               the name, the fallback and the names dropped
 docs/BRAND-CLEARANCE.md     trademark, collision, domain, handle and fee checks for the name
@@ -94,6 +96,15 @@ Release dates use the UTC date of the publication timestamp.
 | `BUILD_DATE` | Fixed date for the build, used by tests and freshness checks |
 | `WATCH_USER_AGENT` | Replaces the watch script's User-Agent |
 | `GITHUB_TOKEN` | Raises the GitHub API rate limit for the watch script |
+
+## License
+
+- Code: MIT, see [LICENSE](LICENSE). The copyright line reads "Rulefiles contributors".
+- Data and text: CC BY 4.0, see [LICENSE-DATA.md](LICENSE-DATA.md). That covers `data/` (the matrix and the digests, also published as `/data/matrix.json` and `/data/digests.json`) and the text of `content/` and `docs/*.md`. Every published data file has `license`, `licenseUrl` and `attribution` fields.
+- Excerpts quoted from official pages belong to their authors and are not licensed by this project. Product names and trademarks are not licensed either.
+- The font in `src/static/fonts/` is Hanken Grotesk under the SIL Open Font License 1.1.
+
+Suggested credit for reusing the data: "Rulefiles data by Rulefiles contributors, https://rulefiles.dev/, licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)." The domain is the provisional one.
 
 ## Limits
 
