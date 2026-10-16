@@ -23,5 +23,10 @@
     "sourceUrl": "https://www.cloudflare.com/website-terms/",
     "readOn": "2026-10-16"
   },
+  "pageUpdated": {
+    "/about/": "2026-10-16",
+    "/generator/": "2026-10-16",
+    "/newsletter/": "2026-10-16"
+  },
   "staleAfterDays": 30
 }
