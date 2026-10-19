@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { ROOT, readJson, writeFile, todayIso, isIsoDate } from './lib/util.mjs';
 import { createFetcher, DEFAULT_USER_AGENT } from './lib/fetcher.mjs';
 import { parseRss, parseGithubReleases, groupDrafts } from './lib/parsers.mjs';
-import { publishedDigestsFromDir } from './lib/drafts.mjs';
+import { publishedDigestsFromDir, sourceKeys } from './lib/drafts.mjs';
 
 function parseArgs(argv) {
   const a = { noState: false };
@@ -60,9 +60,9 @@ export async function run(argv, deps = {}) {
   }
 
   // Keep entries in the window that are neither seen before nor already cited by a published digest.
-  const cited = new Set(publishedDigestsFromDir(root).flatMap((d) => d.items.flatMap((i) => [i.sourceUrl, ...(i.version ? [`${i.tool}:${i.version}`] : [])])));
+  const cited = new Set(publishedDigestsFromDir(root).flatMap((d) => d.items.flatMap((i) => [...sourceKeys(i.tool, i.sourceUrl), ...(i.version ? [`${i.tool}:${i.version}`] : [])])));
   const total = entries.length;
-  entries = entries.filter((e) => e.date >= since && e.date <= today && !state.seen[e.id] && !cited.has(e.url) && !(e.version && cited.has(`${e.tool}:${e.version}`)));
+  entries = entries.filter((e) => e.date >= since && e.date <= today && !state.seen[e.id] && !sourceKeys(e.tool, e.url).some((k) => cited.has(k)) && !(e.version && cited.has(`${e.tool}:${e.version}`)));
   entries.sort((a, b) => (a.date === b.date ? (a.id < b.id ? -1 : 1) : a.date < b.date ? -1 : 1));
   log(`\n${entries.length} new change(s) since ${since} (of ${total} parsed):`);
   for (const e of entries) log(`${e.date} | ${e.tool} | ${e.title} | ${e.url}`);
