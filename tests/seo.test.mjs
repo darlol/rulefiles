@@ -37,7 +37,9 @@ test('sitemap: every URL has a lastmod, and the data files and the feed are list
   assert.equal(by['/data/digests.json'], digests[0].verifiedOn);
   assert.equal(by['/digest/feed.xml'], digests[0].verifiedOn);
   assert.equal(by['/digest/2026-W41/'], digests.find((d) => d.week === '2026-W41').verifiedOn);
-  assert.equal(by['/privacy/'], fs.readFileSync(new URL('../content/privacy.md', import.meta.url), 'utf8').match(/^updated: (\d{4}-\d\d-\d\d)$/m)[1], 'the privacy page takes the updated date of its front matter');
+  // A fixed date on purpose, unlike the other lines that read the data: the test fails if the privacy page loses its
+  // `updated` date or if the date moves, so a pull request that changes the privacy text has to update this line and `updated` together.
+  assert.equal(by['/privacy/'], '2026-10-19');
 });
 
 test('sitemap lastmod comes from the content, not from the build date', () => {

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -19,7 +19,11 @@ const src = (id) => sources.sources.find((s) => s.id === id);
 // read it instead of data/digest, so the items they expect as new do not change when a week is published.
 const PUBLISHED_ROOT = new URL('./fixtures/published-digests/', import.meta.url).pathname;
 const SOURCES = new URL('../data/watch-sources.json', import.meta.url).pathname;
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-test-'));
+// Every directory made by tmp() is removed after the file's tests, even when a test fails before its own cleanup
+// or never cleans up (the fetcher caches below).
+const TMP_DIRS = [];
+const tmp = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-test-')); TMP_DIRS.push(d); return d; };
+after(() => { for (const d of TMP_DIRS) fs.rmSync(d, { recursive: true, force: true }); });
 
 test('cursor RSS parses titles, dates and links without inventing text', () => {
   const e = parseRss(fx('cursor-changelog.xml'), src('cursor-changelog'));
@@ -160,16 +164,17 @@ test('offline run writes drafts, skips items already published, and remembers wh
 
 test('a second run with state lists nothing new', async () => {
   const out = tmp();
-  const state = path.join(out, 'state.json');
-  fs.writeFileSync(state, '{"seen":{}}');
-  // offline mode does not write state, so mark entries as seen by hand through a first dry listing.
-  const first = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
-  assert.ok(first.entries.length > 0, 'the first run lists the fixture items that the frozen digest does not cite');
-  const seen = Object.fromEntries(first.entries.map((e) => [e.id, '2026-10-15']));
-  fs.writeFileSync(state, JSON.stringify({ seen }));
-  const second = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
-  assert.equal(second.entries.length, 0);
-  fs.rmSync(out, { recursive: true, force: true });
+  try {
+    const state = path.join(out, 'state.json');
+    fs.writeFileSync(state, '{"seen":{}}');
+    // offline mode does not write state, so mark entries as seen by hand through a first dry listing.
+    const first = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
+    assert.ok(first.entries.length > 0, 'the first run lists the fixture items that the frozen digest does not cite');
+    const seen = Object.fromEntries(first.entries.map((e) => [e.id, '2026-10-15']));
+    fs.writeFileSync(state, JSON.stringify({ seen }));
+    const second = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
+    assert.equal(second.entries.length, 0);
+  } finally { fs.rmSync(out, { recursive: true, force: true }); }
 });
 
 test('merging into an existing draft keeps reviewer edits', async () => {
