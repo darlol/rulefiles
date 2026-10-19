@@ -3,6 +3,10 @@
 // cell verifiedOn) plus TEST_DATE_MARGIN_DAYS. The validator refuses data dated after the build date, so TEST_DATE
 // is never before the data. It stays strictly after the latest verifiedOn, so a feed <updated> that took the build
 // date instead of a digest date shows up in the tests.
+//
+// Limits. Because TEST_DATE follows the data, `npm test` alone no longer checks that the data is not dated in the
+// future: only `npm run validate` and `npm run build`, which use the real day, refuse it (the first CI step). A draft
+// dated far ahead (say a verifiedOn in 2027) moves TEST_DATE with it, and the tests still pass without a warning.
 import fs from 'node:fs';
 import path from 'node:path';
 

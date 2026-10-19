@@ -504,7 +504,8 @@ function digestSourceLinkProblems(html, items, file = 'page') {
 const digestOf = (week) => JSON.parse(fs.readFileSync(path.join(root, 'data', 'digest', `${week}.json`), 'utf8'));
 
 test('every Source link on the digest cards has a unique accessible name that starts with its visible text', () => {
-  const weeks = fs.readdirSync(path.join(root, 'data', 'digest')).filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', '')).sort();
+  // Published weeks only: a *.draft.json file has no page.
+  const weeks = fs.readdirSync(path.join(root, 'data', 'digest')).filter((f) => f.endsWith('.json')).map((f) => JSON.parse(fs.readFileSync(path.join(root, 'data', 'digest', f), 'utf8'))).filter((dg) => dg.status === 'published').map((dg) => dg.week).sort();
   assert.ok(weeks.length >= 2);
   for (const week of weeks) assert.deepEqual(digestSourceLinkProblems(fs.readFileSync(path.join(out, 'digest', week, 'index.html'), 'utf8'), digestOf(week).items, week), []);
   const latest = weeks[weeks.length - 1];

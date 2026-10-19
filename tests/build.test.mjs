@@ -5,14 +5,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
-import { listFiles } from '../scripts/lib/util.mjs';
+import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
 import { matrixStats } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
-import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
+import { loadData } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
-import { TEST_DATE } from './helpers/test-date.mjs';
-import { PAGES, PUBLISHED_WEEKS } from './helpers/pages.mjs';
+import { TEST_DATE, LATEST_DATA_DATE, addDays } from './helpers/test-date.mjs';
+import { PAGES, PUBLISHED_WEEKS, PUBLISHED_DIGESTS } from './helpers/pages.mjs';
 
 process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
@@ -113,7 +113,7 @@ test('sitemap lists every indexable page and not the 404', () => {
   assert.ok(!locs.some((l) => l.includes('404')));
   // lastmod is the date the content changed: the newest digest's verifiedOn for the home page, the digest index,
   // digests.json and the feed; each issue page carries its own verifiedOn.
-  const digests = publishedDigests(loadData());
+  const digests = PUBLISHED_DIGESTS;
   const latest = digests[0].verifiedOn;
   assert.ok(latest <= TEST_DATE);
   const lastmod = (loc, date) => assert.ok(xml.includes(`<loc>https://rulefiles.dev${loc}</loc><lastmod>${date}</lastmod>`), `${loc} lastmod is ${date}`);
@@ -157,7 +157,7 @@ test('llms-full.txt carries every matrix cell and every digest item', () => {
   const full = read('llms-full.txt');
   for (const c of data.matrix.cells) assert.ok(full.includes(`(checked ${c.verifiedOn})`), `${c.tool} ${c.file}`);
   assert.equal((full.match(/ \(checked \d{4}-\d\d-\d\d\)/g) || []).length, data.matrix.cells.length);
-  for (const d of publishedDigests(data)) for (const i of d.items) assert.ok(full.includes(i.sourceUrl), i.id);
+  for (const d of PUBLISHED_DIGESTS) for (const i of d.items) assert.ok(full.includes(i.sourceUrl), i.id);
 });
 
 test('Atom feed is well formed and has one entry per issue', () => {
@@ -165,7 +165,10 @@ test('Atom feed is well formed and has one entry per issue', () => {
   assert.match(xml, /^<\?xml version="1.0" encoding="utf-8"\?>\n<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom"/);
   assert.equal((xml.match(/<entry>/g) || []).length, PUBLISHED_WEEKS.length);
   assert.equal((xml.match(/<entry>/g) || []).length, (xml.match(/<\/entry>/g) || []).length);
-  assert.equal(xml.slice(0, xml.indexOf('<entry>')).match(/<updated>(.*?)<\/updated>/)?.[1], `${publishedDigests(loadData())[0].verifiedOn}T00:00:00Z`, 'feed-level updated is the newest verifiedOn');
+  assert.equal(xml.slice(0, xml.indexOf('<entry>')).match(/<updated>(.*?)<\/updated>/)?.[1], `${PUBLISHED_DIGESTS[0].verifiedOn}T00:00:00Z`, 'feed-level updated is the newest verifiedOn');
+  // Entries are newest first, in the order the helper finds on its own.
+  assert.deepEqual([...xml.matchAll(/<entry>[\s\S]*?<id>[^<]*:digest\/(\d{4}-W\d\d)<\/id>/g)].map((m) => m[1]), PUBLISHED_DIGESTS.map((d) => d.week), 'feed entries newest first');
+  assert.deepEqual(JSON.parse(read('data/digests.json')).map((d) => d.week), PUBLISHED_DIGESTS.map((d) => d.week), 'digests.json newest first');
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
   assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');
@@ -343,6 +346,40 @@ test('SITE_URL changes canonical URLs, sitemap and llms.txt', () => {
   } finally {
     delete process.env.SITE_URL;
     fs.rmSync(out3, { recursive: true, force: true });
+  }
+});
+
+test('a draft digest stays out of the build: no page, no sitemap or feed entry, nothing in digests.json or anywhere in dist', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-draft-'));
+  const buildDate = process.env.BUILD_DATE;
+  try {
+    fs.cpSync(new URL('..', import.meta.url).pathname, root, { recursive: true, filter: (s) => !/node_modules|\/dist|\.git(\/|$)|\.cache/.test(s) });
+    // The draft is the week after the latest data, built from the newest published issue with its dates moved by 7 days.
+    const latest = PUBLISHED_DIGESTS[0];
+    const week = isoWeekId(addDays(LATEST_DATA_DATE, 7));
+    assert.ok(!PUBLISHED_DIGESTS.some((d) => d.week === week), 'the draft week is not a published week');
+    const { start, end } = isoWeekRange(week);
+    const marker = 'DRAFTONLYMARKER';
+    const draft = {
+      ...structuredClone(latest), week, start, end, status: 'draft', verifiedOn: end,
+      title: `${marker} digest`, summary: `${marker} summary.`,
+      items: latest.items.slice(0, 2).map((it, n) => ({ ...it, id: `${it.tool}-${start}-${marker.toLowerCase()}-${n}`, date: start, title: `${marker} item ${n}`, sourceUrl: `${it.sourceUrl.split('#')[0]}#${marker.toLowerCase()}-${n}` }))
+    };
+    fs.writeFileSync(path.join(root, 'data', 'digest', `${week}.draft.json`), JSON.stringify(draft, null, 2) + '\n');
+    process.env.BUILD_DATE = addDays(end, 1);
+    const outDir = path.join(root, 'dist');
+    build({ root, outDir, quiet: true });
+    const r = (rel) => fs.readFileSync(path.join(outDir, rel), 'utf8');
+    assert.ok(!fs.existsSync(path.join(outDir, 'digest', week)), 'no page for the draft week');
+    assert.ok(!r('sitemap.xml').includes(`/digest/${week}/`), 'not in the sitemap');
+    assert.ok(!r('digest/feed.xml').includes(week), 'not in the feed');
+    assert.deepEqual(JSON.parse(r('data/digests.json')).map((d) => d.week), PUBLISHED_DIGESTS.map((d) => d.week), 'digests.json holds the published weeks only');
+    for (const f of listFiles(outDir)) {
+      if (/\.(html|xml|txt|json|js|css|svg)$/.test(f)) assert.ok(!fs.readFileSync(f, 'utf8').includes(marker), `${path.relative(outDir, f)} carries the draft`);
+    }
+  } finally {
+    process.env.BUILD_DATE = buildDate;
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 

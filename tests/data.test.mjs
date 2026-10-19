@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { loadData } from '../scripts/lib/data.mjs';
 import { validateMatrix, validateDigest, validateConfig, validateWatchSources, staleCells } from '../scripts/lib/validate.mjs';
 import { isoWeekId, isoWeekRange, isIsoDate } from '../scripts/lib/util.mjs';
-import { TEST_DATE } from './helpers/test-date.mjs';
+import { TEST_DATE, addDays } from './helpers/test-date.mjs';
 
 const TODAY = TEST_DATE;
 const data = loadData();
@@ -46,7 +46,7 @@ test('matrix rejects a missing cell, a bad status, an http URL and an unknown ho
 
 test('matrix rejects future and malformed dates and duplicate cells', () => {
   const m = structuredClone(data.matrix);
-  m.cells[0].verifiedOn = '2027-01-01';
+  m.cells[0].verifiedOn = addDays(TODAY, 1);
   assert.match(validateMatrix(m, data.hosts, TODAY).errors.join('\n'), /future/);
   m.cells[0].verifiedOn = '2026-02-30';
   assert.match(validateMatrix(m, data.hosts, TODAY).errors.join('\n'), /YYYY-MM-DD/);
@@ -80,8 +80,10 @@ test('digest items stay within their week and have sources', () => {
 });
 
 test('stale cells are reported after the configured number of days', () => {
-  assert.equal(staleCells(data.matrix, '2026-10-20', 30).length, 0);
-  assert.equal(staleCells(data.matrix, '2026-12-01', 30).length, data.matrix.cells.length);
+  // Dates follow the matrix: 30 days after the oldest check nothing is stale yet, 31 days after the newest check all is.
+  const checked = data.matrix.cells.map((c) => c.verifiedOn).sort();
+  assert.equal(staleCells(data.matrix, addDays(checked[0], 30), 30).length, 0);
+  assert.equal(staleCells(data.matrix, addDays(checked.at(-1), 31), 30).length, data.matrix.cells.length);
 });
 
 test('ISO week helpers', () => {
