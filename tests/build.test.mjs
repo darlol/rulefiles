@@ -12,6 +12,7 @@ import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
 import { TEST_DATE } from './helpers/test-date.mjs';
+import { PAGES, PUBLISHED_WEEKS } from './helpers/pages.mjs';
 
 process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
@@ -33,7 +34,6 @@ let result;
 before(() => { result = build({ outDir: out, quiet: true }); });
 after(() => fs.rmSync(out, { recursive: true, force: true }));
 
-const PAGES = ['index.html', 'matrix/index.html', 'generator/index.html', 'digest/index.html', 'digest/2026-W41/index.html', 'digest/2026-W42/index.html', 'about/index.html', 'sponsors/index.html', 'newsletter/index.html', 'privacy/index.html', 'legal/index.html', '404.html'];
 
 test('all expected pages and files exist', () => {
   for (const p of [...PAGES, 'sitemap.xml', 'robots.txt', 'llms.txt', 'llms-full.txt', 'digest/feed.xml', 'data/matrix.json', 'data/digests.json', 'assets/style.css', 'assets/generator.js', 'assets/generator-core.js', '_headers', 'favicon.svg']) {
@@ -163,13 +163,13 @@ test('llms-full.txt carries every matrix cell and every digest item', () => {
 test('Atom feed is well formed and has one entry per issue', () => {
   const xml = read('digest/feed.xml');
   assert.match(xml, /^<\?xml version="1.0" encoding="utf-8"\?>\n<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom"/);
-  assert.equal((xml.match(/<entry>/g) || []).length, 2);
+  assert.equal((xml.match(/<entry>/g) || []).length, PUBLISHED_WEEKS.length);
   assert.equal((xml.match(/<entry>/g) || []).length, (xml.match(/<\/entry>/g) || []).length);
   assert.equal(xml.slice(0, xml.indexOf('<entry>')).match(/<updated>(.*?)<\/updated>/)?.[1], `${publishedDigests(loadData())[0].verifiedOn}T00:00:00Z`, 'feed-level updated is the newest verifiedOn');
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
   assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');
-  assert.equal((xml.match(/<author><name>Rulefiles<\/name><\/author>/g) || []).length, 3, 'feed plus one per entry');
+  assert.equal((xml.match(/<author><name>Rulefiles<\/name><\/author>/g) || []).length, PUBLISHED_WEEKS.length + 1, 'feed plus one per entry');
   assert.doesNotMatch(xml, /<email>|<uri>/, 'no personal data in the author element');
   const one = renderFeed({ config: data.config, digests: [] });
   assert.match(one, /<updated>1970-01-01T00:00:00Z<\/updated>/);
@@ -573,8 +573,8 @@ test('the old name does not appear anywhere in the built site', () => {
 test('no page still says the site has no trackers or no analytics, and the footer and llms.txt name Web Analytics', () => {
   // A "no ..." claim that ends on "tracker(s)" is stale, unless the word is "ad tracker", which stays true.
   // "tracking" is not matched, so the Buttondown sentence "no tracking pixel" passes.
-  const stale = /\bno\b[^.]{0,30}(?<!\bad )\btrackers?\b|\bno analytics\b/i;
-  for (const s of ['No cookies, no trackers.', 'uses no ad network or tracker.', 'no cookies, no analytics']) assert.match(s, stale, s);
+  const stale = /\bno\b[^.]{0,30}(?<!\bad )\btrackers?\b|\bno\s+analytics\b/i;
+  for (const s of ['No cookies, no trackers.', 'uses no ad network or tracker.', 'no cookies, no analytics', 'no\nanalytics']) assert.match(s, stale, s);
   for (const s of ['uses no ad network or ad tracker.', 'Our emails carry no tracking pixel.', 'No cookies. Visits are counted with Cloudflare Web Analytics.']) assert.doesNotMatch(s, stale, s);
   const footerText = 'No cookies. Visits are counted with Cloudflare Web Analytics.';
   const htmlFiles = listFiles(out).filter((f) => f.endsWith('.html'));
@@ -583,7 +583,7 @@ test('no page still says the site has no trackers or no analytics, and the foote
     const html = fs.readFileSync(f, 'utf8');
     const rel = path.relative(out, f);
     assert.doesNotMatch(html, stale, rel);
-    const footers = html.match(/<footer class="site-footer">[\s\S]*?<\/footer>/g) || [];
+    const footers = html.match(/<footer\b[^>]*\bclass="[^"]*\bsite-footer\b[^>]*>[\s\S]*?<\/footer>/g) || [];
     assert.equal(footers.length, 1, `one site footer in ${rel}`);
     assert.ok(footers[0].includes(footerText), `footer in ${rel}`);
     assert.equal(html.split(footerText).length - 1, 1, `the sentence appears in the footer only, once, in ${rel}`);

@@ -6,7 +6,8 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { validateConfig } from '../scripts/lib/validate.mjs';
 import { renderHeaders, cspFor } from '../scripts/lib/render.mjs';
-import { TEST_DATE } from './helpers/test-date.mjs';
+import { TEST_DATE, addDays } from './helpers/test-date.mjs';
+import { PAGES } from './helpers/pages.mjs';
 
 process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
@@ -16,7 +17,6 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.config.json'), 'utf8'));
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-seo-'));
 const read = (rel, dir = out) => fs.readFileSync(path.join(dir, rel), 'utf8');
-const PAGES = ['index.html', 'matrix/index.html', 'generator/index.html', 'digest/index.html', 'digest/2026-W41/index.html', 'digest/2026-W42/index.html', 'about/index.html', 'sponsors/index.html', 'newsletter/index.html', 'privacy/index.html', 'legal/index.html', '404.html'];
 const ldBlocks = (html) => [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1]));
 const entries = (xml) => [...xml.matchAll(/<url><loc>(.*?)<\/loc>(?:<lastmod>(.*?)<\/lastmod>)?<\/url>/g)].map((m) => ({ loc: m[1], lastmod: m[2] }));
 before(() => { build({ outDir: out, quiet: true }); });
@@ -24,7 +24,7 @@ after(() => fs.rmSync(out, { recursive: true, force: true }));
 
 test('sitemap: every URL has a lastmod, and the data files and the feed are listed', () => {
   const list = entries(read('sitemap.xml'));
-  assert.equal(list.length, 14);
+  assert.equal(list.length, PAGES.length - 1 + 3, 'the pages without the 404, plus matrix.json, digests.json and the feed');
   for (const e of list) assert.match(e.lastmod || '', /^\d{4}-\d{2}-\d{2}$/, e.loc);
   const locs = list.map((e) => e.loc);
   for (const p of ['/data/matrix.json', '/data/digests.json', '/digest/feed.xml']) assert.ok(locs.includes(`https://rulefiles.dev${p}`), p);
@@ -44,11 +44,14 @@ test('sitemap: every URL has a lastmod, and the data files and the feed are list
 
 test('sitemap lastmod comes from the content, not from the build date', () => {
   const later = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-seo-later-'));
-  process.env.BUILD_DATE = '2026-10-20';
+  // One day after the shared build date, which is itself after every data date (tests/helpers/test-date.mjs).
+  const laterDate = addDays(TEST_DATE, 1);
+  process.env.BUILD_DATE = laterDate;
   try {
     build({ outDir: later, quiet: true });
     assert.equal(read('sitemap.xml', later), read('sitemap.xml'));
-    assert.ok(!read('sitemap.xml', later).includes('2026-10-20'));
+    assert.ok(!read('sitemap.xml', later).includes(laterDate));
+    assert.ok(!read('sitemap.xml').includes(TEST_DATE), 'the shared build date is not a lastmod either');
   } finally {
     process.env.BUILD_DATE = TEST_DATE;
     fs.rmSync(later, { recursive: true, force: true });

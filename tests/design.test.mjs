@@ -7,11 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { build } from '../scripts/build.mjs';
 import { listFiles } from '../scripts/lib/util.mjs';
 import { itemHtml } from '../scripts/lib/render.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const css = fs.readFileSync(path.join(root, 'src', 'static', 'style.css'), 'utf8');
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'design-dist-'));
-before(() => { build({ outDir: out, quiet: true }); });
+// A fixed build date that follows the data, so the build does not depend on the day the tests run.
+before(() => { process.env.BUILD_DATE = TEST_DATE; build({ outDir: out, quiet: true }); });
 after(() => fs.rmSync(out, { recursive: true, force: true }));
 const pages = () => listFiles(out).filter((f) => f.endsWith('.html')).map((f) => [path.relative(out, f), fs.readFileSync(f, 'utf8')]);
 
