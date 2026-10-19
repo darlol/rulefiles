@@ -1,7 +1,7 @@
 ---
 title: Privacy
 description: What data Rulefiles collects, who is responsible for it, and your rights. The data {{dataStatus}} is the email address you give for the newsletter and the messages you send us.
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 # Privacy
 
@@ -11,9 +11,11 @@ For the newsletter, the person responsible for personal data (responsable de tra
 
 ## The website
 
-The site sets no cookies and loads no analytics, advertising, font or script from another domain. The instruction file generator runs in your browser. What you type stays on your device and is never sent anywhere.
+The site sets no cookies and loads no advertising or font from another domain. The only script from another domain is Cloudflare Web Analytics, described below. The instruction file generator runs in your browser. What you type stays on your device and is never sent anywhere.
 
-The company that hosts the site may log requests, including IP addresses, as any web host does. The host is {{hostName}}, {{hostAddress}}. Its [data processing addendum](https://www.cloudflare.com/cloudflare-customer-dpa/) covers transfers from the European Economic Area to the United States with the Standard Contractual Clauses and the EU-U.S. Data Privacy Framework, and its [privacy policy](https://www.cloudflare.com/privacypolicy/) applies to those logs. This site adds no tracking on top of them.
+The company that hosts the site may log requests, including IP addresses, as any web host does. The host is {{hostName}}, {{hostAddress}}. Its [data processing addendum](https://www.cloudflare.com/cloudflare-customer-dpa/) covers transfers from the European Economic Area to the United States with the Standard Contractual Clauses and the EU-U.S. Data Privacy Framework, and its [privacy policy](https://www.cloudflare.com/privacypolicy/) applies to those logs. Apart from the visit counts below, this site adds no tracking on top of them.
+
+To count visits, Cloudflare adds its Web Analytics script, loaded from static.cloudflareinsights.com, to each page as it is served. The script measures how long the page took to load and sends that, with the page address and the address of the page you came from, to this site's /cdn-cgi/rum address, which Cloudflare runs. According to Cloudflare, Web Analytics leaves out query strings, uses no cookies or local storage, does not fingerprint visitors by IP address or browser, does not track individual users across sites, and does not collect or use visitors' personal data ([product page](https://www.cloudflare.com/web-analytics/), [documentation](https://developers.cloudflare.com/web-analytics/about/), [FAQ](https://developers.cloudflare.com/web-analytics/faq/)). We see totals only: page views, visits, load times, and counts by country, page, referring site, browser, operating system and device type. We use them to know how many people read the site and which pages they read, and to give sponsors audience figures. Our dashboard shows the last six months.
 
 ## The newsletter
 

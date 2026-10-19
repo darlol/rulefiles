@@ -1,7 +1,7 @@
 ---
 title: Sponsors
 description: Sponsorship policy for Rulefiles. Sponsorship is not open yet and no rates are published.
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 # Sponsors
 
@@ -12,7 +12,7 @@ Sponsorship is not open yet. No rates are published and no sponsor is booked.
 - A sponsor line is labeled as a sponsor line, names the sponsor it is paid for by, and sits apart from the digest items.
 - Sponsors cannot add, remove, reorder or edit digest items or matrix cells.
 - Every digest item and matrix cell keeps linking to an official source, whoever pays.
-- The site sets no cookies and uses no ad network or tracker. Sponsor lines are plain text with a link.
+- The site sets no cookies and uses no ad network or ad tracker. It counts visits with Cloudflare Web Analytics. Sponsor lines are plain text with a link.
 - Sponsor links will not be presented as editorial picks.
 
 Questions about sponsorship go to [{{sponsorContact}}](mailto:{{sponsorContact}}). Writing there does not book anything.
