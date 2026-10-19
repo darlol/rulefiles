@@ -348,22 +348,24 @@ test('SITE_URL changes canonical URLs, sitemap and llms.txt', () => {
 
 test('the build refuses invalid data', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-root-'));
-  fs.cpSync(new URL('..', import.meta.url).pathname, root, { recursive: true, filter: (s) => !/node_modules|\/dist|\.git(\/|$)|\.cache/.test(s) });
-  const m = JSON.parse(fs.readFileSync(path.join(root, 'data/matrix.json'), 'utf8'));
-  m.cells[0].sourceUrl = 'https://example.com/not-official';
-  fs.writeFileSync(path.join(root, 'data/matrix.json'), JSON.stringify(m));
-  assert.throws(() => build({ root, outDir: path.join(root, 'dist'), quiet: true }), /refusing to build/);
-  fs.rmSync(root, { recursive: true, force: true });
+  try {
+    fs.cpSync(new URL('..', import.meta.url).pathname, root, { recursive: true, filter: (s) => !/node_modules|\/dist|\.git(\/|$)|\.cache/.test(s) });
+    const m = JSON.parse(fs.readFileSync(path.join(root, 'data/matrix.json'), 'utf8'));
+    m.cells[0].sourceUrl = 'https://example.com/not-official';
+    fs.writeFileSync(path.join(root, 'data/matrix.json'), JSON.stringify(m));
+    assert.throws(() => build({ root, outDir: path.join(root, 'dist'), quiet: true }), /refusing to build/);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
 test('build output is deterministic', () => {
   const out4 = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-dist4-'));
-  build({ outDir: out4, quiet: true });
-  for (const f of listFiles(out)) {
-    const rel = path.relative(out, f);
-    assert.ok(fs.readFileSync(f).equals(fs.readFileSync(path.join(out4, rel))), rel);
-  }
-  fs.rmSync(out4, { recursive: true, force: true });
+  try {
+    build({ outDir: out4, quiet: true });
+    for (const f of listFiles(out)) {
+      const rel = path.relative(out, f);
+      assert.ok(fs.readFileSync(f).equals(fs.readFileSync(path.join(out4, rel))), rel);
+    }
+  } finally { fs.rmSync(out4, { recursive: true, force: true }); }
 });
 
 test('result reports the pages built', () => {
@@ -569,15 +571,28 @@ test('the old name does not appear anywhere in the built site', () => {
 });
 
 test('no page still says the site has no trackers or no analytics, and the footer and llms.txt name Web Analytics', () => {
-  const stale = /no (ad )?trackers?\b|no analytics/i;
+  // A "no ..." claim that ends on "tracker(s)" is stale, unless the word is "ad tracker", which stays true.
+  // "tracking" is not matched, so the Buttondown sentence "no tracking pixel" passes.
+  const stale = /\bno\b[^.]{0,30}(?<!\bad )\btrackers?\b|\bno analytics\b/i;
+  for (const s of ['No cookies, no trackers.', 'uses no ad network or tracker.', 'no cookies, no analytics']) assert.match(s, stale, s);
+  for (const s of ['uses no ad network or ad tracker.', 'Our emails carry no tracking pixel.', 'No cookies. Visits are counted with Cloudflare Web Analytics.']) assert.doesNotMatch(s, stale, s);
+  const footerText = 'No cookies. Visits are counted with Cloudflare Web Analytics.';
   const htmlFiles = listFiles(out).filter((f) => f.endsWith('.html'));
   assert.ok(htmlFiles.length >= PAGES.length);
   for (const f of htmlFiles) {
     const html = fs.readFileSync(f, 'utf8');
-    assert.doesNotMatch(html, stale, path.relative(out, f));
-    assert.ok(html.includes('No cookies. Visits are counted with Cloudflare Web Analytics.'), `footer in ${path.relative(out, f)}`);
+    const rel = path.relative(out, f);
+    assert.doesNotMatch(html, stale, rel);
+    const footers = html.match(/<footer class="site-footer">[\s\S]*?<\/footer>/g) || [];
+    assert.equal(footers.length, 1, `one site footer in ${rel}`);
+    assert.ok(footers[0].includes(footerText), `footer in ${rel}`);
+    assert.equal(html.split(footerText).length - 1, 1, `the sentence appears in the footer only, once, in ${rel}`);
   }
   for (const rel of ['llms.txt', 'llms-full.txt']) assert.doesNotMatch(read(rel), stale, rel);
   assert.ok(read('llms.txt').includes('no cookies; visits counted with Cloudflare Web Analytics'));
-  assert.doesNotMatch(fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8'), stale, 'README.md');
+  assert.ok(read('llms.txt').includes('Their only third-party script is Cloudflare Web Analytics, which measures visits and page load performance.'));
+  // llms-full.txt holds the matrix and the digests only, with no privacy sentence, so only the absence of a stale claim is checked.
+  const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
+  assert.doesNotMatch(readme, stale, 'README.md');
+  assert.ok(readme.includes('The only third-party script is the Cloudflare Web Analytics beacon'), 'README.md names the beacon');
 });

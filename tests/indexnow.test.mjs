@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -15,7 +15,10 @@ process.env.NEWSLETTER_FORM_ACTION = '';
 const ROOT = new URL('..', import.meta.url).pathname;
 const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.config.json'), 'utf8'));
 const KEY = config.indexNowKey;
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-indexnow-'));
+// Every directory made by tmp() is removed after the file's tests, even when a test fails before its own cleanup.
+const TMP_DIRS = [];
+const tmp = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-indexnow-')); TMP_DIRS.push(d); return d; };
+after(() => { for (const d of TMP_DIRS) fs.rmSync(d, { recursive: true, force: true }); });
 const noNetwork = async () => { throw new Error('the network must not be used'); };
 
 test('the committed IndexNow key follows the documented format and carries no personal data', () => {
