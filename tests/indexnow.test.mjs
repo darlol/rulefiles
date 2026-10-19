@@ -33,7 +33,7 @@ test('the build writes the key file at the root, with the key alone, and nothing
   assert.equal(fs.readFileSync(path.join(dir, `${KEY}.txt`), 'utf8'), KEY);
   assert.ok(!fs.readFileSync(path.join(dir, 'sitemap.xml'), 'utf8').includes(KEY), 'the key file is not a page of the sitemap');
   assert.ok(!fs.readFileSync(path.join(dir, '_headers'), 'utf8').toLowerCase().includes('indexnow'), 'the CSP and the headers do not mention IndexNow');
-  assert.match(fs.readFileSync(path.join(dir, '_headers'), 'utf8'), /connect-src 'none'/);
+  assert.match(fs.readFileSync(path.join(dir, '_headers'), 'utf8'), /connect-src 'self'/);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 

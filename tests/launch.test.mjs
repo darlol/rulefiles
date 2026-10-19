@@ -270,7 +270,7 @@ test('the full name appears on the privacy page and the legal notice and nowhere
   const where = (rels, read) => rels.filter((rel) => read(rel).includes(FULL_NAME));
   assert.deepEqual(NAME_PAGES.filter((rel) => !text(rel).includes(FULL_NAME)), [], 'both pages carry the name');
   // The privacy page says it is the controller and the publisher of the newsletter, with no postal address.
-  assert.ok(text('content/privacy.md').includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${FULL_NAME}. The same person is responsible for the messages sent to the contact addresses and for the request logs described in the next section. No postal address is published.`));
+  assert.ok(text('content/privacy.md').includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${FULL_NAME}. The same person is responsible for the messages sent to the contact addresses and for the request logs and the visit statistics described in the next section. No postal address is published.`));
   assert.ok(text('content/legal.md').includes(`The publisher of the site and of the newsletter is ${FULL_NAME}, who is also responsible for the personal data of the newsletter (see [Privacy](/privacy/)).`));
   const tracked = files().map(([rel]) => rel);
   assert.deepEqual(where(tracked, text).sort(), [...NAME_PAGES].sort(), 'every other tracked text file is free of the name');

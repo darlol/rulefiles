@@ -198,6 +198,7 @@ test('digest pages show sourced items', () => {
 });
 
 test('no cookies, no external scripts, fonts, images or trackers anywhere in the output', () => {
+  // Cloudflare Web Analytics adds its beacon at the edge, as the HTML is served, so it is never in dist/ and this test still holds.
   for (const f of listFiles(out).filter((x) => /\.(html|js|css)$/.test(x))) {
     const s = fs.readFileSync(f, 'utf8');
     assert.doesNotMatch(s, /document\.cookie|localStorage|sessionStorage|navigator\.sendBeacon|XMLHttpRequest|\bfetch\(/, f);
@@ -208,9 +209,28 @@ test('no cookies, no external scripts, fonts, images or trackers anywhere in the
   }
 });
 
+test('Web Analytics: the CSP allows only the Cloudflare beacon host and same-origin posts, with a same-origin referrer', () => {
+  const directives = (policy) => Object.fromEntries(policy.split(';').map((d) => d.trim().split(/\s+/)).map(([k, ...v]) => [k, v]));
+  const headers = read('_headers');
+  const fromHeaders = headers.match(/Content-Security-Policy: ([^\n]+)/)[1];
+  const fromMeta = unescapeAttr(read('index.html')).match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)[1];
+  for (const [where, policy] of [['_headers', fromHeaders], ['meta', fromMeta]]) {
+    const d = directives(policy);
+    assert.deepEqual(d['script-src'], ["'self'", 'https://static.cloudflareinsights.com'], `${where}: script-src`);
+    assert.deepEqual(d['connect-src'], ["'self'"], `${where}: connect-src`);
+    for (const k of Object.keys(d).filter((x) => x !== 'form-action')) {
+      for (const v of d[k]) assert.ok(v.startsWith("'") || v === 'https://static.cloudflareinsights.com', `${where}: no other external host in ${k} (${v})`);
+      if (k !== 'script-src') assert.ok(!d[k].includes('https://static.cloudflareinsights.com'), `${where}: the beacon host is in script-src only, not in ${k}`);
+    }
+  }
+  assert.match(headers, /^\s+Referrer-Policy: same-origin$/m);
+  assert.doesNotMatch(headers, /no-referrer/);
+  assert.doesNotMatch(headers, /no-transform/i, 'no-transform would stop Cloudflare from adding the beacon');
+});
+
 test('Content-Security-Policy meta tag locks scripts, styles and connections to self', () => {
   const html = unescapeAttr(read('index.html'));
-  assert.match(html, /http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'self'"/);
+  assert.match(html, /http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https:\/\/static\.cloudflareinsights\.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'"/);
   assert.match(read('_headers'), /Content-Security-Policy: default-src 'none'/);
   // Assets keep stable names, so browsers must revalidate them: a cached old stylesheet under new HTML renders unstyled.
   assert.match(read('_headers'), /\/assets\/\*\n\s+Cache-Control: public, max-age=0, must-revalidate/);
@@ -296,7 +316,7 @@ test('the committed configuration opens the newsletter on Buttondown with double
     // Every page carries the same policy, and the only origin it adds is Buttondown's, for form-action only.
     for (const f of ['index.html', 'newsletter/index.html', 'privacy/index.html', '404.html']) {
       const html = unescapeAttr(fs.readFileSync(path.join(out5, f), 'utf8'));
-      assert.match(html, /content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'self' https:\/\/buttondown\.com"/, f);
+      assert.match(html, /content="default-src 'none'; script-src 'self' https:\/\/static\.cloudflareinsights\.com; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self' https:\/\/buttondown\.com"/, f);
     }
     const headers = fs.readFileSync(path.join(out5, '_headers'), 'utf8');
     assert.match(headers, /Content-Security-Policy: default-src 'none'.*form-action 'self' https:\/\/buttondown\.com\s*$/m);
@@ -472,16 +492,19 @@ test('the legal notice names the publisher of the site and of the newsletter, gi
 
 test('the privacy page covers controller, basis, provider, tracking, retention, rights and the CNIL', () => {
   const text = textOf('privacy/index.html');
-  for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies', 'The host is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.']) {
+  for (const needle of ['responsable de traitement', 'article 6(1)(a)', 'double opt-in', 'Buttondown, LLC', 'Standard Contractual Clauses', 'unsubscribe link', 'We answer within one month', 'CNIL', 'sets no cookies', 'Cloudflare Web Analytics', 'The host is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.']) {
     assert.ok(text.includes(needle), needle);
   }
   for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'on' : 'off']) assert.ok(text.includes(s), s);
   for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'off' : 'on']) assert.equal(text.includes(s), false, `the other branch is not shown: ${s}`);
   assert.ok(text.includes('We do not track them.'));
+  // Web Analytics: the legal basis and the objection address, with {{privacyEmail}} replaced by the configured alias.
+  assert.ok(read('privacy/index.html').includes('We rely on our legitimate interest in measuring how the site is read (GDPR, article 6(1)(f)). You can object by writing to <a href="mailto:privacy@rulefiles.dev">privacy@rulefiles.dev</a>.'));
+  assert.doesNotMatch(read('privacy/index.html'), /\{\{/, 'no template variable left');
   assert.ok(text.includes('other than with the provider below and the sub-processors it lists.'));
   assert.ok(text.includes('we delete your data within 30 days, unless the law requires us to keep it'));
   assert.ok(text.includes('If you sign up and never confirm, we delete the address within 40 days. Deleting means removing the record from the provider\'s database, not only hiding it.'));
-  assert.ok(text.includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${OWNER}. The same person is responsible for the messages sent to the contact addresses and for the request logs described in the next section. No postal address is published. The only contact is privacy@rulefiles.dev`));
+  assert.ok(text.includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${OWNER}. The same person is responsible for the messages sent to the contact addresses and for the request logs and the visit statistics described in the next section. No postal address is published. The only contact is privacy@rulefiles.dev`));
   assert.doesNotMatch(text, /anonymous non-professional publisher/, 'the privacy page no longer says the controller is anonymous');
   assert.deepEqual(markerFields(text), []);
   const html = read('privacy/index.html');
@@ -543,4 +566,18 @@ test('the old name does not appear anywhere in the built site', () => {
     if (/\.(html|xml|txt|json|js|css|svg)$/.test(f)) assert.doesNotMatch(fs.readFileSync(f, 'utf8'), old, `${path.relative(out, f)} carries the former name`);
   }
   assert.equal(JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).name, 'Rulefiles');
+});
+
+test('no page still says the site has no trackers or no analytics, and the footer and llms.txt name Web Analytics', () => {
+  const stale = /no (ad )?trackers?\b|no analytics/i;
+  const htmlFiles = listFiles(out).filter((f) => f.endsWith('.html'));
+  assert.ok(htmlFiles.length >= PAGES.length);
+  for (const f of htmlFiles) {
+    const html = fs.readFileSync(f, 'utf8');
+    assert.doesNotMatch(html, stale, path.relative(out, f));
+    assert.ok(html.includes('No cookies. Visits are counted with Cloudflare Web Analytics.'), `footer in ${path.relative(out, f)}`);
+  }
+  for (const rel of ['llms.txt', 'llms-full.txt']) assert.doesNotMatch(read(rel), stale, rel);
+  assert.ok(read('llms.txt').includes('no cookies; visits counted with Cloudflare Web Analytics'));
+  assert.doesNotMatch(fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8'), stale, 'README.md');
 });

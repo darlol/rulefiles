@@ -37,15 +37,18 @@ export function url(config, p) { return config.baseUrl + p; }
 
 function newsletterEnabled(config) { return Boolean(config.newsletter && config.newsletter.formAction); }
 
+// Cloudflare Web Analytics (automatic setup of the zone) adds its beacon to the HTML at the edge, so it is never in dist/.
+// The script path is versioned (/beacon.min.js/v...), hence the host alone in script-src. The beacon posts to /cdn-cgi/rum on the same origin, hence connect-src 'self'.
+// See docs/OPERATIONS.md, section Web Analytics.
 function csp(config) {
   const formAction = newsletterEnabled(config) ? `'self' ${new URL(config.newsletter.formAction).origin}` : "'self'";
   return [
     "default-src 'none'",
-    "script-src 'self'",
+    "script-src 'self' https://static.cloudflareinsights.com",
     "style-src 'self'",
     "img-src 'self'",
     "font-src 'self'",
-    "connect-src 'none'",
+    "connect-src 'self'",
     "base-uri 'none'",
     `form-action ${formAction}`
   ].join('; ');
@@ -129,7 +132,7 @@ ${page.body}
 <footer class="site-footer"><div class="wrap footer-grid">
 <div class="footer-brand">
 <a class="brand" href="/">${MARK}<span>${h(config.name)}</span></a>
-<p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies, no trackers.</p>
+<p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies. Visits are counted with Cloudflare Web Analytics.</p>
 <p class="footer-license">Code under the <a href="/about/">MIT license</a>. Data and text under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>.</p>
 </div>
 <nav aria-label="Explore"><h2>Explore</h2><ul>
@@ -555,7 +558,7 @@ export function renderLlmsTxt(ctx) {
     '',
     `> ${config.description}`,
     '',
-    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page, and cells marked "migration only" are mentioned there only as input to a migration command. Pages are plain HTML without cookies or scripts that load data.',
+    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page, and cells marked "migration only" are mentioned there only as input to a migration command. Pages are plain HTML without cookies. Their only third-party script is Cloudflare Web Analytics, which measures visits and page load performance.',
     '',
     '## Data',
     '',
@@ -577,7 +580,7 @@ export function renderLlmsTxt(ctx) {
     '## Optional',
     '',
     `- [About](${url(config, '/about/')}): method and limits`,
-    `- [Privacy](${url(config, '/privacy/')}): no cookies, no analytics`,
+    `- [Privacy](${url(config, '/privacy/')}): no cookies; visits counted with Cloudflare Web Analytics`,
     `- [Sponsors](${url(config, '/sponsors/')}): sponsorship policy`,
     `- [Legal notice](${url(config, '/legal/')}): publisher, host and contact`,
     ''
@@ -619,7 +622,7 @@ export function renderHeaders(config) {
   return `/*
   Content-Security-Policy: ${csp(config)}
   X-Content-Type-Options: nosniff
-  Referrer-Policy: no-referrer
+  Referrer-Policy: same-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate

@@ -84,7 +84,7 @@ Release dates use the UTC date of the publication timestamp.
 
 ## Privacy and security
 
-- No cookies, no analytics, no third-party scripts, fonts or images. A test fails if any appears.
+- No cookies, and no third-party fonts or images. The only third-party script is the Cloudflare Web Analytics beacon, which Cloudflare adds to the HTML as it is served (it is not in `dist/`). The CSP allows it with `script-src https://static.cloudflareinsights.com` and `connect-src 'self'`. A test fails if any other appears.
 - Every page carries a Content-Security-Policy meta tag. `dist/_headers` repeats it for hosts that read that file.
 - The generator runs in the browser and sends nothing.
 - The newsletter form posts to the Buttondown endpoint set in `newsletter.formAction` in `site.config.json` (the `NEWSLETTER_FORM_ACTION` environment variable overrides it, and an empty value closes the form). It sends only the email address typed by the visitor, plus the provider's `embed` field, and the CSP allows that one origin for `form-action` only. Signup uses double opt-in.
