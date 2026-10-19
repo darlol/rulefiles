@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W41",
+  "start": "2026-10-05",
+  "end": "2026-10-11",
+  "status": "draft",
+  "verifiedOn": "2026-10-19",
+  "title": "Draft for 2026-10-05 to 2026-10-11",
+  "summary": "Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.",
+  "items": [
+    {
+      "id": "codex-2026-10-09-composer-predictions-in-codex",
+      "date": "2026-10-09",
+      "tool": "codex",
+      "title": "Composer predictions in Codex",
+      "text": "Composer predictions adds autocomplete-style suggestions for your next message in the Codex desktop app. After Codex responds, it uses the current conversation to suggest a follow-up prompt in the message box. Press Tab to accept the suggestion as an editable draft, or type your own message. Accepting a prediction doesn't send it for you.",
+      "quote": true,
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "Composer predictions adds autocomplete-style suggestions for your next message in the Codex desktop app. After Codex responds, it uses the current conversation to suggest a follow-up prompt in the message box. Press Tab to accept the suggestion as an editable draft, or type your own message. Accepting a prediction doesn't send it for you.",
+        "The feature is available in beta to users aged 18 and older with personal ChatGPT Pro plans in supported regions, in local and SSH threads with GPT-6 Astra and GPT-6.1 Sol.",
+        "Learn more about composer predictions."
+      ]
+    }
+  ]
+}

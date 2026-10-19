@@ -1,1 +1,11 @@
-{ "seen": {} }
+{
+  "seen": {
+    "codex-changelog:https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions": "2026-10-19",
+    "copilot-changelog:https://github.blog/changelog/2026-10-12-client-telemetry-user-attribution-and-configurable-capture": "2026-10-19",
+    "copilot-changelog:https://github.blog/changelog/2026-10-14-hydrafusion-updates-and-new-max-option": "2026-10-19",
+    "copilot-changelog:https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates": "2026-10-19",
+    "claude-code-releases:v2.1.302": "2026-10-19",
+    "cursor-changelog:https://cursor.com/changelog/cloud-agent-canvases-and-environments": "2026-10-19",
+    "claude-code-releases:v2.1.303": "2026-10-19"
+  }
+}

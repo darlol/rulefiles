@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W42",
+  "start": "2026-10-12",
+  "end": "2026-10-18",
+  "status": "draft",
+  "verifiedOn": "2026-10-19",
+  "title": "Draft for 2026-10-12 to 2026-10-18",
+  "summary": "Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.",
+  "items": [
+    {
+      "id": "github-copilot-2026-10-12-client-telemetry-user-attribution-and-configurable-capture",
+      "date": "2026-10-12",
+      "tool": "github-copilot",
+      "title": "Client telemetry user attribution and configurable capture",
+      "text": "Enterprise administrators can now use telemetry in managed settings to attribute GitHub Copilot activity to a user without collecting their prompts, responses, or tool content.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-12-client-telemetry-user-attribution-and-configurable-capture",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Enterprise administrators can now use telemetry in managed settings to attribute GitHub Copilot activity to a user without collecting their prompts, responses, or tool content."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-14-hydrafusion-updates-and-new-max-option",
+      "date": "2026-10-14",
+      "tool": "github-copilot",
+      "title": "HydraFusion updates and new Max option",
+      "text": "HydraFusion has an updated model pool, improved orchestration workflows, and introduces HydraFusion Max.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-14-hydrafusion-updates-and-new-max-option",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "HydraFusion has an updated model pool, improved orchestration workflows, and introduces HydraFusion Max."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-15-multi-repository-support-and-other-improvements-for-github-i",
+      "date": "2026-10-15",
+      "tool": "github-copilot",
+      "title": "Multi-repository support and other improvements for GitHub in Slack and Teams",
+      "text": "@GitHub in Slack and Teams now supports working across multiple repositories in a single conversation.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-15-copilot-in-slack-and-teams-adds-model-and-repository-updates",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "@GitHub in Slack and Teams now supports working across multiple repositories in a single conversation."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-16-2-1-302",
+      "date": "2026-10-16",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.302",
+      "text": "Added CLAUDE_CODE_AUTO_MODE_MODEL to choose the model the client-side auto mode classifier uses; it does not change the model for server-side auto mode",
+      "quote": true,
+      "version": "2.1.302",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.302",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added CLAUDE_CODE_AUTO_MODE_MODEL to choose the model the client-side auto mode classifier uses; it does not change the model for server-side auto mode",
+        "Added an Idle compaction row to /config for turning idle compaction off or back on; the notices shown after an idle compaction now say how to turn it off",
+        "Added a notice to /design-sync and /design-login that standalone Claude Design (claude.ai/design) closes by December 14, 2026"
+      ]
+    },
+    {
+      "id": "cursor-2026-10-16-cloud-agent-canvases-and-environment-improvements",
+      "date": "2026-10-16",
+      "tool": "cursor",
+      "title": "Cloud Agent Canvases and Environment Improvements",
+      "text": "Cloud agents can now build and share interactive canvases.",
+      "quote": true,
+      "sourceUrl": "https://cursor.com/changelog/cloud-agent-canvases-and-environments",
+      "sourceLabel": "Cursor changelog",
+      "candidateLines": [
+        "Cloud agents can now build and share interactive canvases."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-18-2-1-303",
+      "date": "2026-10-18",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.303",
+      "text": "Bug fixes and reliability improvements",
+      "quote": true,
+      "version": "2.1.303",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.303",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Bug fixes and reliability improvements"
+      ]
+    }
+  ]
+}
