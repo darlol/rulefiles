@@ -9,6 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { run, skippedSummary, skippedNotice, writeSkippedNotice } from '../scripts/watch.mjs';
 import { validateDigest, validateWatchSources } from '../scripts/lib/validate.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
+import { sourceKeys } from '../scripts/lib/drafts.mjs';
 
 const FIX = new URL('./fixtures/', import.meta.url).pathname;
 const fx = (n) => fs.readFileSync(path.join(FIX, n), 'utf8');
@@ -569,4 +570,63 @@ test('watch CLI: a skipped source writes the notice and keeps exit 0, a clean ru
   assert.equal(four.status, 3);
   assert.match(fs.readFileSync(notice, 'utf8'), /^⚠ Sources skipped: s0 \(.*\); s1 \(.*\); s2 \(.*\); s3 \(/);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+const sameItem = (a, b) => {
+  const kb = new Set(sourceKeys(b.tool, b.url));
+  return sourceKeys(a.tool, a.url).some((k) => kb.has(k));
+};
+
+test('already-cited check: a trailing slash or a changed host does not make a published item new again', () => {
+  // Published as https://github.blog/changelog/2026-10-13-enterprise-managed-settings-enforcement-updates/ ; the feed has no final slash.
+  assert.ok(sameItem(
+    { tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-13-enterprise-managed-settings-enforcement-updates/' },
+    { tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-13-enterprise-managed-settings-enforcement-updates' }
+  ));
+  assert.ok(sameItem(
+    { tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-15-agentic-autofix-for-code-scanning-alerts-general-availability/' },
+    { tool: 'github-copilot', url: 'https://GitHub.blog/changelog/2026-10-15-agentic-autofix-for-code-scanning-alerts-general-availability' }
+  ));
+  // Same Codex changelog entry id under two hosts.
+  assert.ok(sameItem(
+    { tool: 'codex', url: 'https://learn.chatgpt.com/docs/changelog#codex-2026-10-14-gpt-55-retirement' },
+    { tool: 'codex', url: 'https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement' }
+  ));
+});
+
+test('already-cited check: different items are not merged', () => {
+  const codex = { tool: 'codex', url: 'https://developers.openai.com/codex/changelog/#codex-2026-10-14-gpt-55-retirement' };
+  // Same page, another entry id (the September announcement has the same slug but another date).
+  assert.ok(!sameItem({ tool: 'codex', url: 'https://learn.chatgpt.com/docs/changelog#codex-2026-10-14-gpt-55-retirement' }, { tool: 'codex', url: 'https://developers.openai.com/codex/changelog/#codex-2026-09-14-gpt-55-retirement' }));
+  // Same page without a fragment, and with another fragment: the page link alone never matches an entry.
+  assert.ok(!sameItem({ tool: 'codex', url: 'https://developers.openai.com/codex/changelog/' }, codex));
+  // Same fragment on another tool or another page.
+  assert.ok(!sameItem({ tool: 'cursor', url: 'https://cursor.com/changelog#codex-2026-10-14-gpt-55-retirement' }, codex));
+  assert.ok(!sameItem({ tool: 'codex', url: 'https://developers.openai.com/codex/guide/#codex-2026-10-14-gpt-55-retirement' }, codex));
+  // Two items with different paths, or the same path on another host, stay apart.
+  assert.ok(!sameItem({ tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-13-a/' }, { tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-13-b' }));
+  assert.ok(!sameItem({ tool: 'github-copilot', url: 'https://github.blog/changelog/2026-10-13-a' }, { tool: 'github-copilot', url: 'https://example.org/changelog/2026-10-13-a' }));
+  // A malformed link does not throw and only matches itself.
+  assert.deepEqual(sourceKeys('codex', 'not a url'), ['url:not a url']);
+});
+
+test('watch: published items are not listed again when the feed link differs only by trailing slash or host', async () => {
+  const root = tmp();
+  fs.mkdirSync(path.join(root, 'data', 'digest'), { recursive: true });
+  fs.copyFileSync(new URL('../data/watch-sources.json', import.meta.url), path.join(root, 'data', 'watch-sources.json'));
+  const item = (id, tool, title, sourceUrl) => ({ id, date: '2026-10-15', tool, title, text: 'x', sourceUrl, sourceLabel: 'x' });
+  fs.writeFileSync(path.join(root, 'data', 'digest', '2026-W42.json'), JSON.stringify({
+    week: '2026-W42', status: 'published',
+    items: [
+      item('a', 'github-copilot', 'Agentic autofix', 'https://github.blog/changelog/2026-10-15-agentic-autofix-for-code-scanning-alerts-general-availability/'),
+      item('b', 'codex', 'GPT-5.5 retirement in Codex', 'https://learn.chatgpt.com/docs/changelog#codex-2026-10-14-gpt-55-retirement')
+    ]
+  }));
+  const args = ['--offline', FIX, '--out', path.join(root, 'out'), '--today', '2026-10-19', '--since', '2026-10-12', '--no-state'];
+  const r = await run(args, { root, log: () => {} });
+  assert.ok(!r.entries.some((e) => /agentic-autofix/.test(e.url)));
+  assert.ok(!r.entries.some((e) => /codex-2026-10-14-gpt-55-retirement/.test(e.url)));
+  // The other items of the same feeds are still listed.
+  assert.ok(r.entries.some((e) => /HydraFusion/.test(e.title)));
+  fs.rmSync(root, { recursive: true, force: true });
 });
