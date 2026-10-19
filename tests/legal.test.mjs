@@ -75,9 +75,9 @@ test('the legal notice, the privacy page, the sponsors page and the About page r
     assert.ok(page('privacy').includes(`If you write to hello@example.org, data@example.org or ads@example.org, your message reaches ${['Tho', 'mas', ' ', 'Ram', 'baut'].join('')} through Cloudflare Email Routing and a private mailbox. We use it only to answer you, on the basis of our legitimate interest in answering (GDPR, article 6(1)(f))`));
     for (const p of ['legal', 'privacy', 'sponsors', 'about']) assert.doesNotMatch(page(p), /@rulefiles\.dev|Cloudflare, Inc\./, p);
     // The host comes from the configuration. Cloudflare is named only for its mail routing and for Web Analytics, which are not the host.
-    for (const p of ['legal', 'about']) assert.doesNotMatch(page(p), /Cloudflare/, p);
-    assert.doesNotMatch(page('sponsors').replace(/Cloudflare Web Analytics/g, ''), /Cloudflare/);
-    const analytics = /To count visits, Cloudflare adds its Web Analytics script.*?Our dashboard shows the last six months\./;
+    // The footer of every page names Cloudflare Web Analytics.
+    for (const p of ['legal', 'sponsors', 'about']) assert.doesNotMatch(page(p).replace(/Cloudflare Web Analytics/g, ''), /Cloudflare/, p);
+    const analytics = /To count visits, Cloudflare adds its Web Analytics script.*?You can object by writing to data@example\.org \./;
     assert.match(page('privacy'), analytics);
     assert.doesNotMatch(page('privacy').replace(analytics, '').replace(/Cloudflare (Email Routing|Web Analytics)/g, ''), /Cloudflare/);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }

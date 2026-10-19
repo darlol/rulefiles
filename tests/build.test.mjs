@@ -498,10 +498,13 @@ test('the privacy page covers controller, basis, provider, tracking, retention, 
   for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'on' : 'off']) assert.ok(text.includes(s), s);
   for (const s of NL_TEXT[DATA_WORD === 'collected' ? 'off' : 'on']) assert.equal(text.includes(s), false, `the other branch is not shown: ${s}`);
   assert.ok(text.includes('We do not track them.'));
+  // Web Analytics: the legal basis and the objection address, with {{privacyEmail}} replaced by the configured alias.
+  assert.ok(read('privacy/index.html').includes('We rely on our legitimate interest in measuring how the site is read (GDPR, article 6(1)(f)). You can object by writing to <a href="mailto:privacy@rulefiles.dev">privacy@rulefiles.dev</a>.'));
+  assert.doesNotMatch(read('privacy/index.html'), /\{\{/, 'no template variable left');
   assert.ok(text.includes('other than with the provider below and the sub-processors it lists.'));
   assert.ok(text.includes('we delete your data within 30 days, unless the law requires us to keep it'));
   assert.ok(text.includes('If you sign up and never confirm, we delete the address within 40 days. Deleting means removing the record from the provider\'s database, not only hiding it.'));
-  assert.ok(text.includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${OWNER}. The same person is responsible for the messages sent to the contact addresses and for the request logs described in the next section. No postal address is published. The only contact is privacy@rulefiles.dev`));
+  assert.ok(text.includes(`For the newsletter, the person responsible for personal data (responsable de traitement, in the sense of the GDPR) and its publisher is ${OWNER}. The same person is responsible for the messages sent to the contact addresses and for the request logs and the visit statistics described in the next section. No postal address is published. The only contact is privacy@rulefiles.dev`));
   assert.doesNotMatch(text, /anonymous non-professional publisher/, 'the privacy page no longer says the controller is anonymous');
   assert.deepEqual(markerFields(text), []);
   const html = read('privacy/index.html');

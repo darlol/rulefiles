@@ -132,7 +132,7 @@ ${page.body}
 <footer class="site-footer"><div class="wrap footer-grid">
 <div class="footer-brand">
 <a class="brand" href="/">${MARK}<span>${h(config.name)}</span></a>
-<p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies, no ad trackers.</p>
+<p>${h(config.name)} is an independent project, not affiliated with the tools it covers. No cookies. Visits are counted with Cloudflare Web Analytics.</p>
 <p class="footer-license">Code under the <a href="/about/">MIT license</a>. Data and text under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>.</p>
 </div>
 <nav aria-label="Explore"><h2>Explore</h2><ul>
@@ -558,7 +558,7 @@ export function renderLlmsTxt(ctx) {
     '',
     `> ${config.description}`,
     '',
-    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page, and cells marked "migration only" are mentioned there only as input to a migration command. Pages are plain HTML without cookies. Their only third-party script is Cloudflare Web Analytics, which counts visits.',
+    'Every digest item and matrix cell links to an official source and carries a date. Cells marked "unverified" were not confirmed on the cited page, and cells marked "migration only" are mentioned there only as input to a migration command. Pages are plain HTML without cookies. Their only third-party script is Cloudflare Web Analytics, which measures visits and page load performance.',
     '',
     '## Data',
     '',
