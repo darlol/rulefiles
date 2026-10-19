@@ -6,6 +6,7 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { validateConfig } from '../scripts/lib/validate.mjs';
 import { loadConfig } from '../scripts/lib/data.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const textOf = (html) => html.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ');
@@ -51,7 +52,7 @@ test('validateConfig rejects a missing or malformed contact address and incomple
 });
 
 test('the legal notice, the privacy page, the sponsors page and the About page read the aliases and the host from the configuration', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-legal-'));
   try {
     for (const d of ['data', 'content', 'src', 'scripts']) fs.cpSync(path.join(root, d), path.join(dir, d), { recursive: true });
@@ -121,7 +122,7 @@ test('the content prose holds no postal code, street, phone number or registrati
 });
 
 test('the legal notice, privacy and sponsors pages show the "updated" date of their own front matter, the about page shows none', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   delete process.env.SITE_URL;
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-updated-'));
   try {
@@ -143,7 +144,7 @@ test('the legal notice, privacy and sponsors pages show the "updated" date of th
 });
 
 test('a page with an updated date that is not YYYY-MM-DD stops the build with a clear message', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-updated-bad-'));
   try {
     for (const d of ['data', 'content', 'src', 'scripts']) fs.cpSync(path.join(root, d), path.join(dir, d), { recursive: true });

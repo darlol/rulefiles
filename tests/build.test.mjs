@@ -11,8 +11,9 @@ import { matrixStats } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
-process.env.BUILD_DATE = '2026-10-16';
+process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
 // The shared build below is the CLOSED state (an empty value closes the form). The committed config opens the form on Buttondown;
 // the test 'the committed configuration opens the newsletter on Buttondown' builds that state.
@@ -110,7 +111,16 @@ test('sitemap lists every indexable page and not the 404', () => {
   assert.equal(locs.length, PAGES.length - 1 + 3, 'the pages plus matrix.json, digests.json and the feed');
   assert.ok(locs.includes('https://rulefiles.dev/matrix/'));
   assert.ok(!locs.some((l) => l.includes('404')));
-  for (const loc of ['/', '/digest/', '/digest/2026-W41/', '/digest/2026-W42/', '/data/digests.json', '/digest/feed.xml']) assert.ok(xml.includes(`<loc>https://rulefiles.dev${loc}</loc><lastmod>2026-10-16</lastmod>`), `${loc} lastmod follows the latest verifiedOn`);
+  // lastmod is the date the content changed: the newest digest's verifiedOn for the home page, the digest index,
+  // digests.json and the feed; each issue page carries its own verifiedOn.
+  const digests = publishedDigests(loadData());
+  const latest = digests[0].verifiedOn;
+  assert.ok(latest <= TEST_DATE);
+  const lastmod = (loc, date) => assert.ok(xml.includes(`<loc>https://rulefiles.dev${loc}</loc><lastmod>${date}</lastmod>`), `${loc} lastmod is ${date}`);
+  for (const loc of ['/', '/digest/', '/data/digests.json', '/digest/feed.xml']) lastmod(loc, latest);
+  for (const d of digests) lastmod(`/digest/${d.week}/`, d.verifiedOn);
+  // One fixed date as well, so a change in how the dates are read cannot pass unnoticed: W41 was last checked on 2026-10-16.
+  lastmod('/digest/2026-W41/', '2026-10-16');
   for (const l of locs) {
     const p = new URL(l).pathname;
     const file = /\.(json|xml)$/.test(p) ? p.slice(1) : p === '/' ? 'index.html' : path.join(p, 'index.html');
@@ -155,7 +165,7 @@ test('Atom feed is well formed and has one entry per issue', () => {
   assert.match(xml, /^<\?xml version="1.0" encoding="utf-8"\?>\n<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom"/);
   assert.equal((xml.match(/<entry>/g) || []).length, 2);
   assert.equal((xml.match(/<entry>/g) || []).length, (xml.match(/<\/entry>/g) || []).length);
-  assert.match(xml, /<updated>2026-10-16T00:00:00Z<\/updated>/);
+  assert.equal(xml.slice(0, xml.indexOf('<entry>')).match(/<updated>(.*?)<\/updated>/)?.[1], `${publishedDigests(loadData())[0].verifiedOn}T00:00:00Z`, 'feed-level updated is the newest verifiedOn');
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
   assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');

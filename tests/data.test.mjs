@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { loadData } from '../scripts/lib/data.mjs';
 import { validateMatrix, validateDigest, validateConfig, validateWatchSources, staleCells } from '../scripts/lib/validate.mjs';
 import { isoWeekId, isoWeekRange, isIsoDate } from '../scripts/lib/util.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
-const TODAY = '2026-10-16';
+const TODAY = TEST_DATE;
 const data = loadData();
 
 test('shipped data passes validation', () => {

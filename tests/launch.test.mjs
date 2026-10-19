@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { markerFields, releaseProblems, RELEASE_URL } from '../scripts/lib/placeholders.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const text = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
@@ -63,7 +64,7 @@ const isBinary = (buf) => buf.subarray(0, 8000).includes(0);
 const files = () => [...walk(root)].map((f) => [path.relative(root, f), fs.readFileSync(f)]).filter(([, buf]) => !isBinary(buf)).map(([rel, buf]) => [rel, buf.toString('utf8')]);
 
 function strictFindings() {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-launch-'));
   try {
     const normal = build({ root, outDir, quiet: true });
@@ -91,7 +92,7 @@ test('npm run build:strict passes on the real tree and reports nothing', () => {
 });
 
 test('the strict build fails again when a marker or a placeholder sentence comes back in a page or in a configuration value', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const cases = [
     ['a marker in a page', (dir) => fs.appendFileSync(path.join(dir, 'content', 'about.md'), '\nOwner: [[TODO-OWNER: new field]].\n'), /TODO-OWNER: new field/],
     ['a placeholder sentence in a page', (dir) => fs.appendFileSync(path.join(dir, 'content', 'legal.md'), '\nThe host will be named here.\n'), /will be named here/],
@@ -116,7 +117,7 @@ test('the strict build fails again when a marker or a placeholder sentence comes
 });
 
 test('the strict build refuses any base URL other than https://rulefiles.dev, and a preview build is not affected', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   assert.equal(RELEASE_URL, 'https://rulefiles.dev');
   assert.deepEqual(releaseProblems({ baseUrl: RELEASE_URL }), []);
   for (const bad of ['http://rulefiles.dev', 'https://www.rulefiles.dev', 'https://example.com', 'http://localhost:8080', 'https://agent-diffs-preview.pages.dev', '']) {
@@ -197,7 +198,7 @@ test('docs/LAUNCH.md and docs/LAUNCH-BLOCKERS.md say that no field remains, name
 
 test('the domain is bought: baseUrl is https://rulefiles.dev and canonical, og, sitemap, robots and llms.txt use it', () => {
   delete process.env.SITE_URL;
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   assert.equal(JSON.parse(text('site.config.json')).baseUrl, 'https://rulefiles.dev');
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-domain-'));
   try {
@@ -244,7 +245,7 @@ test('the repository holds no personal noreply address, no surname and no first 
 
 test('the built site and the public sources hold no GitHub handle, no surname, no first name and no personal noreply address, except the full name on two pages', () => {
   delete process.env.SITE_URL;
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-ident-'));
   try {
     build({ root, outDir, quiet: true });
@@ -265,7 +266,7 @@ test('the built site and the public sources hold no GitHub handle, no surname, n
 
 test('the full name appears on the privacy page and the legal notice and nowhere else: not in the sources, the built site, the docs, the tests or the commit messages', () => {
   delete process.env.SITE_URL;
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const where = (rels, read) => rels.filter((rel) => read(rel).includes(FULL_NAME));
   assert.deepEqual(NAME_PAGES.filter((rel) => !text(rel).includes(FULL_NAME)), [], 'both pages carry the name');
   // The privacy page says it is the controller and the publisher of the newsletter, with no postal address.

@@ -15,6 +15,10 @@ const FIX = new URL('./fixtures/', import.meta.url).pathname;
 const fx = (n) => fs.readFileSync(path.join(FIX, n), 'utf8');
 const sources = JSON.parse(fs.readFileSync(new URL('../data/watch-sources.json', import.meta.url), 'utf8'));
 const src = (id) => sources.sources.find((s) => s.id === id);
+// A frozen published digest that cites Origin App Marketplace and Claude Code v2.1.301 only. The offline runs below
+// read it instead of data/digest, so the items they expect as new do not change when a week is published.
+const PUBLISHED_ROOT = new URL('./fixtures/published-digests/', import.meta.url).pathname;
+const SOURCES = new URL('../data/watch-sources.json', import.meta.url).pathname;
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-test-'));
 
 test('cursor RSS parses titles, dates and links without inventing text', () => {
@@ -141,15 +145,15 @@ test('offline run writes drafts, skips items already published, and remembers wh
   const out = tmp();
   const state = path.join(out, 'state.json');
   const logs = [];
-  const args = ['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state];
-  const r1 = await run(args, { log: (m) => logs.push(m) });
+  const args = ['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state];
+  const r1 = await run(args, { root: PUBLISHED_ROOT, log: (m) => logs.push(m) });
   assert.equal(r1.skipped.length, 0);
   // Items cited by the published digests are not listed again.
   assert.ok(!r1.entries.some((e) => e.url === 'https://cursor.com/changelog/origin-app-marketplace'));
   assert.ok(!r1.entries.some((e) => e.tool === 'claude-code' && e.version === '2.1.301'));
   assert.ok(r1.entries.some((e) => /HydraFusion/.test(e.title)));
   for (const f of r1.written) assert.ok(fs.existsSync(f));
-  const r2 = await run([...args, '--no-state'], { log: () => {} });
+  const r2 = await run([...args, '--no-state'], { root: PUBLISHED_ROOT, log: () => {} });
   assert.ok(r2.entries.length > 0);
   fs.rmSync(out, { recursive: true, force: true });
 });
@@ -159,23 +163,25 @@ test('a second run with state lists nothing new', async () => {
   const state = path.join(out, 'state.json');
   fs.writeFileSync(state, '{"seen":{}}');
   // offline mode does not write state, so mark entries as seen by hand through a first dry listing.
-  const first = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
+  const first = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
+  assert.ok(first.entries.length > 0, 'the first run lists the fixture items that the frozen digest does not cite');
   const seen = Object.fromEntries(first.entries.map((e) => [e.id, '2026-10-15']));
   fs.writeFileSync(state, JSON.stringify({ seen }));
-  const second = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
+  const second = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
   assert.equal(second.entries.length, 0);
   fs.rmSync(out, { recursive: true, force: true });
 });
 
 test('merging into an existing draft keeps reviewer edits', async () => {
   const out = tmp();
-  const args = ['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-14', '--no-state'];
-  const r1 = await run(args, { log: () => {} });
+  const args = ['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-14', '--no-state'];
+  const r1 = await run(args, { root: PUBLISHED_ROOT, log: () => {} });
+  assert.ok(r1.written.length > 0, 'the fixture feeds have new items on 2026-10-14 and 2026-10-15');
   const file = r1.written[0];
   const d = JSON.parse(fs.readFileSync(file, 'utf8'));
   d.items[0].text = 'Edited by a reviewer.';
   fs.writeFileSync(file, JSON.stringify(d));
-  await run(args, { log: () => {} });
+  await run(args, { root: PUBLISHED_ROOT, log: () => {} });
   const after = JSON.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(after.items[0].text, 'Edited by a reviewer.');
   assert.equal(after.items.length, d.items.length);
@@ -629,4 +635,22 @@ test('watch: published items are not listed again when the feed link differs onl
   // The other items of the same feeds are still listed.
   assert.ok(r.entries.some((e) => /HydraFusion/.test(e.title)));
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('watch: a published release is recognised by tool and version when its link differs', async () => {
+  const root = tmp();
+  try {
+    fs.mkdirSync(path.join(root, 'data', 'digest'), { recursive: true });
+    const write = (version) => fs.writeFileSync(path.join(root, 'data', 'digest', '2026-W42.json'), JSON.stringify({
+      week: '2026-W42', status: 'published',
+      // The link is not the release page, so only the tool:version key can match the feed entry.
+      items: [{ id: 'a', date: '2026-10-15', tool: 'claude-code', title: 'Claude Code v2.1.301', text: 'x', ...(version ? { version } : {}), sourceUrl: 'https://example.org/claude-code-2.1.301', sourceLabel: 'x' }]
+    }));
+    const args = ['--offline', FIX, '--sources', SOURCES, '--out', path.join(root, 'out'), '--today', '2026-10-15', '--since', '2026-10-01', '--no-state'];
+    const listed = async () => (await run(args, { root, log: () => {} })).entries.some((e) => e.tool === 'claude-code' && e.version === '2.1.301');
+    write(undefined);
+    assert.ok(await listed(), 'without a version the published item does not match the release');
+    write('2.1.301');
+    assert.ok(!(await listed()), 'with the same tool and version the release is not listed again');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

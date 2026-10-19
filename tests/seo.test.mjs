@@ -6,8 +6,9 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { validateConfig } from '../scripts/lib/validate.mjs';
 import { renderHeaders, cspFor } from '../scripts/lib/render.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
-process.env.BUILD_DATE = '2026-10-16';
+process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
 process.env.NEWSLETTER_FORM_ACTION = '';
 
@@ -47,7 +48,7 @@ test('sitemap lastmod comes from the content, not from the build date', () => {
     assert.equal(read('sitemap.xml', later), read('sitemap.xml'));
     assert.ok(!read('sitemap.xml', later).includes('2026-10-20'));
   } finally {
-    process.env.BUILD_DATE = '2026-10-16';
+    process.env.BUILD_DATE = TEST_DATE;
     fs.rmSync(later, { recursive: true, force: true });
   }
 });

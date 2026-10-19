@@ -6,6 +6,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { build } from '../scripts/build.mjs';
 import { PLACEHOLDER_RE, launchWarnings, markerFields } from '../scripts/lib/placeholders.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const hits = (text) => text.match(PLACEHOLDER_RE) || [];
@@ -73,7 +74,7 @@ const fillMarkers = (dir) => {
 };
 
 test('strict build fails and leaves no dist while markers remain, the normal build only warns', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const dir = scratchProject();
   try {
     addMarker(dir);
@@ -92,7 +93,7 @@ test('strict build fails and leaves no dist while markers remain, the normal bui
 });
 
 test('strict build succeeds on the project as it is, and once a marker that was added is filled', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const dir = scratchProject();
   try {
     assert.deepEqual(build({ root: dir, outDir: path.join(dir, 'dist0'), quiet: true, strict: true }).warnings, []);
@@ -106,7 +107,7 @@ test('strict build succeeds on the project as it is, and once a marker that was 
 });
 
 test('strict build also fails on an older-style placeholder sentence', () => {
-  process.env.BUILD_DATE = '2026-10-16';
+  process.env.BUILD_DATE = TEST_DATE;
   const dir = scratchProject();
   try {
     fillMarkers(dir);
@@ -120,7 +121,7 @@ test('the command line honours --strict and RULEFILES_STRICT, and the default ru
   const dir = scratchProject();
   try {
     const run = (args, env = {}) => spawnSync(process.execPath, [path.join(dir, 'scripts', 'build.mjs'), ...args], {
-      cwd: dir, encoding: 'utf8', env: { ...process.env, BUILD_DATE: '2026-10-16', SITE_URL: '', RULEFILES_STRICT: '', ...env }
+      cwd: dir, encoding: 'utf8', env: { ...process.env, BUILD_DATE: TEST_DATE, SITE_URL: '', RULEFILES_STRICT: '', ...env }
     });
     addMarker(dir);
     const plain = run([]);
