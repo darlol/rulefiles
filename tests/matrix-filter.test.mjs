@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { applyFilters, countMessage } from '../src/js/matrix-filter.js';
 import { build } from '../scripts/build.mjs';
 import { STATUS_LABEL } from '../scripts/lib/render.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const data = JSON.parse(fs.readFileSync(path.join(root, 'data', 'matrix.json'), 'utf8'));
@@ -64,7 +65,8 @@ test('applyFilters does not change the model it is given', () => {
 });
 
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'matrix-filter-dist-'));
-before(() => { build({ outDir: out, quiet: true }); });
+// A fixed build date that follows the data, so the build does not depend on the day the tests run.
+before(() => { process.env.BUILD_DATE = TEST_DATE; build({ outDir: out, quiet: true }); });
 after(() => fs.rmSync(out, { recursive: true, force: true }));
 
 test('matrix page: filter bar is hidden until the script runs, and every control is a real button', () => {
