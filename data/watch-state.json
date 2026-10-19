@@ -1,1 +1,6 @@
-{ "seen": {} }
+{
+  "seen": {
+    "codex-changelog:https://developers.openai.com/codex/changelog/#codex-2026-10-09-composer-predictions": "2026-10-19",
+    "copilot-changelog:https://github.blog/changelog/2026-10-12-client-telemetry-user-attribution-and-configurable-capture": "2026-10-19"
+  }
+}
