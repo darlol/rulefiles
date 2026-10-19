@@ -6,8 +6,9 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { validateConfig } from '../scripts/lib/validate.mjs';
 import { run, parseArgs, parseSitemap, buildPayload, DEFAULT_ENDPOINT, MAX_URLS } from '../scripts/indexnow.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
-process.env.BUILD_DATE = '2026-10-16';
+process.env.BUILD_DATE = TEST_DATE;
 delete process.env.SITE_URL;
 process.env.NEWSLETTER_FORM_ACTION = '';
 

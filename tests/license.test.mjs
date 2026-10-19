@@ -8,10 +8,11 @@ import { loadData } from '../scripts/lib/data.mjs';
 import { validateMatrix, validateDigest } from '../scripts/lib/validate.mjs';
 import { groupDrafts } from '../scripts/lib/parsers.mjs';
 import { DATA_LICENSE, DATA_LICENSE_URL, DATA_ATTRIBUTION, licenseFields, licenseProblems } from '../scripts/lib/license.mjs';
+import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const text = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
-const TODAY = '2026-10-16';
+const TODAY = TEST_DATE;
 
 // The MIT text as the SPDX license list gives it (https://spdx.org/licenses/MIT.html), with the year and the
 // holder filled in. Written out here so a change to LICENSE shows up as a difference in this test.
