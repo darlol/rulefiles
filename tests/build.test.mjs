@@ -567,3 +567,17 @@ test('the old name does not appear anywhere in the built site', () => {
   }
   assert.equal(JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8')).name, 'Rulefiles');
 });
+
+test('no page still says the site has no trackers or no analytics, and the footer and llms.txt name Web Analytics', () => {
+  const stale = /no (ad )?trackers?\b|no analytics/i;
+  const htmlFiles = listFiles(out).filter((f) => f.endsWith('.html'));
+  assert.ok(htmlFiles.length >= PAGES.length);
+  for (const f of htmlFiles) {
+    const html = fs.readFileSync(f, 'utf8');
+    assert.doesNotMatch(html, stale, path.relative(out, f));
+    assert.ok(html.includes('No cookies. Visits are counted with Cloudflare Web Analytics.'), `footer in ${path.relative(out, f)}`);
+  }
+  for (const rel of ['llms.txt', 'llms-full.txt']) assert.doesNotMatch(read(rel), stale, rel);
+  assert.ok(read('llms.txt').includes('no cookies; visits counted with Cloudflare Web Analytics'));
+  assert.doesNotMatch(fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8'), stale, 'README.md');
+});
