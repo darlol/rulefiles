@@ -119,6 +119,8 @@ test('sitemap lists every indexable page and not the 404', () => {
   const lastmod = (loc, date) => assert.ok(xml.includes(`<loc>https://rulefiles.dev${loc}</loc><lastmod>${date}</lastmod>`), `${loc} lastmod is ${date}`);
   for (const loc of ['/', '/digest/', '/data/digests.json', '/digest/feed.xml']) lastmod(loc, latest);
   for (const d of digests) lastmod(`/digest/${d.week}/`, d.verifiedOn);
+  // One fixed date as well, so a change in how the dates are read cannot pass unnoticed: W41 was last checked on 2026-10-16.
+  lastmod('/digest/2026-W41/', '2026-10-16');
   for (const l of locs) {
     const p = new URL(l).pathname;
     const file = /\.(json|xml)$/.test(p) ? p.slice(1) : p === '/' ? 'index.html' : path.join(p, 'index.html');
@@ -163,7 +165,7 @@ test('Atom feed is well formed and has one entry per issue', () => {
   assert.match(xml, /^<\?xml version="1.0" encoding="utf-8"\?>\n<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom"/);
   assert.equal((xml.match(/<entry>/g) || []).length, 2);
   assert.equal((xml.match(/<entry>/g) || []).length, (xml.match(/<\/entry>/g) || []).length);
-  assert.ok(xml.includes(`<updated>${publishedDigests(loadData())[0].verifiedOn}T00:00:00Z</updated>`), 'feed updated is the newest verifiedOn');
+  assert.equal(xml.slice(0, xml.indexOf('<entry>')).match(/<updated>(.*?)<\/updated>/)?.[1], `${publishedDigests(loadData())[0].verifiedOn}T00:00:00Z`, 'feed-level updated is the newest verifiedOn');
   assert.doesNotMatch(xml, /<content type="html">[^<]*<ul>/, 'content must be escaped');
   const data = loadData();
   assert.match(xml, /<feed [^>]*>[\s\S]*?<author><name>Rulefiles<\/name><\/author>[\s\S]*?<entry>/, 'feed-level author');

@@ -163,10 +163,11 @@ test('a second run with state lists nothing new', async () => {
   const state = path.join(out, 'state.json');
   fs.writeFileSync(state, '{"seen":{}}');
   // offline mode does not write state, so mark entries as seen by hand through a first dry listing.
-  const first = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
+  const first = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
+  assert.ok(first.entries.length > 0, 'the first run lists the fixture items that the frozen digest does not cite');
   const seen = Object.fromEntries(first.entries.map((e) => [e.id, '2026-10-15']));
   fs.writeFileSync(state, JSON.stringify({ seen }));
-  const second = await run(['--offline', FIX, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { log: () => {} });
+  const second = await run(['--offline', FIX, '--sources', SOURCES, '--out', out, '--today', '2026-10-15', '--since', '2026-10-01', '--state', state], { root: PUBLISHED_ROOT, log: () => {} });
   assert.equal(second.entries.length, 0);
   fs.rmSync(out, { recursive: true, force: true });
 });
@@ -634,4 +635,22 @@ test('watch: published items are not listed again when the feed link differs onl
   // The other items of the same feeds are still listed.
   assert.ok(r.entries.some((e) => /HydraFusion/.test(e.title)));
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('watch: a published release is recognised by tool and version when its link differs', async () => {
+  const root = tmp();
+  try {
+    fs.mkdirSync(path.join(root, 'data', 'digest'), { recursive: true });
+    const write = (version) => fs.writeFileSync(path.join(root, 'data', 'digest', '2026-W42.json'), JSON.stringify({
+      week: '2026-W42', status: 'published',
+      // The link is not the release page, so only the tool:version key can match the feed entry.
+      items: [{ id: 'a', date: '2026-10-15', tool: 'claude-code', title: 'Claude Code v2.1.301', text: 'x', ...(version ? { version } : {}), sourceUrl: 'https://example.org/claude-code-2.1.301', sourceLabel: 'x' }]
+    }));
+    const args = ['--offline', FIX, '--sources', SOURCES, '--out', path.join(root, 'out'), '--today', '2026-10-15', '--since', '2026-10-01', '--no-state'];
+    const listed = async () => (await run(args, { root, log: () => {} })).entries.some((e) => e.tool === 'claude-code' && e.version === '2.1.301');
+    write(undefined);
+    assert.ok(await listed(), 'without a version the published item does not match the release');
+    write('2.1.301');
+    assert.ok(!(await listed()), 'with the same tool and version the release is not listed again');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
