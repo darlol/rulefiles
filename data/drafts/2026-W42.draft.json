@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W42",
+  "start": "2026-10-12",
+  "end": "2026-10-18",
+  "status": "draft",
+  "verifiedOn": "2026-10-19",
+  "title": "Draft for 2026-10-12 to 2026-10-18",
+  "summary": "Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.",
+  "items": [
+    {
+      "id": "github-copilot-2026-10-12-client-telemetry-user-attribution-and-configurable-capture",
+      "date": "2026-10-12",
+      "tool": "github-copilot",
+      "title": "Client telemetry user attribution and configurable capture",
+      "text": "Enterprise administrators can now use telemetry in managed settings to attribute GitHub Copilot activity to a user without collecting their prompts, responses, or tool content.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-12-client-telemetry-user-attribution-and-configurable-capture",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Enterprise administrators can now use telemetry in managed settings to attribute GitHub Copilot activity to a user without collecting their prompts, responses, or tool content."
+      ]
+    }
+  ]
+}
