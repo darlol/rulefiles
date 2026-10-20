@@ -818,7 +818,7 @@ export function renderHeaders(config) {
 ${hsts}`;
 }
 
-export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#3a3fd8}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5aaff}.l{fill:#0d1018}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
+export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#4338ca}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5b4fc}.l{fill:#0b0c10}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
 `;
 
 export { path, daysBetween };
