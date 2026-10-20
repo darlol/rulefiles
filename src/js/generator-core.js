@@ -87,7 +87,7 @@ export function generateFiles(input, targets, options = {}) {
           results.push({
             path: t.path,
             content: '@AGENTS.md\n',
-            note: 'Imports AGENTS.md with the @path syntax, so both files stay in sync. Keep AGENTS.md in the repository. Claude Code reads AGENTS.md on its own only from v2.1.277 and when there is no CLAUDE.md; the import also covers older versions and sessions that cannot read AGENTS.md.'
+            note: 'Imports AGENTS.md with the @path syntax, so both files stay in sync. Keep AGENTS.md in the repository. Claude Code reads AGENTS.md on its own only from v2.1.277 and when there is no CLAUDE.md or CLAUDE.local.md; the import also covers older versions and sessions that cannot read AGENTS.md.'
           });
         } else {
           results.push({ path: t.path, content: body, note: 'Plain Markdown, no frontmatter. The Cursor help page checked for this site says Cursor reads CLAUDE.md the same way it reads AGENTS.md, so Cursor may load this copy as well as AGENTS.md. The import option keeps one copy of the instructions.' });
