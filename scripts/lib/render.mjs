@@ -88,7 +88,7 @@ export const THEME_COLOR = { light: '#f5f6fa', dark: '#0d1018' };
 
 export function layout(config, page) {
   const canonical = url(config, page.path);
-  const title = page.path === '/' ? (config.homeTitle || config.name) : `${page.title} | ${config.name}`;
+  const title = page.path === '/' ? (config.homeTitle || config.name) : page.bareTitle ? page.title : `${page.title} | ${config.name}`;
   const image = url(config, '/og.png');
   const ld = (page.jsonLd || []).map((o) => `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', ...o }).replace(/</g, '\\u003c')}</script>`).join('\n');
   const nav = [['/matrix/', 'Matrix'], ['/generator/', 'Generator'], ['/digest/', 'Digest'], ['/newsletter/', 'Newsletter'], ['/about/', 'About']]
@@ -242,6 +242,24 @@ ${newsletterEnabled(config)
   });
 }
 
+// Sentences shared by the matrix and the reference pages, so the explanation of the two special statuses is written once.
+export const UNVERIFIED_MEANING = 'A cell reads "unverified" when the page we checked does not mention the file.';
+export const NO_SOURCE_SENTENCE = 'We then have no source, which says nothing about whether the tool reads it.';
+export const MIGRATION_MEANING = 'A cell reads "migration only" when the page mentions the file only as input to a migration command such as /init.';
+
+/** The "How to cite" block of the matrix, reused on the reference pages. */
+function citeBlock(config, matrix) {
+  return `<h2 id="cite">How to cite</h2>
+<p>The data and the text are under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>. Credit the project, link the license, and say what you changed. A cell is a dated reading of an official page, so give the date of the cell, which is shown on it, or the date the matrix was last reviewed.</p>
+<p>Suggested credit: "${h(config.name)} data by ${h(DATA_ATTRIBUTION)}, ${h(config.baseUrl)}/matrix/, last reviewed ${h(matrix.lastReviewed)}, licensed under CC BY 4.0 (${h(DATA_LICENSE_URL)})."</p>
+<p class="muted">Quoted excerpts of the sources belong to their authors. Link the official page of the cell when you rely on it.</p>`;
+}
+
+/** The newest verifiedOn of a list of cells: the date the page built from them last changed. */
+export function latestCheck(cells) {
+  return cells.map((c) => c.verifiedOn).sort().at(-1);
+}
+
 export function matrixPage(ctx) {
   const { config, matrix, today } = ctx;
   const stale = new Set(staleCells(matrix, today, config.staleAfterDays).map((c) => `${c.tool}/${c.file}`));
@@ -256,7 +274,7 @@ export function matrixPage(ctx) {
 <p class="note">${inlineHtml(c.note)}</p>
 <p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
     }).join('');
-    return `<tr data-file="${h(f.id)}"><th scope="row"><code>${h(f.path)}</code><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
+    return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
   const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
   const counts = Object.keys(STATUS_LABEL).map((k) => `${STATUS_LABEL[k]}: ${matrix.cells.filter((c) => c.status === k).length}`).join(', ');
@@ -269,12 +287,12 @@ export function matrixPage(ctx) {
 </div>`;
   const body = `<h1>Which coding agent reads which instruction file</h1>
 <p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
-<p class="intro">Each cell cites an official page and the date we checked it. A cell reads "unverified" when the page we checked does not mention the file. We then have no source, which says nothing about whether the tool reads it. A cell reads "migration only" when the page mentions the file only as input to a migration command such as /init. Counts: ${h(counts)}.</p>
+<p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)} Counts: ${h(counts)}.</p>
 ${filters}
 <p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>
-<thead><tr><th scope="col">File</th>${head}</tr></thead>
+<thead><tr><th scope="col"><a href="/files/">File</a></th>${head}</tr></thead>
 <tbody>
 ${rows}
 </tbody></table></div>
@@ -282,10 +300,8 @@ ${rows}
 <ul class="legend">${legend}</ul>
 <h2>Data</h2>
 <p>The same data is published as <a href="/data/matrix.json">matrix.json</a>. Need a starting file? Use the <a href="/generator/">generator</a>.</p>
-<h2 id="cite">How to cite</h2>
-<p>The data and the text are under <a href="${DATA_LICENSE_URL}" rel="license">CC BY 4.0</a>. Credit the project, link the license, and say what you changed. A cell is a dated reading of an official page, so give the date of the cell, which is shown on it, or the date the matrix was last reviewed.</p>
-<p>Suggested credit: "${h(config.name)} data by ${h(DATA_ATTRIBUTION)}, ${h(config.baseUrl)}/matrix/, last reviewed ${h(matrix.lastReviewed)}, licensed under CC BY 4.0 (${h(DATA_LICENSE_URL)})."</p>
-<p class="muted">Quoted excerpts of the sources belong to their authors. Link the official page of the cell when you rely on it.</p>
+<p>Each file type also has <a href="/files/">its own page</a>, and the cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
+${citeBlock(config, matrix)}
 <p class="muted">GitHub Copilot cells describe repository custom instructions on GitHub.com. Editor-specific behavior can differ and is not covered here.</p>`;
   const sources = [...new Set(matrix.tools.map((t) => t.docsUrl))];
   return layout(config, {
@@ -295,6 +311,118 @@ ${rows}
     jsonLd: [
       { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
       breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/']])
+    ]
+  });
+}
+
+// ---------- Reference pages, built from data/matrix.json only ----------
+
+/** <title> and h1 of the page of one instruction file. */
+export function filePageTitle(file) { return `Which coding agents read ${file.path}?`; }
+
+function cellsOfFile(matrix, file) {
+  return matrix.tools.map((t) => ({ tool: t, cell: matrix.cells.find((c) => c.tool === t.id && c.file === file.id) }));
+}
+
+function statusCounts(cells) {
+  return Object.keys(STATUS_LABEL).filter((k) => cells.some((c) => c.status === k))
+    .map((k) => `<li>${statusBadge(k)} <span class="status-count">${cells.filter((c) => c.status === k).length}</span></li>`).join('');
+}
+
+export function filePage(ctx, file) {
+  const { config, matrix } = ctx;
+  const rows = cellsOfFile(matrix, file);
+  const title = filePageTitle(file);
+  const pagePath = `/files/${file.id}/`;
+  const tr = rows.map(({ tool, cell }) => `<tr data-tool="${h(tool.id)}"><th scope="row">${h(tool.name)}${tool.scope ? `<span class="muted block">${h(tool.scope)}</span>` : ''}</th>
+<td class="cell st-${cell.status}"><p class="cell-status">${statusBadge(cell.status)}${cell.version ? ` <span class="muted">from v${h(cell.version)}</span>` : ''}</p></td>
+<td class="cell note-col"><p class="note">${inlineHtml(cell.note)}</p></td>
+<td class="cell"><p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener" aria-label="Source — ${h(file.path)} × ${h(tool.name)}">Source${icon('external')}</a></p></td>
+<td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
+  const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a></li>`).join('');
+  const toolNames = listNames(matrix.tools.map((t) => t.name));
+  const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
+<p class="lead">${h(file.description)}</p>
+<p class="intro">${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
+<ul class="status-counts" aria-label="Tools by status">${statusCounts(rows.map((r) => r.cell))}</ul>
+<div class="table-wrap" tabindex="0" role="region" aria-label="${h(file.path)} by tool"><table class="matrix ref">
+<caption class="sr">${h(file.path)}: status, note, official source and check date for each tool</caption>
+<thead><tr><th scope="col">Tool</th><th scope="col">Status</th><th scope="col">Note</th><th scope="col">Official source</th><th scope="col">Checked</th></tr></thead>
+<tbody>
+${tr}
+</tbody></table></div>
+<h2>Data</h2>
+<p>These rows come from the <a href="/matrix/">instruction file matrix</a>, also published as <a href="/data/matrix.json">matrix.json</a>. Cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
+<h2 id="other-files">Other instruction files</h2>
+<ul>${others}</ul>
+<p><a href="/files/">All instruction file pages</a></p>
+${citeBlock(config, matrix)}
+<h2 id="newsletter">Newsletter</h2>
+${newsletterForm(config)}`;
+  const modified = latestCheck(rows.map((r) => r.cell));
+  return layout(config, {
+    path: pagePath, title, bareTitle: true, ogType: 'article',
+    description: `Which of ${toolNames} read ${file.path}, with an official source and a check date for each tool.`,
+    body,
+    jsonLd: [
+      { '@type': 'TechArticle', headline: title, description: file.description, dateModified: modified, inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, pagePath), isBasedOn: url(config, '/data/matrix.json'), citation: [...new Set(rows.map((r) => r.cell.sourceUrl))] },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], [file.path, pagePath]])
+    ]
+  });
+}
+
+export function filesIndexPage(ctx) {
+  const { config, matrix } = ctx;
+  const list = matrix.files.map((f) => {
+    const cells = matrix.cells.filter((c) => c.file === f.id);
+    return `<li class="issue">
+<h2 class="issue-title"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a></h2>
+<p class="muted">${h(f.description)}</p>
+<ul class="status-counts" aria-label="${h(f.path)}: tools by status">${statusCounts(cells)}</ul>
+</li>`;
+  }).join('\n');
+  const body = `<h1>Instruction files</h1>
+<p class="lead">One page per file type, built from the <a href="/matrix/">matrix</a>: ${matrix.files.length} file types, ${matrix.tools.length} tools.</p>
+<ul class="archive">${list}</ul>
+<p>Cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>`;
+  return layout(config, {
+    path: '/files/', title: 'Instruction files',
+    description: `One page for each of the ${matrix.files.length} instruction file types in the matrix, with the status, official source and check date for each of ${matrix.tools.length} AI coding tools.`,
+    body,
+    jsonLd: [
+      { '@type': 'CollectionPage', name: `${config.name} instruction files`, url: url(config, '/files/'), dateModified: latestCheck(matrix.cells), mainEntity: { '@type': 'ItemList', itemListElement: matrix.files.map((f, i) => ({ '@type': 'ListItem', position: i + 1, url: url(config, `/files/${f.id}/`), name: filePageTitle(f) })) } },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], ['Instruction files', '/files/']])
+    ]
+  });
+}
+
+export function unverifiedPage(ctx) {
+  const { config, matrix } = ctx;
+  const toolOf = Object.fromEntries(matrix.tools.map((t) => [t.id, t]));
+  const cells = matrix.files.flatMap((f) => matrix.tools.map((t) => matrix.cells.find((c) => c.tool === t.id && c.file === f.id)))
+    .filter((c) => c && c.status === 'unverified');
+  const fileOf = Object.fromEntries(matrix.files.map((f) => [f.id, f]));
+  const rows = cells.map((c) => `<tr data-tool="${h(c.tool)}" data-file="${h(c.file)}"><th scope="row">${h(toolOf[c.tool].name)}</th>
+<td class="cell file-col"><a href="/files/${h(c.file)}/"><code>${h(fileOf[c.file].path)}</code></a></td>
+<td class="cell"><p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener">${h(c.sourceUrl.replace(/^https:\/\//, ''))}${icon('external')}</a></p></td>
+<td class="cell"><time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></td></tr>`).join('\n');
+  const title = 'What the cited official pages don\'t say';
+  const body = `<h1>${h(title)}</h1>
+<p class="lead">${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)}</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Unverified cells"><table class="matrix ref">
+<caption class="sr">${cells.length} unverified cells: tool, file, cited page and check date</caption>
+<thead><tr><th scope="col">Tool</th><th scope="col">File</th><th scope="col">Cited page</th><th scope="col">Checked</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table></div>
+<p>The full data is in the <a href="/matrix/">matrix</a> and in <a href="/data/matrix.json">matrix.json</a>.</p>`;
+  return layout(config, {
+    path: '/unverified/', title,
+    description: `${cells.length} cells of the instruction file matrix that the cited official page does not confirm, with the page and the check date.`,
+    body,
+    jsonLd: [
+      { '@type': 'WebPage', name: title, url: url(config, '/unverified/'), inLanguage: config.language, ...(cells.length ? { dateModified: latestCheck(cells) } : {}) },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], ['Unverified', '/unverified/']])
     ]
   });
 }
@@ -462,8 +590,8 @@ export function contentPage(ctx, file, pagePath) {
   });
 }
 
-export function newsletterPage(ctx) {
-  const { config } = ctx;
+/** The signup form of the newsletter page, open or switched off. The reference pages carry the same form. */
+function newsletterForm(config) {
   const nl = config.newsletter;
   const enabled = newsletterEnabled(config);
   const hidden = Object.entries(nl.hiddenFields || {}).map(([k, v]) => `<input type="hidden" name="${h(k)}" value="${h(v)}">`).join('');
@@ -481,6 +609,13 @@ ${hidden}
 <button type="button" disabled>Subscribe</button>
 <p id="nl-status" class="notice" role="status">${icon('warn')}<span>Signup is switched off until the publication. Nothing can be submitted or sent.</span></p>
 </form>`;
+  return form;
+}
+
+export function newsletterPage(ctx) {
+  const { config } = ctx;
+  const enabled = newsletterEnabled(config);
+  const form = newsletterForm(config);
   const body = `<div class="prose">
 <h1>Newsletter</h1>
 <p class="lead">The weekly digest by email, sent through Buttondown.</p>
@@ -574,6 +709,12 @@ export function renderLlmsTxt(ctx) {
     `- [llms-full.txt](${url(config, '/llms-full.txt')}): matrix and digests as one Markdown file`,
     `- [License](${DATA_LICENSE_URL}): the data and the text are CC BY 4.0, credit "${DATA_ATTRIBUTION}" and link ${url(config, '/')}; quoted excerpts belong to their authors; the code is MIT`,
     '',
+    '## Instruction files',
+    '',
+    `- [Instruction files](${url(config, '/files/')}): one page per file type, built from the matrix`,
+    ...matrix.files.map((f) => `- [${filePageTitle(f)}](${url(config, `/files/${f.id}/`)}): ${f.description}`),
+    `- [What the cited official pages don't say](${url(config, '/unverified/')}): the ${matrix.cells.filter((c) => c.status === 'unverified').length} cells marked unverified, with the cited page and the check date`,
+    '',
     '## Digest',
     '',
     ...digests.map((d) => `- [${d.title}](${url(config, `/digest/${d.week}/`)}): ${d.items.length} dated items, checked ${d.verifiedOn}`),
@@ -598,9 +739,9 @@ export function renderLlmsFull(ctx) {
   const { config, matrix, digests } = ctx;
   const toolName = Object.fromEntries(matrix.tools.map((t) => [t.id, t.name]));
   const fileById = Object.fromEntries(matrix.files.map((f) => [f.id, f]));
-  const out = [`# ${config.name}: full content`, '', `> ${config.description}`, '', `Matrix last reviewed ${matrix.lastReviewed}. Source: ${url(config, '/matrix/')}`, '', '## Instruction file matrix', ''];
+  const out = [`# ${config.name}: full content`, '', `> ${config.description}`, '', `Matrix last reviewed ${matrix.lastReviewed}. Source: ${url(config, '/matrix/')}`, '', `File pages: ${url(config, '/files/')}. Unverified cells: ${url(config, '/unverified/')}`, '', '## Instruction file matrix', ''];
   for (const f of matrix.files) {
-    out.push(`### ${f.path}`, '', f.description, '');
+    out.push(`### ${f.path}`, '', f.description, '', `Page: ${url(config, `/files/${f.id}/`)}`, '');
     for (const t of matrix.tools) {
       const c = matrix.cells.find((x) => x.tool === t.id && x.file === f.id);
       out.push(`- ${toolName[t.id]}: ${STATUS_LABEL[c.status]}. ${c.note} Source: ${c.sourceUrl} (checked ${c.verifiedOn})`);

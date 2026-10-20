@@ -57,6 +57,13 @@ export function validateConfig(config) {
   return errors;
 }
 
+// Tool and file ids end up in URLs (/files/<id>/), paths in dist/ and HTML attributes: lowercase letters, digits and
+// dashes only, as for digest items but without dots, so no id can climb out of its directory or change case.
+export const MATRIX_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+// The first-level directories of dist/ (scripts/build.mjs). A file id may not take one of these names, so a page can
+// never be confused with, or later moved onto, a section of the site. tests/build.test.mjs checks the list against dist/.
+export const RESERVED_IDS = ['about', 'assets', 'data', 'digest', 'files', 'generator', 'legal', 'matrix', 'newsletter', 'privacy', 'sponsors', 'unverified'];
+
 export function validateMatrix(matrix, hosts, today) {
   const errors = [];
   const warnings = [];
@@ -66,6 +73,7 @@ export function validateMatrix(matrix, hosts, today) {
   const toolIds = new Set();
   for (const t of matrix.tools || []) {
     if (!t.id || !t.name) errors.push('matrix.json: every tool needs id and name');
+    else if (typeof t.id !== 'string' || !MATRIX_ID_RE.test(t.id)) errors.push(`matrix.json: tool id "${t.id}" must be lowercase letters, digits and dashes`);
     if (toolIds.has(t.id)) errors.push(`matrix.json: duplicate tool id ${t.id}`);
     toolIds.add(t.id);
     const why = hostAllowed(t.docsUrl, hosts);
@@ -74,6 +82,8 @@ export function validateMatrix(matrix, hosts, today) {
   const fileIds = new Set();
   for (const f of matrix.files || []) {
     if (!f.id || !f.path || !f.description) errors.push('matrix.json: every file needs id, path and description');
+    if (f.id && (typeof f.id !== 'string' || !MATRIX_ID_RE.test(f.id))) errors.push(`matrix.json: file id "${f.id}" must be lowercase letters, digits and dashes`);
+    else if (RESERVED_IDS.includes(f.id)) errors.push(`matrix.json: file id "${f.id}" is the name of a section of the site`);
     if (fileIds.has(f.id)) errors.push(`matrix.json: duplicate file id ${f.id}`);
     fileIds.add(f.id);
   }

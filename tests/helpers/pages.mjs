@@ -18,8 +18,13 @@ export function publishedDigestsIn(digestDir = DIGEST_DIR) {
 
 const STATIC_PAGES = ['index.html', 'matrix/index.html', 'generator/index.html', 'digest/index.html', 'about/index.html', 'sponsors/index.html', 'newsletter/index.html', 'privacy/index.html', 'legal/index.html', '404.html'];
 
+// The reference pages follow the files of data/matrix.json, read here directly: one page per file id, the index and /unverified/.
+export const MATRIX = JSON.parse(fs.readFileSync(new URL('../../data/matrix.json', import.meta.url), 'utf8'));
+export const FILE_PAGES = MATRIX.files.map((f) => `files/${f.id}/index.html`);
+const REFERENCE_PAGES = ['files/index.html', ...FILE_PAGES, 'unverified/index.html'];
+
 /** Newest first, as the site lists them. */
 export const PUBLISHED_DIGESTS = publishedDigestsIn();
 /** Oldest first. */
 export const PUBLISHED_WEEKS = PUBLISHED_DIGESTS.map((d) => d.week).reverse();
-export const PAGES = [...STATIC_PAGES.slice(0, 4), ...PUBLISHED_WEEKS.map((w) => `digest/${w}/index.html`), ...STATIC_PAGES.slice(4)];
+export const PAGES = [...STATIC_PAGES.slice(0, 2), ...REFERENCE_PAGES, ...STATIC_PAGES.slice(2, 4), ...PUBLISHED_WEEKS.map((w) => `digest/${w}/index.html`), ...STATIC_PAGES.slice(4)];

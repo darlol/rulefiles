@@ -7,7 +7,7 @@ import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
-import { matrixStats, validateConfig } from '../scripts/lib/validate.mjs';
+import { matrixStats, validateMatrix, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
@@ -392,6 +392,33 @@ test('the build refuses invalid data', () => {
     m.cells[0].sourceUrl = 'https://example.com/not-official';
     fs.writeFileSync(path.join(root, 'data/matrix.json'), JSON.stringify(m));
     assert.throws(() => build({ root, outDir: path.join(root, 'dist'), quiet: true }), /refusing to build/);
+    // Tool and file ids become URLs and paths in dist/. Each case renames the cells too, so the id rule is the only error.
+    const real = JSON.parse(fs.readFileSync(new URL('../data/matrix.json', import.meta.url), 'utf8'));
+    const renameFile = (mx, from, to) => { mx.files.find((f) => f.id === from).id = to; for (const c of mx.cells) if (c.file === from) c.file = to; return mx; };
+    const renameTool = (mx, from, to) => { mx.tools.find((t) => t.id === from).id = to; for (const c of mx.cells) if (c.tool === from) c.tool = to; return mx; };
+    const cases = [
+      ['file id ../matrix', renameFile(structuredClone(real), 'agents-md', '../matrix'), /file id "\.\.\/matrix" must be lowercase letters, digits and dashes/],
+      ['file id with a space, ? and #', renameFile(structuredClone(real), 'agents-md', 'Bad Id?#x'), /file id "Bad Id\?#x" must be/],
+      ['file id in upper case', renameFile(structuredClone(real), 'claude-md', 'CLAUDE-MD'), /file id "CLAUDE-MD" must be/],
+      ['file id that is a section of the site', renameFile(structuredClone(real), 'agents-md', 'matrix'), /file id "matrix" is the name of a section of the site/],
+      ['duplicate file id', (() => { const mx = structuredClone(real); mx.files[1].id = mx.files[0].id; return mx; })(), /duplicate file id agents-md/],
+      ['tool id ../matrix', renameTool(structuredClone(real), 'cursor', '../matrix'), /tool id "\.\.\/matrix" must be/],
+      ['tool id with a space, ? and #', renameTool(structuredClone(real), 'cursor', 'Bad Id?#x'), /tool id "Bad Id\?#x" must be/],
+      ['tool id in upper case', renameTool(structuredClone(real), 'codex', 'CODEX'), /tool id "CODEX" must be/]
+    ];
+    for (const [name, mx, message] of cases) {
+      fs.writeFileSync(path.join(root, 'data/matrix.json'), JSON.stringify(mx));
+      assert.throws(() => build({ root, outDir: path.join(root, 'dist'), quiet: true }), message, name);
+    }
+    // The ids of the shipped data pass, and every first-level directory of the real build is refused as a file id.
+    for (const id of [...real.tools, ...real.files].map((x) => x.id)) assert.match(id, /^[a-z0-9][a-z0-9-]*$/, id);
+    const hosts = JSON.parse(fs.readFileSync(new URL('../data/allowed-source-hosts.json', import.meta.url), 'utf8')).hosts;
+    assert.deepEqual(validateMatrix(real, hosts, TEST_DATE).errors, []);
+    const sections = fs.readdirSync(out, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+    assert.ok(sections.includes('files') && sections.includes('matrix') && sections.length >= 10, sections.join(' '));
+    for (const dir of sections) {
+      assert.ok(validateMatrix(renameFile(structuredClone(real), 'agents-md', dir), hosts, TEST_DATE).errors.some((e) => e.includes(`file id "${dir}" is the name of a section of the site`)), dir);
+    }
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
