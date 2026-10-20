@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W43",
+  "start": "2026-10-19",
+  "end": "2026-10-25",
+  "status": "published",
+  "verifiedOn": "2026-10-20",
+  "title": "Claude Code v2.1.10, Codex 0.164.0, Copilot test fixture",
+  "summary": "Test fixture for the digest template. It is never published: the items are not taken from a source.",
+  "highlights": ["claude-code-2026-10-20-v2.1.10", "codex-2026-10-19-0.164.0", "github-copilot-2026-10-20-fixture"],
+  "items": [
+    {
+      "id": "cursor-2026-10-19-fixture",
+      "date": "2026-10-19",
+      "tool": "cursor",
+      "title": "Cursor fixture item",
+      "text": "Fixture text for a Cursor item without a version. Not taken from a source.",
+      "quote": false,
+      "matrix": [{ "tool": "cursor", "file": "cursor-rules-mdc" }, { "tool": "cursor", "file": "agents-md" }],
+      "sourceUrl": "https://cursor.com/changelog",
+      "sourceLabel": "Cursor changelog"
+    },
+    {
+      "id": "claude-code-2026-10-19-v2.1.9",
+      "date": "2026-10-19",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.9",
+      "text": "Fixture text. Not taken from a source.",
+      "quote": false,
+      "version": "2.1.9",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-20-v2.1.10",
+      "date": "2026-10-20",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.10",
+      "text": "Fixture text with `code`. Not taken from a source.",
+      "quote": false,
+      "version": "2.1.10",
+      "figure": "3 settings",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "codex-2026-10-19-0.164.0",
+      "date": "2026-10-19",
+      "tool": "codex",
+      "title": "Codex 0.164.0",
+      "text": "Fixture text. Not taken from a source.",
+      "quote": false,
+      "version": "0.164.0",
+      "sourceUrl": "https://github.com/openai/codex/releases",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "codex-2026-10-20-0.164.0-alpha.1",
+      "date": "2026-10-20",
+      "tool": "codex",
+      "title": "Codex 0.164.0-alpha.1",
+      "text": "Fixture text for a prerelease, which sorts below its release. Not taken from a source.",
+      "quote": false,
+      "version": "0.164.0-alpha.1",
+      "sourceUrl": "https://github.com/openai/codex/releases",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "github-copilot-2026-10-20-fixture",
+      "date": "2026-10-20",
+      "tool": "github-copilot",
+      "title": "Copilot fixture item",
+      "text": "Fixture wording that stands for a quote of the source.",
+      "quote": true,
+      "matrix": [{ "tool": "github-copilot", "file": "copilot-instructions-md" }],
+      "sourceUrl": "https://github.blog/changelog/",
+      "sourceLabel": "GitHub changelog"
+    }
+  ]
+}

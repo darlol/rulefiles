@@ -73,3 +73,33 @@ export function listFiles(dir) {
   }
   return out;
 }
+
+// Version strings as the sources write them: 2.1.303, 0.163.0, v1.4.0, 1.0.0-beta.2. Leading "v" ignored, any number of
+// numeric parts (missing parts count as 0), then an optional prerelease compared as SemVer 2.0.0 section 11 does.
+const VERSION_RE = /^v?(\d+(?:\.\d+)*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/;
+
+/** Compares two version strings: negative if a < b, positive if a > b, 0 if equal. A string that is not a version sorts below every version. */
+export function compareVersions(a, b) {
+  const pa = VERSION_RE.exec(String(a));
+  const pb = VERSION_RE.exec(String(b));
+  if (!pa || !pb) return pa ? 1 : pb ? -1 : 0;
+  const na = pa[1].split('.').map(Number);
+  const nb = pb[1].split('.').map(Number);
+  for (let i = 0; i < Math.max(na.length, nb.length); i++) {
+    const d = (na[i] || 0) - (nb[i] || 0);
+    if (d) return Math.sign(d);
+  }
+  if (!pa[2] || !pb[2]) return pa[2] ? -1 : pb[2] ? 1 : 0; // a release is above its prereleases
+  const xa = pa[2].split('.');
+  const xb = pb[2].split('.');
+  for (let i = 0; i < Math.max(xa.length, xb.length); i++) {
+    if (xa[i] === undefined) return -1;
+    if (xb[i] === undefined) return 1;
+    const da = /^\d+$/.test(xa[i]);
+    const db = /^\d+$/.test(xb[i]);
+    if (da && db) { const d = Number(xa[i]) - Number(xb[i]); if (d) return Math.sign(d); }
+    else if (da !== db) return da ? -1 : 1; // numeric identifiers sort below alphanumeric ones
+    else if (xa[i] !== xb[i]) return xa[i] < xb[i] ? -1 : 1;
+  }
+  return 0;
+}

@@ -12,7 +12,7 @@ test('shipped data passes validation', () => {
   assert.deepEqual(validateConfig(data.config), []);
   assert.deepEqual(validateMatrix(data.matrix, data.hosts, TODAY).errors, []);
   assert.deepEqual(validateWatchSources(data.watchSources), []);
-  for (const d of data.digests) assert.deepEqual(validateDigest(d.data, data.hosts, TODAY, d.file), [], d.file);
+  for (const d of data.digests) assert.deepEqual(validateDigest(d.data, data.hosts, TODAY, d.file, data.matrix), [], d.file);
 });
 
 test('matrix has one cell per tool and file', () => {

@@ -201,6 +201,22 @@ label { font-weight: 620; }
 .tag-mark { background: var(--mark); color: var(--on-mark); }
 .count { display: inline-block; margin-left: var(--s1); font-size: 0.9375rem; font-weight: 640; color: var(--muted); vertical-align: 0.15em; }
 .summary { max-width: var(--measure); }
+/* Editorial blocks of an issue: In short, Versions this week, Instruction files this week. They only repeat item fields. */
+.in-short, .versions, .instruction-files { margin: var(--s6) 0; }
+.in-short ul { max-width: var(--measure); margin: 0; padding-left: 1.25rem; display: grid; gap: var(--s2); }
+.in-short li::marker { color: var(--muted); }
+.versions-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+.versions-table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; }
+.versions-table th, .versions-table td { text-align: left; vertical-align: top; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); }
+.versions-table tbody tr:last-child > * { border-bottom: 0; }
+.versions-table thead th { background: var(--sunken); color: var(--muted); font-size: 0.8125rem; font-weight: 650; }
+.versions-table td:nth-child(2) { white-space: nowrap; }
+@media (min-width: 30.01rem) { .versions-table td:last-child { min-width: 8rem; } }
+.versions-table .src { display: inline; }
+@media (max-width: 30rem) { .versions-table th, .versions-table td { padding: var(--s2); font-size: 0.875rem; } }
+.instruction-files q { quotes: "\201C" "\201D"; }
+/* A digest links to one cell of the matrix: the cell is outlined when it is the target of the address. */
+.matrix td:target { box-shadow: inset 0 0 0 3px var(--accent); scroll-margin-top: 4rem; scroll-margin-left: 11rem; }
 .back { margin-top: var(--s7); }
 
 @media (min-width: 52rem) {
