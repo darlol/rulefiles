@@ -299,7 +299,7 @@ export function matrixPage(ctx) {
 <p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
 <ul class="status-counts" aria-label="Cells by status">${statusCounts(matrix.cells)}</ul>
 ${filters}
-<details class="legend-box"><summary>Legend</summary><ul class="legend">${legend}</ul></details>
+<details class="legend-box" open><summary>Legend</summary><ul class="legend">${legend}</ul></details>
 <p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
 <div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>

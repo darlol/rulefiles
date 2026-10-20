@@ -42,7 +42,11 @@ test('matrix page: search field with a label, a notes toggle, a legend above the
   assert.ok(html.includes(`<label for="matrix-q">${MATRIX_COPY.searchLabel}</label><input id="matrix-q" type="search"`));
   assert.ok(html.includes(`placeholder="${MATRIX_COPY.searchPlaceholder}"`));
   assert.ok(html.includes(`<button type="button" class="chip" aria-pressed="false" data-notes>${MATRIX_COPY.notesToggle}</button>`));
-  assert.ok(html.indexOf('<details class="legend-box"><summary>Legend</summary>') < html.indexOf('<table class="matrix">'), 'the legend comes before the table');
+  // The legend carries caveats that are not in the intro, so it is open by default (content review M1).
+  const legendAt = html.indexOf('<details class="legend-box" open><summary>Legend</summary>');
+  assert.ok(legendAt !== -1, 'the legend is an open details element');
+  assert.ok(legendAt < html.indexOf('<table class="matrix">'), 'the legend comes before the table');
+  assert.equal((html.match(/<details class="legend-box"[^>]*>/g) || []).length, 1, 'one legend block');
   assert.equal((html.match(/<p class="cell-tool">/g) || []).length, matrix.cells.length, 'every cell names its tool for the card view');
   assert.match(html, /<ul class="status-counts" aria-label="Cells by status">/);
   // The search and the toggle sit in the filter bar, which stays hidden without JavaScript, so nothing is folded away then.
