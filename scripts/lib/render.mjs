@@ -463,20 +463,20 @@ export const GENERATOR_COPY = {
   clear: 'Clear the form',
   hints: {
     projectName: 'Becomes the title of the file.',
-    description: 'What the project does, in one sentence. The agent reads it first.',
+    description: 'What the project does, in one sentence. It goes right under the title.',
     stack: 'Languages, frameworks and main tools, with versions when they matter.',
     commands: 'The exact commands the agent should run. Leave a field empty to skip it.',
     rules: 'Each list becomes its own section. Leave a list empty to skip it.',
-    always: 'What the agent does on every task.',
-    askFirst: 'What the agent proposes and waits for your go before doing.',
+    always: 'What the agent should do on every task.',
+    askFirst: 'What the agent must ask you about before doing it.',
     never: 'Hard limits the agent must not cross.',
     pr: 'How to write commit messages and pull requests.',
-    cursorGlobs: 'With globs, the rule applies to matching files only. Without, it always applies.'
+    cursorGlobs: 'With globs, Cursor attaches the rule when a matching file is in context. Without globs, the rule always applies.'
   },
   steps: [
     'Save `AGENTS.md` at the root of your repository and commit it.',
-    'Save each extra file at the path shown in its title, from the root of the repository.',
-    'Start a new agent session. Which tool reads which file is in the matrix.'
+    'Save each extra file at the path shown in its title, relative to the repository root.',
+    'Start a new agent session. The matrix shows which tool reads which file.'
   ]
 };
 export function generatorPage(ctx) {
@@ -525,7 +525,7 @@ ${field('pr', 'Commits and pull requests', h(GENERATOR_COPY.hints.pr), 2, 'Use C
 </fieldset>
 </form>
 <div class="gen-out" aria-live="polite"><h2>Output</h2>
-<ol class="gen-steps">${GENERATOR_COPY.steps.map((t) => `<li>${inlineHtml(t).replace('the matrix', '<a href="/matrix/">the matrix</a>')}</li>`).join('')}</ol>
+<ol class="gen-steps">${GENERATOR_COPY.steps.map((t) => `<li>${inlineHtml(t).replace('The matrix', '<a href="/matrix/">The matrix</a>')}</li>`).join('')}</ol>
 <div id="gen-output"></div></div>
 </div>
 <p class="muted">Which tool reads which file is in the <a href="/matrix/">matrix</a>. Check it before you rely on a file.</p>`;
