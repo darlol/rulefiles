@@ -168,7 +168,9 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   for (const [f, body] of [['docs/LAUNCH.md', launch], ['docs/HISTORY-REWRITE.md', text('docs/HISTORY-REWRITE.md')]]) assert.doesNotMatch(body, /archived and (stays )?private|Deleting the old repository stays|Deleting it is not done/, `${f} no longer says the old repository is kept`);
   assert.ok(launch.includes('3. Done: apply the branch ruleset (`docs/ruleset-main.json`). GitHub refused it while the repository was private on the free plan.'));
   assert.ok(launch.includes('1. Open: link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository.'));
-  assert.ok(launch.includes('No other page or file of the built site, and no JSON-LD block, carries the link.') && launch.includes('4. Done: deleted 2026-10-18.'));
+  assert.ok(launch.includes('No other page or file of the built site, and no JSON-LD block, carries the link.') && /^4\. Done: deleted 2026-10-18\.$/m.test(launch));
+  assert.doesNotMatch(launch, /Decide what happens to the old, archived repository/, 'item 4 holds only its state');
+  assert.ok(text('docs/HISTORY-REWRITE.md').includes('Pull requests #1 to #11 and their review comments stayed in the old repository, which was deleted on 2026-10-18.'));
   for (const f of ['LICENSE', 'LICENSE-DATA.md', 'docs/licenses/CC-BY-4.0.txt']) assert.ok(fs.existsSync(path.join(root, f)), `${f}, named in docs/LAUNCH.md, exists`);
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);

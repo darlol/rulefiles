@@ -99,7 +99,7 @@ A `TREE DIFFERS` line may appear only for a commit whose files held the old mark
 
 Consequences:
 
-- Pull requests #1 to #11 and their review comments stay in the old repository. The new repository starts at pull request #1, so the "(#N)" at the end of the squash commit titles then points at different pull requests, or at none. The titles can be left as they are, or rewritten in step 4 with a message callback. Both are acceptable.
+- Pull requests #1 to #11 and their review comments stayed in the old repository, which was deleted on 2026-10-18. The new repository starts at pull request #1, so the "(#N)" at the end of the squash commit titles then points at different pull requests, or at none. The titles can be left as they are, or rewritten in step 4 with a message callback. Both are acceptable.
 - Issues, if any, do not move.
 - Links to the old repository stop working once it is deleted. None is in the site. `repoUrl` in `site.config.json` points to the new repository.
 - Cloudflare Pages: the preview project was created from an uploaded zip, so it is not linked to the repository. If a Git integration is added later, it uses the new repository.
