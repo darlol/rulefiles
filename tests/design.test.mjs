@@ -58,7 +58,8 @@ const PAIRS = [
   ['config-fg', 'config-bg', TEXT, 'status: configurable, notices, stale flag'], ['migration-fg', 'migration-bg', TEXT, 'status: migration only'],
   ['notread-fg', 'notread-bg', TEXT, 'status: not read'], ['unverified-fg', 'unverified-bg', TEXT, 'status: unverified'],
   ['unverified-fg', 'surface', UI, 'unverified dashed border on cards'],
-  ['control', 'bg', UI, 'input and button borders on the page'], ['control', 'surface', UI, 'input and button borders on cards'],
+  ['control', 'bg', UI, 'input borders on the page'], ['control', 'surface', UI, 'input borders on cards'],
+  ['ctl-line', 'bg', UI, 'button and chip borders on the page'], ['ctl-line', 'surface', UI, 'button and chip borders on cards'],
   ['accent', 'bg', UI, 'focus ring on the page'], ['accent', 'surface', UI, 'focus ring on cards'], ['accent', 'sunken', UI, 'focus ring on sunken areas']
 ];
 
@@ -684,4 +685,53 @@ test('the mini-matrix check fails when the hiding entry animation comes back', (
   assert.ok(specimenHidingProblems(minified.replace('{from{transform', '{from{opacity:0;transform'), html).length > 0, 'a hiding step in minified keyframes must fail');
   assert.ok(specimenHidingProblems(css, html.replace(/ c3">/, ' c2">')).length > 0, 'a tile moved to another column must fail');
   assert.ok(specimenHidingProblems(css, html.replace(/<span class="tile [^>]*>.*?<\/span>/, '')).length > 0, 'a missing tile must fail');
+});
+
+// ---------- Main navigation: never clipped on narrow screens ----------
+
+// Every declaration block of a selector, in source order, media queries included.
+function rulesFor(selector) {
+  const out = [];
+  const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = re.exec(src))) {
+    if (m[1].split(',').map((s) => s.trim()).includes(selector)) out.push(m[2]);
+  }
+  return out;
+}
+
+test('the main navigation wraps instead of clipping a link, at 360 and 390 px and below', () => {
+  const nav = rulesFor('.site-header nav');
+  assert.ok(nav.length > 0, 'the nav has rules');
+  for (const decl of nav) {
+    assert.doesNotMatch(decl, /overflow(-x)?\s*:\s*(hidden|auto|scroll|clip)/, 'the nav never hides or scrolls its links');
+    assert.doesNotMatch(decl, /flex-wrap\s*:\s*nowrap/, 'the nav may wrap onto a second line');
+    assert.doesNotMatch(decl, /(^|;)\s*(width|max-width)\s*:\s*[\d.]+(px|rem|em|ch)/, 'the nav has no fixed width');
+  }
+  assert.ok(nav.some((d) => /flex-wrap\s*:\s*wrap/.test(d)), 'the nav wraps');
+  // One link alone always fits a 360 px screen: the longest label, set in the widest case (every glyph 0.7em),
+  // plus its padding, stays under the 328 px left inside the page padding.
+  const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  const labels = [...(/<nav aria-label="Main">([\s\S]*?)<\/nav>/.exec(html)[1]).matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1]);
+  assert.equal(labels.length, 5);
+  const longest = Math.max(...labels.map((l) => l.length));
+  for (const vw of [360, 390]) assert.ok(longest * 0.7 * 15 + 2 * 12 <= vw - 32, `the longest link fits at ${vw} px`);
+});
+
+test('the current page link keeps the weight of the other links, so marking it never widens the nav', () => {
+  const current = rulesFor('.site-header nav a[aria-current="page"]');
+  assert.ok(current.length > 0);
+  for (const decl of current) assert.doesNotMatch(decl, /font-weight|font-size|padding|letter-spacing/);
+});
+
+test('the favicon uses the accent colour of each theme', () => {
+  const svg = fs.readFileSync(path.join(out, 'favicon.svg'), 'utf8');
+  assert.ok(svg.includes(`.b{fill:${light.accent}}`), 'light accent');
+  assert.ok(svg.includes(`.b{fill:${dark.accent}}`), 'dark accent');
+});
+
+test('anchor targets clear the header only where the header is sticky', () => {
+  assert.match(css, /@media \(min-width: 48rem\) \{ \[id\] \{ scroll-margin-top:/);
+  assert.doesNotMatch(css, /^\[id\] \{/m);
 });
