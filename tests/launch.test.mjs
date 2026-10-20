@@ -164,9 +164,11 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(launch.includes('item 5 of "Before the publication go" tried it on test subscribers on 2026-10-16 and it works') && launch.includes('5. Done on 2026-10-16: the deletion call was tried on the real Buttondown account') && launch.includes('`DELETE /v1/subscribers/{email}` returned 204 for both') && launch.includes('creating the first address again returned 201') && launch.includes('switch off the automatic cleanup of the account'));
   assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
   assert.ok(text('docs/NEWSLETTER.md').includes('Confirmed on 2026-10-16: the API works on the free plan'));
-  assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('Deleting the old repository stays the owner\'s call.'));
+  assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('The old repository was deleted on 2026-10-18.'));
+  for (const [f, body] of [['docs/LAUNCH.md', launch], ['docs/HISTORY-REWRITE.md', text('docs/HISTORY-REWRITE.md')]]) assert.doesNotMatch(body, /archived and (stays )?private|Deleting the old repository stays|Deleting it is not done/, `${f} no longer says the old repository is kept`);
   assert.ok(launch.includes('3. Done: apply the branch ruleset (`docs/ruleset-main.json`). GitHub refused it while the repository was private on the free plan.'));
   assert.ok(launch.includes('1. Open: link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository.'));
+  assert.ok(launch.includes('No other page or file of the built site, and no JSON-LD block, carries the link.') && launch.includes('4. Done: deleted 2026-10-18.'));
   for (const f of ['LICENSE', 'LICENSE-DATA.md', 'docs/licenses/CC-BY-4.0.txt']) assert.ok(fs.existsSync(path.join(root, f)), `${f}, named in docs/LAUNCH.md, exists`);
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
@@ -344,7 +346,7 @@ test('the identity patterns catch an upper-case first name and a handle in a pag
 
 test('the history rewrite plan is written, holds no address, and names both options', () => {
   const plan = text('docs/HISTORY-REWRITE.md');
-  for (const needle of ['Status: written on 2026-10-16. Option A was carried out the same day', '## Result of option A, 2026-10-16', 'The old repository is archived and stays private. Deleting it is not done, and stays the owner\'s call.', 'GitHub refuses rulesets on a private repository on the free plan', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
+  for (const needle of ['Status: written on 2026-10-16. Option A was carried out the same day', '## Result of option A, 2026-10-16', 'The old repository was deleted on 2026-10-18.', 'GitHub refuses rulesets on a private repository on the free plan', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
     assert.ok(plan.includes(needle), needle);
   }
   assert.match(plan, /Option B, with force-push on main \(needs the owner's explicit approval\)/);
@@ -364,7 +366,8 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.doesNotMatch(ops, /and it is private\./, 'docs/OPERATIONS.md no longer calls the repository private');
   assert.doesNotMatch(ops, /darlol\/agent-diffs|still called/, 'the repository is called rulefiles');
   assert.ok(ops.includes('"Upgrade to GitHub Pro or make this repository public"') && ops.includes('gh api --method POST repos/darlol/rulefiles/rulesets --input docs/ruleset-main.json'));
-  assert.ok(ops.includes('Until then nothing blocks a direct push, a force push or the deletion of `main`'));
+  assert.ok(ops.includes('It has been active on `main` since 2026-10-18.') && ops.includes('Before 2026-10-18 nothing blocked a direct push, a force push or the deletion of `main`'));
+  assert.doesNotMatch(ops, /It has not been applied|Until then nothing blocks/, 'docs/OPERATIONS.md no longer says the ruleset is not applied');
   assert.ok(ops.includes('squash merges only, "Allow GitHub Actions to create and approve pull requests" on'));
   assert.ok(plan.includes("grep -o 'TODO-[A-Z][A-Z]*'"), 'the old marker pattern cannot match an empty name');
   assert.doesNotMatch(plan, /TODO-\[A-Z\]\*/);
