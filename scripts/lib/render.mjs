@@ -84,7 +84,7 @@ function iconSprite() {
 /** The site mark: a page with one highlighted line. It carries no text, so it survives a rename. */
 const MARK = '<svg class="mark" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
 
-export const THEME_COLOR = { light: '#f5f6fa', dark: '#0d1018' };
+export const THEME_COLOR = { light: '#fafafa', dark: '#0b0c10' };
 
 export function layout(config, page) {
   const canonical = url(config, page.path);

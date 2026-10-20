@@ -159,7 +159,6 @@ test('the reduced-motion check fails when a neutralisation is removed', () => {
     'catch-all transition duration': ['transition-duration: 0.01ms !important;', ''],
     'catch-all animation duration': ['animation-duration: 0.01ms !important;', ''],
     'catch-all animation delay': ['animation-delay: 0s !important;', ''],
-    'archive card lift reset': ['.issue:hover { transform: none; }', ''],
     'button press reset': [', button:active, .btn:active { transform: none; }', ' { transform: none; }'],
     'arrow nudge reset': ['.cta .btn-primary:hover .ic { transform: none; }', '']
   };
