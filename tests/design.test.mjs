@@ -735,3 +735,65 @@ test('anchor targets clear the header only where the header is sticky', () => {
   assert.match(css, /@media \(min-width: 48rem\) \{ \[id\] \{ scroll-margin-top:/);
   assert.doesNotMatch(css, /^\[id\] \{/m);
 });
+
+// ---------- Narrow screens: file links and matrix filters never overflow ----------
+
+// Pessimistic width of a run of text: every glyph 0.7em, as in the nav check above.
+const runWidth = (chars, fontPx) => chars * 0.7 * fontPx;
+const CONTENT = (vw) => vw - 2 * 16; // .wrap keeps 1rem on each side below 48rem.
+
+test('the other instruction files on each reference page are a .file-links row whose paths break only after a slash', () => {
+  const refs = pages().filter(([rel]) => /^files\/[^/]+\/index\.html$/.test(rel));
+  assert.ok(refs.length >= 9, 'one page per file type');
+  for (const [rel, html] of refs) {
+    const list = /<h2 id="other-files">Other instruction files<\/h2>\n<ul class="file-links">([\s\S]*?)<\/ul>/.exec(html);
+    assert.ok(list, `${rel}: the other files are a ul.file-links`);
+    for (const [, inner] of list[1].matchAll(/<code>([\s\S]*?)<\/code>/g)) {
+      const plain = inner.replace(/<span class="seg">|<\/span>|<wbr>/g, '');
+      assert.doesNotMatch(plain, /</, `${rel}: only seg spans and wbr inside the path`);
+      if (plain.includes('/')) {
+        assert.equal(inner, plain.split('/').map((s) => `<span class="seg">${s}</span>`).join('/<wbr>'), `${rel}: ${plain} breaks after each slash`);
+      }
+    }
+  }
+});
+
+test('a file link fits a 320 and a 360 px screen: it may wrap after a slash, and every segment fits on one line', () => {
+  const a = rulesFor('.file-links a').join(';');
+  const code = rulesFor('.file-links code').join(';');
+  const seg = rulesFor('.file-links .seg').join(';');
+  assert.match(a, /max-width:\s*100%/, 'the link is never wider than its line');
+  assert.match(code, /overflow-wrap:\s*anywhere/, 'the path can break when it must');
+  assert.match(code, /min-width:\s*0/, 'the flex item can shrink below its longest word');
+  for (const d of [a, code]) assert.doesNotMatch(d, /white-space:\s*nowrap/, 'only a segment is kept whole');
+  assert.match(seg, /white-space:\s*nowrap/, 'a segment is kept whole, so a hyphen is not a break point');
+  const html = fs.readFileSync(path.join(out, 'files', 'agents-md', 'index.html'), 'utf8');
+  const segs = [...html.matchAll(/<span class="seg">([^<]*)<\/span>/g)].map((m) => m[1].length);
+  assert.ok(segs.length > 0);
+  const longest = Math.max(...segs) + 1; // with its slash
+  // 0.88em code on a 16px body, the link padding (0.75rem each side) and its 1px borders.
+  for (const vw of [320, 360]) assert.ok(runWidth(longest, 16 * 0.88) + 2 * 12 + 2 <= CONTENT(vw), `the longest segment fits at ${vw} px`);
+});
+
+test('the pill border of a file link uses the control line colour, at least 3:1 on the page and on cards', () => {
+  assert.match(rulesFor('.file-links a').join(';'), /border:\s*1px solid var\(--ctl-line\)/);
+  for (const set of [light, dark]) for (const bg of ['bg', 'surface']) assert.ok(contrast(set['ctl-line'], set[bg]) >= 3);
+});
+
+test('the matrix filters wrap onto new lines instead of scrolling sideways, and every chip fits at 390 px', () => {
+  for (const sel of ['.chips', '.filters .chips', '.filters', '.filter-group']) {
+    for (const decl of rulesFor(sel)) {
+      assert.doesNotMatch(decl, /flex-wrap\s*:\s*nowrap/, `${sel} never stays on one line`);
+      assert.doesNotMatch(decl, /overflow(-x)?\s*:\s*(auto|scroll|hidden|clip)/, `${sel} never scrolls or clips`);
+    }
+  }
+  assert.ok(rulesFor('.chips').some((d) => /flex-wrap\s*:\s*wrap/.test(d)), 'the chips wrap');
+  const html = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
+  const chips = [...html.matchAll(/<button type="button" class="chip[^"]*" aria-pressed="false" data-filter-(tool|status)="[^"]+">([\s\S]*?)<\/button>/g)]
+    .map((m) => m[2].replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  assert.ok(chips.includes('GitHub Copilot'), 'the GitHub Copilot chip is there');
+  assert.equal(chips.filter((c) => /\d+$/.test(c)).length, 6, 'six status chips with a count');
+  const longest = Math.max(...chips.map((c) => c.length));
+  // 0.875rem text, 0.8rem padding each side, a 1em icon and a gap, 1px borders; the filter box has 1rem padding and a 1px border.
+  for (const vw of [360, 390]) assert.ok(runWidth(longest, 14) + 2 * 12.8 + 14 + 8 + 2 <= CONTENT(vw) - 2 * 16 - 2, `the widest chip fits at ${vw} px`);
+});

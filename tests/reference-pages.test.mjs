@@ -225,7 +225,8 @@ test('the pages follow the data: a cell that becomes unverified, a new descripti
     const ESC = '&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt; &amp; &quot;q&quot;';
     const gemini = filePage('gemini-md', dir);
     assert.equal(gemini.match(/<p class="lead">([\s\S]*?)<\/p>/)[1], `Changed description MUTATIONMARKER ${ESC}`);
-    assert.ok(gemini.includes(`<a href="/files/claude-md/"><code>CLAUDE.md${ESC}</code></a>`), 'the other-files list escapes the path');
+    const link = /<a href="\/files\/claude-md\/"><code>([\s\S]*?)<\/code><\/a>/.exec(gemini)[1];
+    assert.equal(link.replace(/<span class="seg">|<\/span>|<wbr>/g, ''), `CLAUDE.md${ESC}`, 'the other-files list escapes the path');
     assert.ok(row.tds[1].includes(`MUTATIONMARKER ${ESC}`), 'the note is escaped');
     for (const html of [gemini, filePage('claude-md', dir), read('unverified/index.html', dir), read('files/index.html', dir)]) {
       assert.ok(!html.includes('<img src=x'), 'no raw markup from the data');

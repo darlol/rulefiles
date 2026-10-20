@@ -35,6 +35,17 @@ export function applyFilters(model, selection = {}) {
   return { visibleTools, visibleFiles, matches, shown: matches.size, total: model.cells.length, active: wantTools.size + wantStatuses.size + words.length > 0 };
 }
 
+/**
+ * State of the "Hide notes" toggle. hideWanted is what the reader asked for with the button. Notes come back
+ * while a search is typed, so the match stays visible; the button then reports the real state (not pressed)
+ * and is disabled until the search is cleared, when the reader's choice applies again.
+ */
+export function notesState(hideWanted, query) {
+  const searching = queryWords(query).length > 0;
+  const hidden = Boolean(hideWanted) && !searching;
+  return { hidden, pressed: hidden, disabled: searching };
+}
+
 /** The sentence announced to screen readers and shown next to the filters. */
 export function countMessage(result) {
   if (!result.active) return `Showing all ${result.total} cells.`;

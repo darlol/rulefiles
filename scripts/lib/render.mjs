@@ -250,6 +250,16 @@ export const MATRIX_COPY = {
   notesToggle: 'Hide notes'
 };
 
+/**
+ * A file path that may wrap after each "/" and nowhere else: each segment is kept whole (so
+ * "copilot-instructions.md" never splits at its hyphen) and a <wbr> follows each slash. The text is unchanged.
+ */
+export function pathBreaks(p) {
+  const parts = String(p).split('/');
+  if (parts.length === 1) return h(p);
+  return parts.map((s) => `<span class="seg">${h(s)}</span>`).join('/<wbr>');
+}
+
 // Sentences shared by the matrix and the reference pages, so the explanation of the two special statuses is written once.
 export const UNVERIFIED_MEANING = 'A cell reads "unverified" when the page we checked does not mention the file.';
 export const NO_SOURCE_SENTENCE = 'We then have no source, which says nothing about whether the tool reads it.';
@@ -348,7 +358,7 @@ export function filePage(ctx, file) {
 <td class="cell note-col"><p class="note">${inlineHtml(cell.note)}</p></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener" aria-label="Source — ${h(file.path)} × ${h(tool.name)}">Source${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
-  const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a></li>`).join('');
+  const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${pathBreaks(f.path)}</code></a></li>`).join('');
   const toolNames = listNames(matrix.tools.map((t) => t.name));
   const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
 <p class="lead">${h(file.description)}</p>

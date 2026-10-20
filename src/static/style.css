@@ -322,9 +322,10 @@ table.matrix { border-collapse: separate; border-spacing: 0; width: 100%; }
 #cite ~ p { overflow-wrap: anywhere; }
 .ref time { white-space: nowrap; }
 .file-links { list-style: none; margin: 0 0 var(--s4); padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
-.file-links a { display: inline-flex; min-height: 2.25rem; align-items: center; padding: 0 var(--s3); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); text-decoration: none; }
+.file-links a { display: inline-flex; max-width: 100%; min-height: 2.25rem; align-items: center; padding: 0 var(--s3); border: 1px solid var(--ctl-line); border-radius: 999px; background: var(--surface); text-decoration: none; }
 .file-links a:hover { border-color: var(--control); }
-.file-links code { background: none; padding: 0; overflow-wrap: normal; }
+.file-links code { min-width: 0; background: none; padding: 0; overflow-wrap: anywhere; }
+.file-links .seg { white-space: nowrap; }
 .matrix tbody tr:hover > * { background: var(--sunken); }
 .cell p { margin: 0; }
 .cell .cell-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
@@ -373,7 +374,6 @@ td.is-off::before { content: "–"; content: "–" / ""; color: var(--muted); fo
   .matrix-wrap tbody tr:hover > th { background: var(--sunken); }
   .cell-tool { display: block; margin: 0 0 var(--s2); font-weight: 700; font-size: 0.875rem; }
   .matrix-wrap .badge { white-space: normal; }
-  .filters .chips { flex-wrap: nowrap; overflow-x: auto; padding-bottom: var(--s1); }
 }
 @media (max-width: 30rem) { .legend li { grid-template-columns: 1fr; gap: var(--s2); } }
 

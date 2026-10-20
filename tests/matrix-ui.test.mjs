@@ -6,7 +6,7 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 import { MATRIX_COPY } from '../scripts/lib/render.mjs';
-import { applyFilters, countMessage, queryWords } from '../src/js/matrix-filter.js';
+import { applyFilters, countMessage, queryWords, notesState } from '../src/js/matrix-filter.js';
 import { TEST_DATE } from './helpers/test-date.mjs';
 
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'matrix-ui-'));
@@ -60,7 +60,25 @@ test('the stylesheet folds notes only under .notes-off and turns the matrix into
   assert.match(css, /\.notes-off \.note \{ display: none; \}/);
   assert.match(css, /@media \(max-width: 47\.99rem\) \{\n  \.scroll-hint \{ display: none; \}\n  \.table-wrap\.matrix-wrap \{ max-height: none; overflow: visible;/);
   const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
-  // Notes are visible by default: the class is set only once "Hide notes" is pressed, and never during a search.
-  assert.match(js, /table\.classList\.toggle\('notes-off', notes\.getAttribute\('aria-pressed'\) === 'true' && query\.trim\(\) === ''\)/);
+  // Notes are visible by default: the class, aria-pressed and disabled all come from notesState, so the button
+  // never says "pressed" while the notes show.
+  assert.match(js, /let hideNotes = false;/);
+  assert.match(js, /const n = notesState\(hideNotes, query\);/);
+  assert.match(js, /table\.classList\.toggle\('notes-off', n\.hidden\);/);
+  assert.match(js, /notes\.setAttribute\('aria-pressed', String\(n\.pressed\)\);/);
+  assert.match(js, /notes\.disabled = n\.disabled;/);
+  assert.doesNotMatch(js, /notes\.getAttribute\('aria-pressed'\)/, 'the script keeps the choice in hideNotes, not in the attribute');
   assert.equal(MATRIX_COPY.notesToggle, 'Hide notes');
+});
+
+test('the Hide notes button reports the real state of the notes, including during a search', () => {
+  assert.deepEqual(notesState(false, ''), { hidden: false, pressed: false, disabled: false }, 'default: notes shown, not pressed');
+  assert.deepEqual(notesState(true, ''), { hidden: true, pressed: true, disabled: false }, 'pressed: notes hidden');
+  assert.deepEqual(notesState(true, 'glob'), { hidden: false, pressed: false, disabled: true }, 'a search shows the notes, so the button is not pressed');
+  assert.deepEqual(notesState(false, 'glob'), { hidden: false, pressed: false, disabled: true });
+  assert.deepEqual(notesState(true, '   '), { hidden: true, pressed: true, disabled: false }, 'a blank query is no search');
+  for (const [want, q] of [[false, ''], [true, ''], [true, 'x'], [false, 'x']]) {
+    const n = notesState(want, q);
+    assert.equal(n.pressed, n.hidden, 'aria-pressed always matches whether the notes are hidden');
+  }
 });
