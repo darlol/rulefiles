@@ -387,7 +387,7 @@ export function filesIndexPage(ctx) {
 <p>Cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>`;
   return layout(config, {
     path: '/files/', title: 'Instruction files',
-    description: `One page for each of ${matrix.files.length} instruction file types, with what the official docs of ${matrix.tools.length} AI coding tools say about it.`,
+    description: `One page for each of the ${matrix.files.length} instruction file types in the matrix, with the status, official source and check date for each of ${matrix.tools.length} AI coding tools.`,
     body,
     jsonLd: [
       { '@type': 'CollectionPage', name: `${config.name} instruction files`, url: url(config, '/files/'), dateModified: latestCheck(matrix.cells), mainEntity: { '@type': 'ItemList', itemListElement: matrix.files.map((f, i) => ({ '@type': 'ListItem', position: i + 1, url: url(config, `/files/${f.id}/`), name: filePageTitle(f) })) } },
@@ -406,7 +406,7 @@ export function unverifiedPage(ctx) {
 <td class="cell"><a href="/files/${h(c.file)}/"><code>${h(fileOf[c.file].path)}</code></a></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener">${h(c.sourceUrl.replace(/^https:\/\//, ''))}${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></td></tr>`).join('\n');
-  const title = 'What the official docs don\'t say';
+  const title = 'What the cited official pages don\'t say';
   const body = `<h1>${h(title)}</h1>
 <p class="lead">${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)}</p>
 <div class="table-wrap" tabindex="0" role="region" aria-label="Unverified cells"><table class="matrix ref">
@@ -707,7 +707,7 @@ export function renderLlmsTxt(ctx) {
     '',
     `- [Instruction files](${url(config, '/files/')}): one page per file type, built from the matrix`,
     ...matrix.files.map((f) => `- [${filePageTitle(f)}](${url(config, `/files/${f.id}/`)}): ${f.description}`),
-    `- [What the official docs don't say](${url(config, '/unverified/')}): the ${matrix.cells.filter((c) => c.status === 'unverified').length} cells marked unverified, with the cited page and the check date`,
+    `- [What the cited official pages don't say](${url(config, '/unverified/')}): the ${matrix.cells.filter((c) => c.status === 'unverified').length} cells marked unverified, with the cited page and the check date`,
     '',
     '## Digest',
     '',

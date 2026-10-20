@@ -106,7 +106,7 @@ test('/unverified/ lists exactly the cells marked unverified, with tool, file pa
   const html = read('unverified/index.html');
   const expected = MATRIX.cells.filter((c) => c.status === 'unverified');
   assert.equal(expected.length, 15, 'the data holds 15 unverified cells on 2026-10-20; update this line with the data');
-  assert.equal(unescape(html.match(/<h1>([\s\S]*?)<\/h1>/)[1]), "What the official docs don't say");
+  assert.equal(unescape(html.match(/<h1>([\s\S]*?)<\/h1>/)[1]), "What the cited official pages don't say");
   assert.ok(text(html).includes(NO_SOURCE));
   const rows = rowsOf(html);
   const key = (c) => `${c.tool}/${c.file}`;
