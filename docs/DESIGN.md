@@ -41,6 +41,8 @@ The mark is a page with one highlighted line. It has no letters, so it does not 
 
 `src/js/matrix-filter.js` holds the logic and has no DOM access. `src/static/matrix.js` wires it to the page. An empty selection means no filter. Without JavaScript the filter bar stays hidden and the whole table shows. Nothing is stored and nothing is fetched.
 
+The search reads the file path, its description, the tool name and the note of each cell, and keeps the cells that hold every word typed. With JavaScript the notes are folded away so the grid reads at a glance; the Show notes toggle brings them back, and they also show while a search is typed. Below 48rem the table becomes one card per file, with the tool name on each cell, so nothing scrolls sideways. The legend sits above the table in a `details` element. All of it is CSS and the same two scripts, so the page needs nothing new from the CSP.
+
 ## Browser support
 
 The versions below are the first release of each engine that supports the feature without a prefix or a flag. They come from MDN's browser-compat-data (the `@mdn/browser-compat-data` package, version 8.1.6, built on 15 October 2026), which feeds the compatibility tables on MDN. WOFF2 comes from caniuse (`Fyrd/caniuse`, read on 16 October 2026). `dvh` and `text-wrap` were also checked against their MDN pages. Where two numbers are given for Chrome / Edge, the second is the first EdgeHTML version; Chromium-based Edge starts at 79. "No" means the engine has no support.

@@ -448,8 +448,10 @@ test('matrix totals on every page come from the data', () => {
   const text = (rel) => read(rel).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   assert.match(text('index.html'), new RegExp(`Each of its ${cells} cells .*? ${unverified} of them are marked unverified .*? ${migration} are marked migration only`));
   assert.match(text('matrix/index.html'), new RegExp(`${cells} cells\\. Last reviewed`));
-  assert.match(text('matrix/index.html'), new RegExp(`Unverified: ${unverified}\\b`));
-  assert.match(text('matrix/index.html'), new RegExp(`Migration only: ${migration}\\b`));
+  // The counts are the status list under the intro, which shows without JavaScript (the filter chips do not).
+  const counts = /<ul class="status-counts" aria-label="Cells by status">([\s\S]*?)<\/ul>/.exec(read('matrix/index.html'))[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  assert.match(counts, new RegExp(`Unverified ${unverified}\\b`));
+  assert.match(counts, new RegExp(`Migration only ${migration}\\b`));
   assert.match(text('about/index.html'), new RegExp(`${unverified} of ${cells} cells are unverified and ${migration} are migration only`));
   // Same cells, one more migration-only cell: the numbers follow the data.
   const m2 = structuredClone(data.matrix);

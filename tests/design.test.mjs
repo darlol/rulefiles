@@ -451,7 +451,7 @@ test('the current page is marked in the main navigation and tables have a captio
   assert.equal((main.match(/aria-current="page"/g) || []).length, 1);
   assert.match(main, /<a href="\/matrix\/" aria-current="page">Matrix<\/a>/);
   assert.match(html, /<caption class="sr">/);
-  assert.match(html, /<div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix">/);
+  assert.match(html, /<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix">/);
   assert.ok(!/<th>/.test(html), 'every th declares a scope');
 });
 

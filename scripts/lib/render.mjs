@@ -243,6 +243,13 @@ ${newsletterEnabled(config)
   });
 }
 
+/** New visible text of the matrix controls, kept in one place for the content review. */
+export const MATRIX_COPY = {
+  searchLabel: 'Search files and notes',
+  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
+  notesToggle: 'Show notes'
+};
+
 // Sentences shared by the matrix and the reference pages, so the explanation of the two special statuses is written once.
 export const UNVERIFIED_MEANING = 'A cell reads "unverified" when the page we checked does not mention the file.';
 export const NO_SOURCE_SENTENCE = 'We then have no source, which says nothing about whether the tool reads it.';
@@ -271,6 +278,7 @@ export function matrixPage(ctx) {
       const c = cellMap.get(`${t.id}/${f.id}`);
       const isStale = stale.has(`${t.id}/${f.id}`);
       return `<td class="st-${c.status}" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}"><div class="cell">
+<p class="cell-tool">${h(t.name)}</p>
 <p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
 <p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
@@ -278,27 +286,27 @@ export function matrixPage(ctx) {
     return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
   const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
-  const counts = Object.keys(STATUS_LABEL).map((k) => `${STATUS_LABEL[k]}: ${matrix.cells.filter((c) => c.status === k).length}`).join(', ');
   const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
   const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
   const filters = `<div class="filters" id="matrix-filters" hidden>
+<div class="filter-search"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"></div>
 <fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
 <fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
-<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div>
+<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><span class="filter-actions"><button type="button" class="chip" aria-pressed="false" data-notes>${h(MATRIX_COPY.notesToggle)}</button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></span></div>
 </div>`;
   const body = `<h1>Which coding agent reads which instruction file</h1>
 <p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
-<p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)} Counts: ${h(counts)}.</p>
+<p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
+<ul class="status-counts" aria-label="Cells by status">${statusCounts(matrix.cells)}</ul>
 ${filters}
+<details class="legend-box"><summary>Legend</summary><ul class="legend">${legend}</ul></details>
 <p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
+<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>
 <thead><tr><th scope="col"><a href="/files/">File</a></th>${head}</tr></thead>
 <tbody>
 ${rows}
 </tbody></table></div>
-<h2>Legend</h2>
-<ul class="legend">${legend}</ul>
 <h2>Data</h2>
 <p>The same data is published as <a href="/data/matrix.json">matrix.json</a>. Need a starting file? Use the <a href="/generator/">generator</a>.</p>
 <p>Each file type also has <a href="/files/">its own page</a>, and the cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
