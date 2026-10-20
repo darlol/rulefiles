@@ -57,7 +57,7 @@ if (presetBar) {
     for (const name of Object.keys(v)) if (form.elements[name]) form.elements[name].value = v[name];
     render();
   });
-  presetBar.hidden = false;
+  for (const b of presetBar.querySelectorAll('button')) b.disabled = false;
 }
 
 function render() {
