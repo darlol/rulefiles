@@ -24,8 +24,9 @@ if (bar && table) {
   const update = () => {
     const query = search ? search.value : '';
     const result = applyFilters(model, { tools: pressed(toolButtons, 'filterTool'), statuses: pressed(statusButtons, 'filterStatus'), query });
-    // Notes are folded away for a compact grid, and come back while a search is typed, so the match is visible.
-    table.classList.toggle('notes-off', notes.getAttribute('aria-pressed') !== 'true' && query.trim() === '');
+    // Notes are shown by default: they carry the conditions a status depends on. "Hide notes" folds them for a
+    // compact grid, and they come back while a search is typed, so the match is visible.
+    table.classList.toggle('notes-off', notes.getAttribute('aria-pressed') === 'true' && query.trim() === '');
     for (const el of table.querySelectorAll('[data-tool]')) el.hidden = !result.visibleTools.has(el.dataset.tool);
     for (const tr of rows) tr.hidden = !result.visibleFiles.has(tr.dataset.file);
     for (const td of cells) td.classList.toggle('is-off', !result.matches.has(`${td.dataset.tool}/${td.dataset.file}`));

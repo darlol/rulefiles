@@ -247,7 +247,7 @@ ${newsletterEnabled(config)
 export const MATRIX_COPY = {
   searchLabel: 'Search files and notes',
   searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
-  notesToggle: 'Show notes'
+  notesToggle: 'Hide notes'
 };
 
 // Sentences shared by the matrix and the reference pages, so the explanation of the two special statuses is written once.
