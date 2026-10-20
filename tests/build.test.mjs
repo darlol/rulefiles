@@ -7,7 +7,7 @@ import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
-import { matrixStats } from '../scripts/lib/validate.mjs';
+import { matrixStats, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
@@ -632,4 +632,34 @@ test('no page still says the site has no trackers or no analytics, and the foote
   const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   assert.doesNotMatch(readme, stale, 'README.md');
   assert.ok(readme.includes('The only third-party script is the Cloudflare Web Analytics beacon'), 'README.md names the beacon');
+});
+
+test('the footer links the public repository when repoUrl is set, and not when it is empty', () => {
+  const cfg = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8'));
+  const repo = `https://github.com/${['dar', 'lol'].join('')}/rulefiles`;
+  assert.equal(cfg.repoUrl, repo);
+  const link = `<a href="${repo}" rel="noopener">Source code and data on GitHub</a>`;
+  for (const p of PAGES) {
+    const html = read(p);
+    const footer = html.match(/<footer\b[^>]*\bclass="[^"]*\bsite-footer\b[^>]*>[\s\S]*?<\/footer>/)[0];
+    assert.equal(footer.split(link).length - 1, 1, `${p}: one repository link in the footer`);
+    assert.equal(html.split('Source code and data on GitHub').length - 1, 1, `${p}: and nowhere else`);
+  }
+  assert.deepEqual(validateConfig(cfg), []);
+  assert.deepEqual(validateConfig({ ...cfg, repoUrl: '' }), []);
+  for (const bad of ['http://github.com/a/b', 'https://example.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b"onclick', 42]) {
+    assert.ok(validateConfig({ ...cfg, repoUrl: bad }).some((e) => /repoUrl/.test(e)), String(bad));
+  }
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-norepo-'));
+  const src = new URL('..', import.meta.url).pathname;
+  try {
+    fs.cpSync(src, root, { recursive: true, filter: (s) => !/^(node_modules|dist|\.git|\.cache)(\/|$)/.test(path.relative(src, s)) });
+    fs.writeFileSync(path.join(root, 'site.config.json'), JSON.stringify({ ...cfg, repoUrl: '' }, null, 2) + '\n');
+    const dir = path.join(root, 'dist');
+    build({ root, outDir: dir, quiet: true });
+    for (const f of listFiles(dir).filter((x) => /\.(html|txt|xml)$/.test(x))) {
+      const body = fs.readFileSync(f, 'utf8');
+      assert.ok(!body.includes('Source code and data on GitHub') && !body.includes(repo), path.relative(dir, f));
+    }
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

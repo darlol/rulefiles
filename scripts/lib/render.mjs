@@ -146,7 +146,7 @@ ${page.body}
 <li><a href="/digest/feed.xml">Atom feed</a></li>
 <li><a href="/llms.txt">llms.txt</a></li>
 <li><a href="/data/matrix.json">matrix.json</a></li>
-<li><a href="/sponsors/">Sponsors</a></li>
+${config.repoUrl ? `<li><a href="${h(config.repoUrl)}" rel="noopener">Source code and data on GitHub</a></li>\n` : ''}<li><a href="/sponsors/">Sponsors</a></li>
 <li><a href="/privacy/">Privacy</a></li>
 <li><a href="/legal/">Legal notice</a></li>
 </ul></nav>
