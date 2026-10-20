@@ -43,7 +43,7 @@ test('each text field has a hint tied to it or an example placeholder, and the h
   }
   for (const hint of Object.values(GENERATOR_COPY.hints)) assert.ok(html.includes(hint), hint);
   assert.match(html, /<ol class="gen-steps"><li>Save <code>AGENTS\.md<\/code> at the root of your repository and commit it\.<\/li>/);
-  assert.ok(html.includes('<a href="/matrix/">the matrix</a>.</li></ol>'));
+  assert.ok(html.includes('<li>Start a new agent session. <a href="/matrix/">The matrix</a> shows which tool reads which file.</li></ol>'));
 });
 
 test('the removed controls stay removed: no checkbox for the main file and no always-apply checkbox', () => {
