@@ -5,6 +5,7 @@ import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
+import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
 
 export const STATUS_LABEL = {
   reads: 'Reads',
@@ -445,46 +446,78 @@ export function agentsMdSentence(matrix) {
   return `According to the <a href="/matrix/">matrix</a>, ${parts.join(', and ')}.`;
 }
 
+/**
+ * New visible text of the generator: hints, presets and the usage steps. Kept in one place so the
+ * content review can read it, and so tests/generator-page.test.mjs can check that each line is on the page.
+ */
+export const GENERATOR_COPY = {
+  presetsLabel: 'Start from an example:',
+  clear: 'Clear the form',
+  hints: {
+    projectName: 'Becomes the title of the file.',
+    description: 'What the project does, in one sentence. The agent reads it first.',
+    stack: 'Languages, frameworks and main tools, with versions when they matter.',
+    commands: 'The exact commands the agent should run. Leave a field empty to skip it.',
+    rules: 'Each list becomes its own section. Leave a list empty to skip it.',
+    always: 'What the agent does on every task.',
+    askFirst: 'What the agent proposes and waits for your go before doing.',
+    never: 'Hard limits the agent must not cross.',
+    pr: 'How to write commit messages and pull requests.',
+    cursorGlobs: 'With globs, the rule applies to matching files only. Without, it always applies.'
+  },
+  steps: [
+    'Save `AGENTS.md` at the root of your repository and commit it.',
+    'Save each extra file at the path shown in its title, from the root of the repository.',
+    'Start a new agent session. Which tool reads which file is in the matrix.'
+  ]
+};
 export function generatorPage(ctx) {
   const { config, matrix } = ctx;
-  const field = (id, label, hint, rows) => `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off">`}</div>`;
+  // Each field has a hint that says what it is for and a placeholder with a concrete example.
+  const field = (id, label, hint, rows, example) => {
+    const ph = example ? ` placeholder="${h(`e.g. ${example}`).replace(/\n/g, '&#10;')}"` : '';
+    const describedBy = hint ? ` aria-describedby="${id}-hint"` : '';
+    return `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block" id="${id}-hint">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"${describedBy}${ph}></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off"${describedBy}${ph}>`}</div>`;
+  };
+  const presets = GENERATOR_PRESETS.map((p) => `<button type="button" class="chip" data-preset="${h(p.id)}">${h(p.label)}</button>`).join('');
   const body = `<h1>Instruction file generator</h1>
 <p class="lead">Fill in the form and copy the files. Everything runs in your browser. Nothing is sent or stored.</p>
 <noscript><p><strong>This page needs JavaScript to generate files.</strong> The <a href="/matrix/">matrix</a> works without it.</p></noscript>
 <div class="gen">
 <form id="gen-form" class="gen-form" autocomplete="off">
+<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label" hidden><span id="gen-presets-label">${h(GENERATOR_COPY.presetsLabel)}</span><div class="chips">${presets}<button type="button" class="btn-quiet chip" data-preset="clear">${h(GENERATOR_COPY.clear)}</button></div></div>
 <fieldset><legend>Project</legend>
-${field('projectName', 'Project name', '', 0)}
-${field('description', 'One-line description', '', 0)}
-${field('stack', 'Stack', 'One item per line.', 3)}
+${field('projectName', 'Project name', GENERATOR_COPY.hints.projectName, 0, 'my-app')}
+${field('description', 'One-line description', GENERATOR_COPY.hints.description, 0, 'Web app for booking meeting rooms, built with Next.js.')}
+${field('stack', 'Stack', `${GENERATOR_COPY.hints.stack} One item per line.`, 3, 'TypeScript\nNext.js 15\nPostgreSQL')}
 </fieldset>
 <fieldset><legend>Commands</legend>
-${field('installCmd', 'Install', '', 0)}${field('devCmd', 'Run in development', '', 0)}${field('buildCmd', 'Build', '', 0)}${field('testCmd', 'Test', '', 0)}${field('lintCmd', 'Lint', '', 0)}
+<p class="muted">${h(GENERATOR_COPY.hints.commands)}</p>
+${field('installCmd', 'Install', '', 0, 'npm ci')}${field('devCmd', 'Run in development', '', 0, 'npm run dev')}${field('buildCmd', 'Build', '', 0, 'npm run build')}${field('testCmd', 'Test', '', 0, 'npm test')}${field('lintCmd', 'Lint', '', 0, 'npm run lint')}
 </fieldset>
 <fieldset><legend>Rules</legend>
-${field('style', 'Code style', 'One rule per line.', 3)}
-${field('architecture', 'Project layout', 'One line per directory or module.', 3)}
-${field('always', 'Always', '', 2)}
-${field('askFirst', 'Ask first', '', 2)}
-${field('never', 'Never', '', 2)}
-${field('pr', 'Commits and pull requests', '', 2)}
+<p class="muted">${h(GENERATOR_COPY.hints.rules)}</p>
+${field('style', 'Code style', 'One rule per line.', 3, 'Use TypeScript strict mode\nPrefer named exports')}
+${field('architecture', 'Project layout', 'One line per directory or module.', 3, 'src/app/: pages and routes\nsrc/lib/: shared code')}
+${field('always', 'Always', h(GENERATOR_COPY.hints.always), 2, 'Run npm test before you finish a task')}
+${field('askFirst', 'Ask first', h(GENERATOR_COPY.hints.askFirst), 2, 'Adding a dependency')}
+${field('never', 'Never', h(GENERATOR_COPY.hints.never), 2, 'Commit secrets or .env files')}
+${field('pr', 'Commits and pull requests', h(GENERATOR_COPY.hints.pr), 2, 'Use Conventional Commits: feat:, fix:, docs:')}
 </fieldset>
 <fieldset><legend>Files to generate</legend>
-<div id="gen-main"></div>
 <p class="muted">AGENTS.md is the main file and is always generated. ${agentsMdSentence(matrix)} Add the files below only for tools that need their own.</p>
 <p>Optional extra files:</p>
 <div id="gen-targets"></div>
-</fieldset>
-<fieldset><legend>Options</legend>
-<div class="field"><span id="claude-mode-label">CLAUDE.md content</span>
+<div class="gen-opt" data-option-for="claude-md"><span id="claude-mode-label">CLAUDE.md content</span>
 <label class="check"><input type="radio" name="claudeMode" value="import" checked> Import AGENTS.md with <code>@AGENTS.md</code></label>
 <label class="check"><input type="radio" name="claudeMode" value="full"> Full copy of the instructions</label></div>
-<div class="field"><label for="cursorGlobs">Cursor rule globs</label><span class="muted block">Leave empty for none. Example: <code>src/**/*.ts</code></span><input id="cursorGlobs" name="cursorGlobs" type="text"></div>
-<label class="check"><input type="checkbox" name="cursorAlwaysApply" checked> Cursor rule: always apply</label>
-<div class="field"><label for="copilotApplyTo">Copilot applyTo glob</label><span class="muted block">Used for the path-specific file. Default: <code>**</code></span><input id="copilotApplyTo" name="copilotApplyTo" type="text"></div>
+<div class="gen-opt field" data-option-for="cursor-mdc"><label for="cursorGlobs">Cursor rule globs</label><span class="muted block" id="cursorGlobs-hint">Leave empty for none. Example: <code>src/**/*.ts</code> ${h(GENERATOR_COPY.hints.cursorGlobs)}</span><input id="cursorGlobs" name="cursorGlobs" type="text" aria-describedby="cursorGlobs-hint"></div>
+<div class="gen-opt field" data-option-for="copilot-path"><label for="copilotApplyTo">Copilot applyTo glob</label><span class="muted block" id="copilotApplyTo-hint">Used for the path-specific file. Default: <code>**</code></span><input id="copilotApplyTo" name="copilotApplyTo" type="text" aria-describedby="copilotApplyTo-hint"></div>
 </fieldset>
 </form>
-<div class="gen-out" aria-live="polite"><h2>Output</h2><div id="gen-output"></div></div>
+<div class="gen-out" aria-live="polite"><h2>Output</h2>
+<ol class="gen-steps">${GENERATOR_COPY.steps.map((t) => `<li>${inlineHtml(t).replace('the matrix', '<a href="/matrix/">the matrix</a>')}</li>`).join('')}</ol>
+<div id="gen-output"></div></div>
 </div>
 <p class="muted">Which tool reads which file is in the <a href="/matrix/">matrix</a>. Check it before you rely on a file.</p>`;
   return layout(config, {

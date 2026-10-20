@@ -384,7 +384,7 @@ test('the fallback check fails when a fallback is removed or a recent feature is
   const mutations = {
     'body vh fallback': ['min-height: 100vh; min-height: 100dvh;', 'min-height: 100dvh;'],
     'table-wrap vh fallback': ['max-height: 64rem; max-height: min(82vh, 64rem); max-height: min(82dvh, 64rem);', 'max-height: min(82dvh, 64rem);'],
-    'generator vh fallback': ['max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);', 'max-height: calc(100dvh - 2rem);'],
+    'generator vh fallback': ['max-height: calc(100vh - 6rem); max-height: calc(100dvh - 6rem);', 'max-height: calc(100dvh - 6rem);'],
     'wrap margin fallback': ['margin-left: auto; margin-right: auto; margin-inline: auto;', 'margin-inline: auto;'],
     'wrap padding fallback': ['padding-left: var(--s4); padding-right: var(--s4); padding-inline: var(--s4);', 'padding-inline: var(--s4);'],
     'button padding fallback': ['padding-left: var(--s4); padding-right: var(--s4); padding-inline: var(--s4); }', 'padding-inline: var(--s4); }'],

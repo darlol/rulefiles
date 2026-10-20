@@ -336,7 +336,7 @@ td.is-off::before { content: "–"; content: "–" / ""; color: var(--muted); fo
 
 /* Generator */
 .gen { display: grid; gap: var(--s6); margin-top: var(--s5); align-items: start; }
-@media (min-width: 62rem) { .gen { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--s7); } .gen-out { position: sticky; top: var(--s4); max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem); overflow: auto; } }
+@media (min-width: 62rem) { .gen { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: var(--s7); } .gen-out { position: sticky; top: calc(var(--header-h) + var(--s4)); max-height: calc(100vh - 6rem); max-height: calc(100dvh - 6rem); overflow: auto; } }
 .gen-form { display: grid; gap: var(--s4); }
 fieldset { border: 1px solid var(--line); border-radius: var(--r-card); margin: 0; padding: var(--s4) var(--s5) var(--s5); background: var(--surface); min-width: 0; }
 legend { font-weight: 720; font-size: 1.0625rem; padding: 0 var(--s2); margin-left: calc(var(--s2) * -1); }
@@ -344,6 +344,13 @@ legend { font-weight: 720; font-size: 1.0625rem; padding: 0 var(--s2); margin-le
 .field label { display: block; margin-bottom: var(--s1); }
 .field .muted { margin-bottom: var(--s2); font-size: 0.875rem; }
 fieldset > .muted { margin: var(--s3) 0; }
+::placeholder { color: var(--muted); opacity: 1; }
+.gen-presets { display: grid; gap: var(--s2); padding: var(--s4) var(--s5); background: var(--sunken); border-radius: var(--r-card); }
+.gen-presets > span { font-weight: 650; font-size: 0.9375rem; }
+.gen-opt { margin: 0 0 var(--s3) 1.9rem; padding-left: var(--s3); border-left: 2px solid var(--line); }
+.gen-opt.field { margin-top: 0; }
+.gen-steps { margin: 0 0 var(--s4); padding-left: 1.3rem; font-size: 0.9375rem; color: var(--muted); }
+.gen-steps li { margin: var(--s1) 0; }
 .gen-out { padding: 0; }
 .gen-out > h2 { margin-top: 0; font-size: 1.35rem; }
 #gen-output { display: grid; gap: var(--s4); }
