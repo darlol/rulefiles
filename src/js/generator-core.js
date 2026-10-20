@@ -87,10 +87,10 @@ export function generateFiles(input, targets, options = {}) {
           results.push({
             path: t.path,
             content: '@AGENTS.md\n',
-            note: 'Imports AGENTS.md with the @path syntax, so both files stay in sync. Keep AGENTS.md in the repository.'
+            note: 'Imports AGENTS.md with the @path syntax, so both files stay in sync. Keep AGENTS.md in the repository. Claude Code reads AGENTS.md on its own only from v2.1.277 and when there is no CLAUDE.md; the import also covers older versions and sessions that cannot read AGENTS.md.'
           });
         } else {
-          results.push({ path: t.path, content: body, note: 'Plain Markdown, no frontmatter.' });
+          results.push({ path: t.path, content: body, note: 'Plain Markdown, no frontmatter. The Cursor help page checked for this site says Cursor reads CLAUDE.md the same way it reads AGENTS.md, so Cursor may load this copy as well as AGENTS.md. The import option keeps one copy of the instructions.' });
         }
         break;
       case 'gemini-md':
@@ -117,7 +117,7 @@ export function generateFiles(input, targets, options = {}) {
         results.push({
           path: t.path,
           content: body,
-          note: 'Legacy single-file format. The Cursor rules page checked for this site does not mention it. Prefer AGENTS.md or .cursor/rules.'
+          note: 'Legacy single-file format. The Cursor help page checked for this site calls it "legacy and will be deprecated". It does not say whether Cursor still loads it. Prefer AGENTS.md or .cursor/rules.'
         });
         break;
       default:

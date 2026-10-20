@@ -51,6 +51,13 @@ test('each target gets the documented path and the expected content', () => {
   assert.match(byPath['.cursorrules'].note, /Legacy/);
 });
 
+test('the CLAUDE.md and .cursorrules notes carry the texts approved in content review', () => {
+  const note = (id, options = {}) => generateFiles(input, [id], options)[0].note;
+  assert.equal(note('cursorrules'), 'Legacy single-file format. The Cursor help page checked for this site calls it "legacy and will be deprecated". It does not say whether Cursor still loads it. Prefer AGENTS.md or .cursor/rules.');
+  assert.equal(note('claude-md', { claudeMode: 'full' }), 'Plain Markdown, no frontmatter. The Cursor help page checked for this site says Cursor reads CLAUDE.md the same way it reads AGENTS.md, so Cursor may load this copy as well as AGENTS.md. The import option keeps one copy of the instructions.');
+  assert.equal(note('claude-md'), 'Imports AGENTS.md with the @path syntax, so both files stay in sync. Keep AGENTS.md in the repository. Claude Code reads AGENTS.md on its own only from v2.1.277 and when there is no CLAUDE.md; the import also covers older versions and sessions that cannot read AGENTS.md.');
+});
+
 test('cursor .mdc frontmatter parses as YAML for descriptions with special characters', () => {
   const cases = [
     'A REST API: built with Express',
