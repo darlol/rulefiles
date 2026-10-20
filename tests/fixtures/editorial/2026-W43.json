@@ -17,8 +17,8 @@
       "date": "2026-10-19",
       "tool": "cursor",
       "title": "Cursor fixture item",
-      "text": "Fixture text for a Cursor item without a version. Not taken from a source.",
-      "quote": false,
+      "text": "Fixture wording that stands for a quote of the source, on a Cursor item without a version.",
+      "quote": true,
       "matrix": [{ "tool": "cursor", "file": "cursor-rules-mdc" }, { "tool": "cursor", "file": "agents-md" }],
       "sourceUrl": "https://cursor.com/changelog",
       "sourceLabel": "Cursor changelog"

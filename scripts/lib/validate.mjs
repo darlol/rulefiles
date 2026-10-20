@@ -171,6 +171,7 @@ export function validateDigest(digest, hosts, today, fileName = '', matrix = nul
     if (why) errors.push(`${l}: sourceUrl ${why}`);
     if (typeof item.sourceLabel !== 'string' || !item.sourceLabel) errors.push(`${l}: sourceLabel is required`);
     if (item.matrix !== undefined) errors.push(...itemMatrixProblems(item.matrix, matrix, l));
+    if (item.matrix !== undefined && item.quote !== true) errors.push(`${l}: matrix needs "quote": true, because the Instruction files section shows only the source's own wording`);
   }
   if (digest.highlights !== undefined) {
     const hl = digest.highlights;

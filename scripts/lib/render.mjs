@@ -627,7 +627,7 @@ ${tr}
 }
 
 /** Items that name matrix cells, newest first as on the page. */
-export function matrixItems(items) { return items.filter((i) => Array.isArray(i.matrix) && i.matrix.length); }
+export function matrixItems(items) { return items.filter((i) => Array.isArray(i.matrix) && i.matrix.length && i.quote === true); }
 
 function instructionFilesBlock(matrix, sortedItems) {
   const items = matrixItems(sortedItems);
@@ -635,8 +635,8 @@ function instructionFilesBlock(matrix, sortedItems) {
   const toolName = Object.fromEntries(matrix.tools.map((t) => [t.id, t.name]));
   const filePath = Object.fromEntries(matrix.files.map((f) => [f.id, f.path]));
   const li = items.map((it) => {
-    const cells = it.matrix.map((p) => `<a href="/matrix/#${h(cellAnchor(p.tool, p.file))}">Matrix cell ${h(toolName[p.tool])} × <code>${h(filePath[p.file])}</code></a>`).join('');
-    return `<li class="item"><p class="item-text">${it.quote === false ? inlineHtml(it.text) : `<q>${inlineHtml(it.text)}</q>`}</p>
+    const cells = it.matrix.map((p) => `<a href="/matrix/#${h(cellAnchor(p.tool, p.file))}">Matrix cell ${h(toolName[p.tool])} <span aria-hidden="true">×</span><span class="sr">,</span> <code>${h(filePath[p.file])}</code></a>`).join('');
+    return `<li class="item"><p class="item-text"><q>${inlineHtml(it.text)}</q></p>
 <p class="item-foot"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><a class="src" href="${h(it.sourceUrl)}" rel="noopener" aria-label="${h(sourceLinkName(it))}">Source: ${h(it.sourceLabel)}${icon('external')}</a>${cells}</p></li>`;
   }).join('\n');
   return `<section class="instruction-files" aria-labelledby="instruction-files"><h2 id="instruction-files">Instruction files this week</h2>

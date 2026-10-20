@@ -61,6 +61,16 @@ test('editorial: item matrix pairs must exist in matrix.json, without duplicates
   assert.match(errorsOf(FIXTURE, null), /matrix cannot be checked without data\/matrix\.json/);
 });
 
+test('editorial: only an item with "quote": true may have matrix', () => {
+  for (const quote of [false, undefined]) {
+    const d = clone(FIXTURE);
+    const it = d.items.find((i) => i.matrix);
+    if (quote === undefined) delete it.quote; else it.quote = quote;
+    assert.match(errorsOf(d), /matrix needs "quote": true, because the Instruction files section shows only the source's own wording/, String(quote));
+  }
+  assert.equal(errorsOf(FIXTURE), '');
+});
+
 test('editorial: every matrix cell has its own anchor, and validation refuses two cells with the same one', () => {
   const anchors = data.matrix.cells.map((c) => cellAnchor(c.tool, c.file));
   assert.equal(new Set(anchors).size, anchors.length);
@@ -191,10 +201,10 @@ test('editorial: "Instruction files this week" appears only with item matrix, on
   // Newest first, as the items of the page: the Copilot item (20 Oct), then the Cursor item (19 Oct).
   assert.match(lines[0], /<q>Fixture wording that stands for a quote of the source\.<\/q>/);
   assert.match(lines[0], /<time datetime="2026-10-20">20 Oct 2026<\/time><a class="src" href="https:\/\/github\.blog\/changelog\/"/);
-  assert.match(lines[0], /<a href="\/matrix\/#cell-github-copilot-copilot-instructions-md">Matrix cell GitHub Copilot × <code>\.github\/copilot-instructions\.md<\/code><\/a>/);
-  assert.doesNotMatch(lines[1], /<q>/, 'an item with "quote": false is not shown as a quote');
-  assert.match(lines[1], /#cell-cursor-cursor-rules-mdc">Matrix cell Cursor × <code>\.cursor\/rules\/\*\.mdc<\/code>/);
-  assert.match(lines[1], /#cell-cursor-agents-md">Matrix cell Cursor × <code>AGENTS\.md<\/code>/);
+  assert.match(lines[0], /<a href="\/matrix\/#cell-github-copilot-copilot-instructions-md">Matrix cell GitHub Copilot <span aria-hidden="true">×<\/span><span class="sr">,<\/span> <code>\.github\/copilot-instructions\.md<\/code><\/a>/);
+  assert.match(lines[1], /<q>Fixture wording that stands for a quote of the source, on a Cursor item without a version\.<\/q>/);
+  assert.match(lines[1], /#cell-cursor-cursor-rules-mdc">Matrix cell Cursor <span aria-hidden="true">×<\/span><span class="sr">,<\/span> <code>\.cursor\/rules\/\*\.mdc<\/code>/);
+  assert.match(lines[1], /#cell-cursor-agents-md">Matrix cell Cursor <span aria-hidden="true">×<\/span><span class="sr">,<\/span> <code>AGENTS\.md<\/code>/);
   // Every linked anchor exists on /matrix/.
   const matrixHtml = read('with', 'matrix/index.html');
   for (const [, a] of s.matchAll(/href="\/matrix\/#([^"]+)"/g)) assert.match(matrixHtml, new RegExp(`<td id="${a}" `), a);
