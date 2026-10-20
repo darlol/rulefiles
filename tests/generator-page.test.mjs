@@ -26,10 +26,12 @@ test('every preset fills every field the form has, and clear empties them', () =
   for (const f of PRESET_FIELDS) assert.match(html, new RegExp(`name="${f}"`), `the form has ${f}`);
 });
 
-test('the presets bar is hidden until the script shows it, and has one button per preset plus clear', () => {
-  assert.match(html, /<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label" hidden>/);
-  for (const p of GENERATOR_PRESETS) assert.ok(html.includes(`data-preset="${p.id}">${p.label}</button>`), p.id);
-  assert.ok(html.includes(`data-preset="clear">${GENERATOR_COPY.clear}</button>`));
+test('the preset buttons are disabled until the script runs, so the page does not move, one per preset plus clear', () => {
+  assert.match(html, /<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label">/);
+  for (const p of GENERATOR_PRESETS) assert.ok(html.includes(`data-preset="${p.id}" disabled>${p.label}</button>`), p.id);
+  assert.ok(html.includes(`data-preset="clear" disabled>${GENERATOR_COPY.clear}</button>`));
+  const js = fs.readFileSync(new URL('../src/static/generator.js', import.meta.url), 'utf8');
+  assert.match(js, /for \(const b of presetBar\.querySelectorAll\('button'\)\) b\.disabled = false;/);
 });
 
 test('each text field has a hint tied to it or an example placeholder, and the hints and steps are on the page', () => {

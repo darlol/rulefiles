@@ -487,13 +487,14 @@ export function generatorPage(ctx) {
     const describedBy = hint ? ` aria-describedby="${id}-hint"` : '';
     return `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block" id="${id}-hint">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"${describedBy}${ph}></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off"${describedBy}${ph}>`}</div>`;
   };
-  const presets = GENERATOR_PRESETS.map((p) => `<button type="button" class="chip" data-preset="${h(p.id)}">${h(p.label)}</button>`).join('');
+  // The preset buttons are in the page from the start, disabled until the script runs, so showing them moves nothing.
+  const presets = GENERATOR_PRESETS.map((p) => `<button type="button" class="chip" data-preset="${h(p.id)}" disabled>${h(p.label)}</button>`).join('');
   const body = `<h1>Instruction file generator</h1>
 <p class="lead">Fill in the form and copy the files. Everything runs in your browser. Nothing is sent or stored.</p>
 <noscript><p><strong>This page needs JavaScript to generate files.</strong> The <a href="/matrix/">matrix</a> works without it.</p></noscript>
 <div class="gen">
 <form id="gen-form" class="gen-form" autocomplete="off">
-<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label" hidden><span id="gen-presets-label">${h(GENERATOR_COPY.presetsLabel)}</span><div class="chips">${presets}<button type="button" class="btn-quiet chip" data-preset="clear">${h(GENERATOR_COPY.clear)}</button></div></div>
+<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label"><span id="gen-presets-label">${h(GENERATOR_COPY.presetsLabel)}</span><div class="chips">${presets}<button type="button" class="btn-quiet chip" data-preset="clear" disabled>${h(GENERATOR_COPY.clear)}</button></div></div>
 <fieldset><legend>Project</legend>
 ${field('projectName', 'Project name', GENERATOR_COPY.hints.projectName, 0, 'my-app')}
 ${field('description', 'One-line description', GENERATOR_COPY.hints.description, 0, 'Web app for booking meeting rooms, built with Next.js.')}
