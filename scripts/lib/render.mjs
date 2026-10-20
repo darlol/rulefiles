@@ -594,9 +594,9 @@ function highlightsListHtml(items) {
   return `<ul>${items.map((it) => `<li><a href="${h(it.sourceUrl)}" rel="noopener">${inlineHtml(highlightText(it))}</a></li>`).join('')}</ul>`;
 }
 
-// The versions table is computed from fields that W41 and W42 already have. It starts with this week, so the
-// pages of the issues published before the template stay as they were.
-export const VERSIONS_TABLE_FROM = '2026-W43';
+// The versions table is computed from fields that W41 and W42 already have, so it needs a start week: the pages of
+// the issues published before it stay as they were. The editorial decisions of 2026-10-20 start it with W44.
+export const VERSIONS_TABLE_FROM = '2026-W44';
 
 /**
  * One row per tool that has at least one item with `version` in the issue: the highest version (compareVersions),
@@ -613,7 +613,7 @@ export function versionRows(digest) {
   return rows;
 }
 
-function versionsBlock(digest) {
+export function versionsBlock(digest) {
   if (digest.week < VERSIONS_TABLE_FROM) return '';
   const rows = versionRows(digest);
   if (!rows.length) return '';

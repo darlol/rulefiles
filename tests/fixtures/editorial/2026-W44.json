@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W44",
+  "start": "2026-10-26",
+  "end": "2026-11-01",
+  "status": "published",
+  "verifiedOn": "2026-11-02",
+  "title": "Claude Code v2.1.12, Codex 0.165.0, Cursor test fixture",
+  "summary": "Test fixture for the versions table, which starts with 2026-W44. It is never published: the items are not taken from a source.",
+  "items": [
+    {
+      "id": "cursor-2026-10-27-fixture",
+      "date": "2026-10-27",
+      "tool": "cursor",
+      "title": "Cursor fixture item",
+      "text": "Fixture text for a Cursor item without a version. Not taken from a source.",
+      "quote": false,
+      "sourceUrl": "https://cursor.com/changelog",
+      "sourceLabel": "Cursor changelog"
+    },
+    {
+      "id": "claude-code-2026-10-27-v2.1.12",
+      "date": "2026-10-27",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.12",
+      "text": "Fixture text. Not taken from a source.",
+      "quote": false,
+      "version": "2.1.12",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "claude-code-2026-10-29-v2.1.11",
+      "date": "2026-10-29",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.11",
+      "text": "Fixture text for an older version published later in the week. Not taken from a source.",
+      "quote": false,
+      "version": "2.1.11",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases",
+      "sourceLabel": "Claude Code release notes"
+    },
+    {
+      "id": "codex-2026-10-28-0.165.0",
+      "date": "2026-10-28",
+      "tool": "codex",
+      "title": "Codex 0.165.0",
+      "text": "Fixture text. Not taken from a source.",
+      "quote": false,
+      "version": "0.165.0",
+      "sourceUrl": "https://github.com/openai/codex/releases",
+      "sourceLabel": "Codex release notes"
+    }
+  ]
+}

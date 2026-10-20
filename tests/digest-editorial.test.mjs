@@ -15,6 +15,8 @@ import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
 const FIXTURE = JSON.parse(fs.readFileSync(new URL('./fixtures/editorial/2026-W43.json', import.meta.url), 'utf8'));
+// W44 test issue: the first week with the versions table. Its dates are after TEST_DATE, so its build uses its own date.
+const FIXTURE_W44 = JSON.parse(fs.readFileSync(new URL('./fixtures/editorial/2026-W44.json', import.meta.url), 'utf8'));
 const data = loadData(root);
 const clone = (o) => JSON.parse(JSON.stringify(o));
 /** The fixture without the two new fields: the same issue as a W43 written before the template. */
@@ -99,21 +101,24 @@ test('editorial: one version row per tool with a versioned item, holding the hig
   assert.deepEqual(versionRows({ items: [{ id: 'a', tool: 'cursor', date: '2026-10-19' }] }), []);
 });
 
-// ---------- Rendering: a temporary copy of the repository with the W43 fixture ----------
+// ---------- Rendering: temporary copies of the repository with the W43 fixture (and the W44 one) ----------
 
 let dir;
 const out = {};
 before(() => {
   process.env.BUILD_DATE = TEST_DATE;
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-editorial-'));
-  for (const [variant, digest] of [['with', FIXTURE], ['without', withoutNewFields(FIXTURE)]]) {
+  const variants = [['with', [FIXTURE], TEST_DATE], ['without', [withoutNewFields(FIXTURE)], TEST_DATE], ['w44', [FIXTURE, FIXTURE_W44], FIXTURE_W44.verifiedOn]];
+  for (const [variant, digests, buildDate] of variants) {
     const r = path.join(dir, variant);
     for (const d of ['data', 'content', 'src', 'scripts']) fs.cpSync(path.join(root, d), path.join(r, d), { recursive: true });
     fs.copyFileSync(path.join(root, 'site.config.json'), path.join(r, 'site.config.json'));
-    fs.writeFileSync(path.join(r, 'data', 'digest', '2026-W43.json'), JSON.stringify(digest, null, 2) + '\n');
+    for (const digest of digests) fs.writeFileSync(path.join(r, 'data', 'digest', `${digest.week}.json`), JSON.stringify(digest, null, 2) + '\n');
     out[variant] = path.join(r, 'dist');
+    process.env.BUILD_DATE = buildDate;
     build({ root: r, outDir: out[variant], quiet: true });
   }
+  process.env.BUILD_DATE = TEST_DATE;
 });
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 const read = (variant, rel) => fs.readFileSync(path.join(out[variant], rel), 'utf8');
@@ -136,8 +141,7 @@ test('editorial: with highlights, "In short" replaces the summary under the lead
   assert.equal(s.replace(/<li><a [^>]+>.*?<\/a><\/li>/g, ''), '<section class="in-short" aria-labelledby="in-short"><h2 id="in-short">In short</h2><ul></ul></section>');
   assert.doesNotMatch(html, /<p class="summary">/);
   assert.ok(html.indexOf('<p class="lead">') < html.indexOf('<section class="in-short"'));
-  assert.ok(html.indexOf('<section class="in-short"') < html.indexOf('<section class="versions"'));
-  assert.ok(html.indexOf('<section class="versions"') < html.indexOf('<section class="instruction-files"'));
+  assert.ok(html.indexOf('<section class="in-short"') < html.indexOf('<section class="instruction-files"'));
   assert.ok(html.indexOf('<section class="instruction-files"') < html.indexOf('<section aria-labelledby="t-'));
 });
 
@@ -145,17 +149,33 @@ test('editorial: without highlights the summary paragraph stays and there is no 
   const html = read('without', 'digest/2026-W43/index.html');
   assert.match(html, /<p class="summary">Test fixture for the digest template\./);
   assert.doesNotMatch(html, /in-short|In short/);
-  assert.ok(html.indexOf('<p class="summary">') < html.indexOf('<section class="versions"'));
+  assert.ok(html.indexOf('<p class="summary">') < html.indexOf('<section aria-labelledby="t-'));
 });
 
-test('editorial: "Versions this week" lists the highest version per tool, needs no new field, and never says there was no release', () => {
-  for (const variant of ['with', 'without']) {
-    const s = section(read(variant, 'digest/2026-W43/index.html'), 'versions');
-    assert.match(s, /<h2 id="versions">Versions this week<\/h2>/, variant);
-    const rows = [...s.matchAll(/<tr><th scope="row">([^<]+)<\/th><td>([^<]+)<\/td><td><time datetime="([^"]+)">[^<]+<\/time><\/td><td><a class="src" href="([^"]+)"/g)].map((m) => m.slice(1));
-    assert.deepEqual(rows, [['Claude Code', '2.1.10', '2026-10-20', 'https://github.com/anthropics/claude-code/releases'], ['Codex', '0.164.0', '2026-10-19', 'https://github.com/openai/codex/releases']], variant);
-    assert.doesNotMatch(s, /Cursor|GitHub Copilot|no release|none/i, variant);
+test('editorial: "Versions this week" starts with W44: absent from W43, with or without the new fields', () => {
+  assert.equal(VERSIONS_TABLE_FROM, '2026-W44');
+  for (const variant of ['with', 'without', 'w44']) {
+    const html = read(variant, 'digest/2026-W43/index.html');
+    assert.doesNotMatch(html, /class="versions"|Versions this week/, variant);
   }
+  // In short and Instruction files this week stay on W43.
+  assert.match(read('with', 'digest/2026-W43/index.html'), /<h2 id="in-short">In short<\/h2>[\s\S]*<h2 id="instruction-files">Instruction files this week<\/h2>/);
+});
+
+test('editorial: from W44, "Versions this week" lists the highest version per tool, needs no new field, and never says there was no release', () => {
+  const html = read('w44', 'digest/2026-W44/index.html');
+  const s = section(html, 'versions');
+  assert.match(s, /<h2 id="versions">Versions this week<\/h2>/);
+  const rows = [...s.matchAll(/<tr><th scope="row">([^<]+)<\/th><td>([^<]+)<\/td><td><time datetime="([^"]+)">[^<]+<\/time><\/td><td><a class="src" href="([^"]+)"/g)].map((m) => m.slice(1));
+  // 2.1.12 wins over 2.1.11 although 2.1.11 is dated later: the row keeps the date of the highest version.
+  assert.deepEqual(rows, [['Claude Code', '2.1.12', '2026-10-27', 'https://github.com/anthropics/claude-code/releases'], ['Codex', '0.165.0', '2026-10-28', 'https://github.com/openai/codex/releases']]);
+  assert.doesNotMatch(s, /Cursor|GitHub Copilot|no release|none/i);
+  // W44 has no highlights and no item matrix: the summary stays, then the table, then the tool sections.
+  assert.ok(html.indexOf('<p class="summary">') < html.indexOf('<section class="versions"'));
+  assert.ok(html.indexOf('<section class="versions"') < html.indexOf('<section aria-labelledby="t-'));
+  assert.doesNotMatch(html, /in-short|instruction-files/);
+  // The same W43 rows would be computed; only the start week keeps them off its page.
+  assert.deepEqual(versionRows(FIXTURE).map((r) => [r.tool, r.item.version]), [['claude-code', '2.1.10'], ['codex', '0.164.0']]);
   // An issue without any versioned item has no block at all.
   const d = withoutNewFields(FIXTURE);
   for (const i of d.items) delete i.version;
@@ -205,8 +225,8 @@ test('editorial: the Atom entry and llms-full.txt carry the same "In short" list
 });
 
 test('editorial: W41 and W42 keep their summary and get none of the new blocks', () => {
-  assert.ok(VERSIONS_TABLE_FROM > '2026-W42');
-  for (const variant of ['with', 'without']) for (const w of ['2026-W41', '2026-W42']) {
+  assert.ok(VERSIONS_TABLE_FROM > '2026-W43');
+  for (const variant of ['with', 'without', 'w44']) for (const w of ['2026-W41', '2026-W42']) {
     const html = read(variant, `digest/${w}/index.html`);
     assert.match(html, /<p class="summary">/, w);
     assert.doesNotMatch(html, /class="(in-short|versions|instruction-files)"|In short|Versions this week|Instruction files this week/, w);
