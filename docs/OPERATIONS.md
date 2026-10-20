@@ -1,6 +1,6 @@
 # Operations
 
-The GitHub repository is `darlol/rulefiles`, and it is private. It was created on 2026-10-16 when the history was rewritten (`docs/HISTORY-REWRITE.md`). Nothing in the code depends on the repository name.
+The GitHub repository is `darlol/rulefiles`, and it is public. `gh repo view darlol/rulefiles --json visibility` returned `PUBLIC` on 2026-10-20. It was created on 2026-10-16 when the history was rewritten (`docs/HISTORY-REWRITE.md`). Nothing in the code depends on the repository name.
 
 ## Hosting
 
@@ -97,9 +97,9 @@ Still to check on GitHub, once, with Actions > Weekly watch > Run workflow:
 
 `docs/ruleset-main.json` is a repository ruleset for the default branch. It requires a pull request, with squash merges only and conversations resolved, requires the two CI checks `test (20)` and `test (22)` to pass on an up to date branch, blocks force pushes and blocks deleting the branch. It asks for no approving review (`required_approving_review_count` is 0) because the repository has one owner. Raise that number if a second reviewer joins. The ruleset has no bypass actor.
 
-It has not been applied. On 2026-10-16 GitHub refused it on this repository with the message "Upgrade to GitHub Pro or make this repository public": rulesets are not available on a private repository on the free plan. Apply it as soon as the repository is public, for example with `gh api --method POST repos/darlol/rulefiles/rulesets --input docs/ruleset-main.json`, or by pasting the same values in Settings, Rules, Rulesets. The names of the checks come from the job name and the Node versions in `.github/workflows/ci.yml`, and a test fails if the two drift apart. The `test (20)` and `test (22)` checks only exist after CI has run once on the repository.
+It has been active on `main` since 2026-10-18. `gh api repos/darlol/rulefiles/rulesets` lists one ruleset, "main: pull request, CI, no force push", with enforcement `active`, created on 2026-10-18. Every value set in `docs/ruleset-main.json` matches it. The live ruleset also has three fields the file leaves out, listed in item 3 of "Before the repository becomes public" in `docs/LAUNCH.md`. On 2026-10-16 GitHub had refused it with the message "Upgrade to GitHub Pro or make this repository public", because rulesets are not available on a private repository on the free plan. It was applied with `gh api --method POST repos/darlol/rulefiles/rulesets --input docs/ruleset-main.json` (running it again would add a second ruleset), or can be edited in Settings, Rules, Rulesets. The names of the checks come from the job name and the Node versions in `.github/workflows/ci.yml`, and a test fails if the two drift apart. The `test (20)` and `test (22)` checks only exist after CI has run once on the repository.
 
-Until then nothing blocks a direct push, a force push or the deletion of `main`, so the owner merges through pull requests by habit. Already set on 2026-10-16, as reported by the owner: squash merges only, "Allow GitHub Actions to create and approve pull requests" on, and the two GitHub email settings ("Keep my email addresses private" and "Block command line pushes that expose my email") on.
+Before 2026-10-18 nothing blocked a direct push, a force push or the deletion of `main`, so the owner merged through pull requests by habit. Already set on 2026-10-16, as reported by the owner: squash merges only, "Allow GitHub Actions to create and approve pull requests" on, and the two GitHub email settings ("Keep my email addresses private" and "Block command line pushes that expose my email") on.
 
 The weekly watch pushes branches named `watch/...` and opens a pull request, so it fits this ruleset as long as the repository setting for creating pull requests with Actions is on. A pull request opened that way does not start CI by itself, so the required checks stay pending until someone closes and reopens it.
 
