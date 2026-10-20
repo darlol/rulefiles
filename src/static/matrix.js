@@ -54,6 +54,5 @@ if (bar && table) {
   });
 
   if (search) search.addEventListener('input', update);
-  bar.hidden = false;
   update();
 }

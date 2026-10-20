@@ -50,7 +50,7 @@ test('matrix page: search field with a label, a notes toggle, a legend above the
   assert.equal((html.match(/<p class="cell-tool">/g) || []).length, matrix.cells.length, 'every cell names its tool for the card view');
   assert.match(html, /<ul class="status-counts" aria-label="Cells by status">/);
   // The search and the toggle sit in the filter bar, which stays hidden without JavaScript, so nothing is folded away then.
-  const bar = /<div class="filters" id="matrix-filters" hidden>([\s\S]*?)\n<\/div>/.exec(html)[1];
+  const bar = /<div class="filters" id="matrix-filters">([\s\S]*?)\n<\/div>/.exec(html)[1];
   assert.ok(bar.includes('id="matrix-q"') && bar.includes('data-notes'));
   assert.doesNotMatch(html, /class="matrix notes-off"/, 'notes are folded only by the script');
 });
@@ -81,4 +81,43 @@ test('the Hide notes button reports the real state of the notes, including durin
     const n = notesState(want, q);
     assert.equal(n.pressed, n.hidden, 'aria-pressed always matches whether the notes are hidden');
   }
+});
+
+// ---------- First render: the filter bar shows at once with JavaScript, never without ----------
+
+function rulesFor(css, selector) {
+  const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  return [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(selector)).map((m) => m[2]);
+}
+
+test('the matrix loads assets/js-flag.js synchronously in the head, and only the matrix does', () => {
+  const head = /<head>([\s\S]*?)<\/head>/.exec(html)[1];
+  const tag = /<script src="\/assets\/js-flag\.js"><\/script>/.exec(head);
+  assert.ok(tag, 'the flag script is in the head');
+  assert.doesNotMatch(tag[0], /\b(async|defer|type="module")\b/, 'it runs before the first paint');
+  assert.ok(head.indexOf(tag[0]) < head.indexOf('rel="stylesheet"'), 'it does not wait for the stylesheet');
+  const flag = fs.readFileSync(new URL('../src/static/js-flag.js', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '').trim();
+  assert.equal(flag, "document.documentElement.classList.add('js');", 'the file does one thing');
+  for (const f of fs.readdirSync(out, { recursive: true }).filter((x) => String(x).endsWith('.html') && !String(x).startsWith('matrix'))) {
+    assert.ok(!fs.readFileSync(path.join(out, String(f)), 'utf8').includes('js-flag.js'), `${f} does not load the flag`);
+  }
+  // script-src 'self' allows it, in the meta CSP and in _headers.
+  const csp = /http-equiv="Content-Security-Policy" content="([^"]*)"/.exec(html)[1].replace(/&#39;/g, "'");
+  assert.match(csp, /script-src 'self'/);
+  assert.match(fs.readFileSync(path.join(out, '_headers'), 'utf8'), /script-src 'self'/);
+});
+
+test('without JavaScript the filter bar is hidden by CSS and all 36 notes show; html.js shows the bar', () => {
+  const css = fs.readFileSync(new URL('../src/static/style.css', import.meta.url), 'utf8');
+  const base = rulesFor(css, '.filters');
+  assert.ok(base.length > 0 && base.every((d) => !/display:\s*(grid|flex|block)/.test(d)), 'no rule on .filters alone shows the bar');
+  assert.ok(base.some((d) => /display:\s*none/.test(d)), '.filters is display: none by default');
+  assert.ok(rulesFor(css, '.js .filters').some((d) => /display:\s*grid/.test(d)), '.js .filters shows the bar');
+  assert.ok(rulesFor(css, '#matrix-count').some((d) => /min-height/.test(d)), 'the count line is reserved, so filling it moves nothing');
+  assert.doesNotMatch(html, /<html[^>]*class="[^"]*\bjs\b/, 'the js class is never in the markup');
+  assert.equal(matrix.cells.length, 36);
+  assert.equal((html.match(/<p class="note">/g) || []).length, 36, '36 notes in the markup');
+  assert.doesNotMatch(html, /notes-off/, 'nothing folds the notes without the script');
+  const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(js, /bar\.hidden/, 'the script does not reveal the bar after the first paint');
 });

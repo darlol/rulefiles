@@ -71,7 +71,8 @@ after(() => fs.rmSync(out, { recursive: true, force: true }));
 
 test('matrix page: filter bar is hidden until the script runs, and every control is a real button', () => {
   const html = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
-  assert.match(html, /<div class="filters" id="matrix-filters" hidden>/);
+  // The bar is hidden by CSS until html.js is set (assets/js-flag.js), not by an attribute the script removes later.
+  assert.match(html, /<div class="filters" id="matrix-filters">/);
   for (const t of data.tools) assert.match(html, new RegExp(`<button type="button" class="chip" aria-pressed="false" data-filter-tool="${t.id}">`));
   for (const k of Object.keys(STATUS_LABEL)) assert.match(html, new RegExp(`<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">`));
   assert.match(html, /id="matrix-count" class="muted" role="status" aria-live="polite"/);

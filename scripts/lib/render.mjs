@@ -100,7 +100,7 @@ export function layout(config, page) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${h(csp(config))}">
-<title>${h(title)}</title>
+${page.headScript ? `<script src="${page.headScript}"></script>\n` : ''}<title>${h(title)}</title>
 <meta name="description" content="${h(page.description)}">
 ${page.noindex ? '<meta name="robots" content="noindex">\n' : `<link rel="canonical" href="${h(canonical)}">\n`}<meta property="og:type" content="${page.ogType || 'website'}">
 <meta property="og:site_name" content="${h(config.name)}">
@@ -298,7 +298,9 @@ export function matrixPage(ctx) {
   const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
   const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
   const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
-  const filters = `<div class="filters" id="matrix-filters" hidden>
+  // Without JavaScript the bar is hidden by CSS; assets/js-flag.js sets html.js before the first paint, so the
+  // bar shows from the first render and never pushes the page down.
+  const filters = `<div class="filters" id="matrix-filters">
 <div class="filter-search"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"></div>
 <fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
 <fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
@@ -326,7 +328,7 @@ ${citeBlock(config, matrix)}
   return layout(config, {
     path: '/matrix/', title: 'Which coding agent reads which instruction file',
     description: `Matrix of ${matrix.tools.length} AI coding tools and ${matrix.files.length} instruction file types, with an official source and a check date for each cell.`,
-    body, script: '/assets/matrix.js',
+    body, script: '/assets/matrix.js', headScript: '/assets/js-flag.js',
     jsonLd: [
       { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
       breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/']])

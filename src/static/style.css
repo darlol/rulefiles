@@ -279,7 +279,10 @@ label { font-weight: 620; }
 /* Matrix page */
 [hidden] { display: none !important; }
 .intro { max-width: var(--measure); color: var(--muted); }
-.filters { display: grid; gap: var(--s4) var(--s6); padding: var(--s4); margin: var(--s5) 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+.filters { display: none; gap: var(--s4) var(--s6); padding: var(--s4); margin: var(--s5) 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+.js .filters { display: grid; }
+/* The count is written by matrix.js; its line is reserved so filling it moves nothing. */
+#matrix-count { min-height: 1.5em; }
 @media (min-width: 48rem) { .filters { grid-template-columns: auto 1fr; } .filter-foot { grid-column: 1 / -1; } }
 .filter-group { border: 0; padding: 0; margin: 0; min-width: 0; }
 .filter-group legend { padding: 0; margin-left: 0; margin-bottom: var(--s2); font-size: 0.9375rem; font-weight: 700; }
