@@ -648,7 +648,7 @@ test('the footer links the public repository when repoUrl is set, and not when i
   assert.deepEqual(validateConfig(cfg), []);
   assert.deepEqual(validateConfig({ ...cfg, repoUrl: '' }), []);
   for (const bad of ['http://github.com/a/b', 'https://example.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b"onclick', 42,
-    'javascript:alert(1)//https://github.com/a/b', 'https://githubXcom/a/b', 'https://github.com.evil.tld/a/b', 'https://user@github.com/a/b',
+    'javascript:alert(1)//https://github.com/a/b', 'https://githubXcom/a/b', 'https://github.com.evil.tld/a/b', `https://user${'@'}github.com/a/b`,
     'https://github.com/a/b?q', 'https://github.com/a/b#f', 'https://github.com/a/..', 'https://github.com/a/.', 'https://github.com/-a/b']) {
     assert.ok(validateConfig({ ...cfg, repoUrl: bad }).some((e) => /repoUrl/.test(e)), String(bad));
   }
