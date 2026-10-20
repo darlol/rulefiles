@@ -545,7 +545,10 @@ ${sections}
 
 export function contentPage(ctx, file, pagePath) {
   const { config, matrix } = ctx;
-  const { meta, body } = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+  const parsed = parseFrontmatter(fs.readFileSync(file, 'utf8'));
+  const { meta } = parsed;
+  // With no repoUrl, a line that would link the repository is left out rather than rendered with an empty link.
+  const body = config.repoUrl ? parsed.body : parsed.body.split('\n').filter((l) => !l.includes('{{repoUrl}}')).join('\n');
   const nl = (present, future) => (newsletterEnabled(config) ? present : future);
   const vars = {
     unverified: matrixStats(matrix).unverified,
@@ -570,7 +573,10 @@ export function contentPage(ctx, file, pagePath) {
     sponsorContact: config.sponsorContact,
     hostName: config.host.name,
     hostAddress: config.host.address,
-    hostPhone: config.host.phone
+    hostPhone: config.host.phone,
+    // The public repository is linked from the About page only. Its label is the address without the scheme.
+    repoUrl: config.repoUrl || '',
+    repoLabel: (config.repoUrl || '').replace(/^https:\/\//, '')
   };
   const type = pagePath === '/about/' ? 'AboutPage' : 'WebPage';
   // A page can carry `updated: YYYY-MM-DD` in its front matter. The date is shown at the foot of the page.

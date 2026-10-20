@@ -22,6 +22,8 @@ It is an independent project. It is not affiliated with Cursor, Anthropic, OpenA
 
 The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers.
 
+The source code for this site is public on GitHub: [{{repoLabel}}]({{repoUrl}}).
+
 ## License
 
 The code is under the MIT license. The data (the matrix and the digests, in the JSON files above) and the text of this site are under [CC BY 4.0]({{licenseUrl}}). You can copy, share and adapt them, including for commercial use or with AI tools, if you credit the project, link the license and say what you changed.

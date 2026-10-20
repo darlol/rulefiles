@@ -5,7 +5,7 @@
   "baseUrl": "https://rulefiles.dev",
   "language": "en",
   "homeTitle": "Rulefiles: AI coding tool changes and instruction files",
-  "repoUrl": "",
+  "repoUrl": "https://github.com/darlol/rulefiles",
   "indexNowKey": "8d1736ea8635607b800b6571cbba08ce",
   "newsletter": {
     "provider": "Buttondown",

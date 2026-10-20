@@ -48,6 +48,12 @@ const plain = (s) => s
   .replace(/&([A-Za-z])(?:acute|grave|circ|uml|tilde|ring|cedil|caron);/g, '$1');
 const SURNAME = new RegExp(['Ram', 'baut'].join(''), 'i');
 const HANDLE = new RegExp(['dar', 'lol'].join(''), 'i');
+// The public repository address (repoUrl in site.config.json, linked from the About page) carries the handle, which the
+// owner accepts (docs/LAUNCH.md, "Before the repository becomes public"). That address and its subpaths are allowed, with
+// or without the https:// the link label leaves out; the handle anywhere else, the bare account and another repository of
+// the same account included, still counts.
+const REPO_URL = `https://github.com/${['dar', 'lol'].join('')}/rulefiles`;
+const REPO_URL_RE = new RegExp(`(?:https:\\/\\/|(?<![\\w./-]))${REPO_URL.slice('https://'.length).replace(/[./]/g, '\\$&')}(?![\\w-]|\\.[\\w-])`, 'gi');
 // The workflow bot's own noreply address is not personal. Any other numbered noreply address is.
 const NOREPLY = new RegExp('\\d+\\+(?!github-actions)[A-Za-z0-9-]+@' + ['users', 'noreply', 'github', 'com'].join('\\.'), 'i');
 /** What a file says about the owner's identity, apart from the full name on the two pages that may carry it. */
@@ -55,7 +61,7 @@ function identityHits(rel, body, allowedFiles) {
   const hits = [];
   const rest = plain(allowedFiles.includes(rel) ? body.split(FULL_NAME).join('') : body);
   const all = plain(body);
-  for (const [name, re, text] of [['handle', HANDLE, all], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, all]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
+  for (const [name, re, text] of [['handle', HANDLE, all.replace(REPO_URL_RE, '')], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, all]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
   return hits;
 }
 // Every text file is scanned, whatever its name or extension: a file with no extension (LICENSE), a dotfile and
@@ -375,4 +381,15 @@ test('docs/LAUNCH.md covers the publisher who gives only the host\'s details, th
     assert.ok(doc.includes(needle), needle);
   }
   assert.match(doc, /bought on 2026-10-16/);
+});
+
+test('the handle is allowed only inside the public repository address', () => {
+  const handle = ['dar', 'lol'].join('');
+  const hit = (body) => identityHits('dist/index.html', body, []);
+  assert.deepEqual(hit(`<a href="${REPO_URL}">github.com/${handle}/rulefiles</a>`), []);
+  assert.deepEqual(hit(`${REPO_URL}/blob/main/LICENSE`), []);
+  assert.deepEqual(hit(`The source code is public on GitHub: github.com/${handle}/rulefiles.`), []);
+  for (const body of [`https://github.com/${handle}`, `https://github.com/${handle}/other`, `${REPO_URL}-fork`, `${REPO_URL}.fork`, `@${handle}`, `${REPO_URL} by ${handle}`, `evilgithub.com/${handle}/rulefiles`, `http://github.com/${handle}/rulefiles`]) {
+    assert.deepEqual(hit(body), ['dist/index.html: handle'], body);
+  }
 });

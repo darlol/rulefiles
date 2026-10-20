@@ -154,7 +154,7 @@ Status on 2026-10-16:
 
 These items wait until the repository is public. Nothing on the built site needs them today.
 
-1. Link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository, and set `repoUrl` in `site.config.json`. It is empty today, since there is no public repository to point to, and the license text lives in the repository only.
+1. Link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository. `repoUrl` in `site.config.json` is set to the public repository, and the About page links to it, in the "Data files" section. No other page, file or JSON-LD block carries the link.
 2. The repository is now named `rulefiles` (option A, 2026-10-16), and `docs/OPERATIONS.md` shows the owner's GitHub handle in a command. A public repository shows the handle in its URL anyway, and the owner accepts that by publishing the name on the legal pages.
 3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan. The command and the settings already made are in `docs/OPERATIONS.md`, under "Recommended protection for main".
 4. Decide what happens to the old, archived repository. Deleting it is the owner's call.

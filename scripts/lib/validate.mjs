@@ -45,6 +45,7 @@ export function validateConfig(config) {
     if (typeof host.sourceUrl !== 'string' || !/^https:\/\//.test(host.sourceUrl)) errors.push('site.config.json: host.sourceUrl must be the https page the host details were read on');
     if (!isIsoDate(host.readOn)) errors.push('site.config.json: host.readOn must be YYYY-MM-DD');
   }
+  if (config.repoUrl !== undefined && config.repoUrl !== '' && (typeof config.repoUrl !== 'string' || !/^https:\/\/github\.com\/[A-Za-z0-9][A-Za-z0-9-]*\/(?!\.{1,2}$)[A-Za-z0-9._-]+$/.test(config.repoUrl))) errors.push('site.config.json: repoUrl must be empty or a repository address such as https://github.com/owner/repo');
   if (config.indexNowKey !== undefined && !/^[A-Za-z0-9-]{8,128}$/.test(config.indexNowKey)) errors.push('site.config.json: indexNowKey must be 8 to 128 characters: letters, digits and dashes');
   const nl = config.newsletter;
   if (!nl || typeof nl !== 'object') errors.push('site.config.json: newsletter object is missing');

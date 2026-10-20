@@ -7,10 +7,11 @@ import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
-import { matrixStats, validateMatrix } from '../scripts/lib/validate.mjs';
+import { matrixStats, validateMatrix, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
+import { renderMarkdown } from '../scripts/lib/markdown.mjs';
 import { TEST_DATE, LATEST_DATA_DATE, addDays } from './helpers/test-date.mjs';
 import { PAGES, PUBLISHED_WEEKS, PUBLISHED_DIGESTS } from './helpers/pages.mjs';
 
@@ -659,4 +660,52 @@ test('no page still says the site has no trackers or no analytics, and the foote
   const readme = fs.readFileSync(new URL('../README.md', import.meta.url), 'utf8');
   assert.doesNotMatch(readme, stale, 'README.md');
   assert.ok(readme.includes('The only third-party script is the Cloudflare Web Analytics beacon'), 'README.md names the beacon');
+});
+
+test('the public repository is linked from the About page only, and nowhere when repoUrl is empty', () => {
+  const cfg = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8'));
+  const label = `github.com/${['dar', 'lol'].join('')}/rulefiles`;
+  const repo = `https://${label}`;
+  assert.equal(cfg.repoUrl, repo);
+  const sentence = `<p>The source code for this site is public on GitHub: <a href="${repo}">${label}</a>.</p>`;
+  const about = read('about/index.html');
+  assert.equal(about.split(sentence).length - 1, 1, 'about: the sentence, once');
+  assert.equal(about.split(label).length - 1, 2, 'about: the address only in that link (href and label)');
+  const main = about.match(/<main\b[\s\S]*?<\/main>/)[0];
+  assert.ok(main.includes(sentence), 'about: the sentence is in the main content');
+  assert.ok(!about.match(/<footer\b[\s\S]*?<\/footer>/)[0].includes(label), 'about: not in the footer');
+  for (const ld of about.match(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g) || []) assert.ok(!ld.includes(label), 'about: not in the JSON-LD');
+  // Every other file of the build, whatever its type (html, txt, xml, json, llms*, headers, images), is free of the address.
+  const files = listFiles(out);
+  assert.ok(files.length > 20, 'the build has files');
+  const holders = files.filter((f) => fs.readFileSync(f).includes(label)).map((f) => path.relative(out, f));
+  assert.deepEqual(holders, [path.join('about', 'index.html')]);
+  for (const f of ['llms.txt', 'llms-full.txt', 'sitemap.xml', 'data/matrix.json', 'data/digests.json', 'digest/feed.xml']) assert.ok(fs.existsSync(path.join(out, f)), f);
+
+  assert.deepEqual(validateConfig(cfg), []);
+  assert.deepEqual(validateConfig({ ...cfg, repoUrl: '' }), []);
+  for (const bad of ['http://github.com/a/b', 'https://example.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b"onclick', 42,
+    'javascript:alert(1)//https://github.com/a/b', 'https://githubXcom/a/b', 'https://github.com.evil.tld/a/b', `https://user${'@'}github.com/a/b`,
+    'https://github.com/a/b?q', 'https://github.com/a/b#f', 'https://github.com/a/..', 'https://github.com/a/.', 'https://github.com/-a/b', `https://github.com/a${'@'}b/c`]) {
+    assert.ok(validateConfig({ ...cfg, repoUrl: bad }).some((e) => /repoUrl/.test(e)), String(bad));
+  }
+  for (const good of ['https://github.com/a/b', 'https://github.com/a-1/b.c_d-e', 'https://github.com/a/...']) assert.deepEqual(validateConfig({ ...cfg, repoUrl: good }), [], good);
+  // The validation refuses "&" and "<", but the page still escapes the address: rendered directly, past the validation.
+  const line = 'The source code for this site is public on GitHub: [{{repoLabel}}]({{repoUrl}}).';
+  const amp = renderMarkdown(line, { repoUrl: 'https://github.com/a/b?x=1&y=<2>', repoLabel: 'github.com/a/b?x=1&y=<2>' });
+  assert.equal(amp, '<p>The source code for this site is public on GitHub: <a href="https://github.com/a/b?x=1&amp;y=&lt;2&gt;">github.com/a/b?x=1&amp;y=&lt;2&gt;</a>.</p>');
+
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-norepo-'));
+  const src = new URL('..', import.meta.url).pathname;
+  try {
+    fs.cpSync(src, root, { recursive: true, filter: (s) => !/^(node_modules|dist|\.git|\.cache)(\/|$)/.test(path.relative(src, s)) });
+    fs.writeFileSync(path.join(root, 'site.config.json'), JSON.stringify({ ...cfg, repoUrl: '' }, null, 2) + '\n');
+    const dir = path.join(root, 'dist');
+    build({ root, outDir: dir, quiet: true });
+    for (const f of listFiles(dir)) {
+      const body = fs.readFileSync(f);
+      assert.ok(!body.includes(label) && !body.includes('public on GitHub') && !body.includes('{{repo'), path.relative(dir, f));
+    }
+    assert.match(fs.readFileSync(path.join(dir, 'about', 'index.html'), 'utf8'), /<a href="\/llms\.txt">llms\.txt<\/a> file lists the pages/);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
