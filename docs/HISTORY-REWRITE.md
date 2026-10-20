@@ -11,7 +11,7 @@ This file holds no personal address. Commands read the old and the new address f
 - `main` went from 16 commits to 16 commits. After the rewrite the authors and committers are the owner's GitHub login with its noreply address, and `GitHub <noreply@github.com>` for the squash merges. The personal address has 0 hit in `git log --all -S`, in `git grep` over every revision and in the raw commit objects. The old marker name has 0 hit in the messages and in the files of every revision. No `refs/pull` ref, tag or note was kept, and `git fsck --full` is clean. The GitHub signatures are gone, as expected.
 - Nine commits had a tree difference. In each one, the files that differ are exactly the files that held the old marker name, and the new file is the old file with that name replaced, with as many lines added as removed. Nothing else changed.
 - The new private repository `darlol/rulefiles` received `main` only, and CI is green on it. The old repository was deleted on 2026-10-18.
-- The ruleset could not be applied on the new repository yet (applied on 2026-10-18), since GitHub refuses rulesets on a private repository on the free plan (see `docs/OPERATIONS.md`).
+- The ruleset could not be applied that day, since GitHub refuses rulesets on a private repository on the free plan. It was applied on 2026-10-18 (see `docs/OPERATIONS.md`).
 - Left as it was: the owner's first name remains in two lines of an old revision of a brand note, which the plan does not cover. The name is published on the legal pages anyway.
 
 ## What was found
@@ -101,7 +101,7 @@ Consequences:
 
 - Pull requests #1 to #11 and their review comments stayed in the old repository, which was deleted on 2026-10-18. The new repository starts at pull request #1, so the "(#N)" at the end of the squash commit titles then points at different pull requests, or at none. The titles can be left as they are, or rewritten in step 4 with a message callback. Both are acceptable.
 - Issues, if any, do not move.
-- Links to the old repository stop working once it is deleted. None is in the site. `repoUrl` in `site.config.json` points to the new repository.
+- Links to the old repository stopped working when it was deleted on 2026-10-18. None is in the site. `repoUrl` in `site.config.json` points to the new repository.
 - Cloudflare Pages: the preview project was created from an uploaded zip, so it is not linked to the repository. If a Git integration is added later, it uses the new repository.
 - The new repository holds no pull request refs and none of the old unreachable objects, so the old address does not travel with it. This is the main advantage over option B.
 
