@@ -5,6 +5,7 @@ import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
+import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
 
 export const STATUS_LABEL = {
   reads: 'Reads',
@@ -84,7 +85,7 @@ function iconSprite() {
 /** The site mark: a page with one highlighted line. It carries no text, so it survives a rename. */
 const MARK = '<svg class="mark" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
 
-export const THEME_COLOR = { light: '#f5f6fa', dark: '#0d1018' };
+export const THEME_COLOR = { light: '#fafafa', dark: '#0b0c10' };
 
 export function layout(config, page) {
   const canonical = url(config, page.path);
@@ -99,7 +100,7 @@ export function layout(config, page) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${h(csp(config))}">
-<title>${h(title)}</title>
+${page.headScript ? `<script src="${page.headScript}"></script>\n` : ''}<title>${h(title)}</title>
 <meta name="description" content="${h(page.description)}">
 ${page.noindex ? '<meta name="robots" content="noindex">\n' : `<link rel="canonical" href="${h(canonical)}">\n`}<meta property="og:type" content="${page.ogType || 'website'}">
 <meta property="og:site_name" content="${h(config.name)}">
@@ -242,6 +243,23 @@ ${newsletterEnabled(config)
   });
 }
 
+/** New visible text of the matrix controls, kept in one place for the content review. */
+export const MATRIX_COPY = {
+  searchLabel: 'Search files and notes',
+  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
+  notesToggle: 'Hide notes'
+};
+
+/**
+ * A file path that may wrap after each "/" and nowhere else: each segment is kept whole (so
+ * "copilot-instructions.md" never splits at its hyphen) and a <wbr> follows each slash. The text is unchanged.
+ */
+export function pathBreaks(p) {
+  const parts = String(p).split('/');
+  if (parts.length === 1) return h(p);
+  return parts.map((s) => `<span class="seg">${h(s)}</span>`).join('/<wbr>');
+}
+
 // Sentences shared by the matrix and the reference pages, so the explanation of the two special statuses is written once.
 export const UNVERIFIED_MEANING = 'A cell reads "unverified" when the page we checked does not mention the file.';
 export const NO_SOURCE_SENTENCE = 'We then have no source, which says nothing about whether the tool reads it.';
@@ -270,6 +288,7 @@ export function matrixPage(ctx) {
       const c = cellMap.get(`${t.id}/${f.id}`);
       const isStale = stale.has(`${t.id}/${f.id}`);
       return `<td class="st-${c.status}" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}"><div class="cell">
+<p class="cell-tool">${h(t.name)}</p>
 <p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
 <p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
@@ -277,27 +296,29 @@ export function matrixPage(ctx) {
     return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
   const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
-  const counts = Object.keys(STATUS_LABEL).map((k) => `${STATUS_LABEL[k]}: ${matrix.cells.filter((c) => c.status === k).length}`).join(', ');
   const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
   const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
-  const filters = `<div class="filters" id="matrix-filters" hidden>
+  // Without JavaScript the bar is hidden by CSS; assets/js-flag.js sets html.js before the first paint, so the
+  // bar shows from the first render and never pushes the page down.
+  const filters = `<div class="filters" id="matrix-filters">
+<div class="filter-search"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"></div>
 <fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
 <fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
-<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div>
+<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><span class="filter-actions"><button type="button" class="chip" aria-pressed="false" data-notes>${h(MATRIX_COPY.notesToggle)}</button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></span></div>
 </div>`;
   const body = `<h1>Which coding agent reads which instruction file</h1>
 <p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
-<p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)} Counts: ${h(counts)}.</p>
+<p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
+<ul class="status-counts" aria-label="Cells by status">${statusCounts(matrix.cells)}</ul>
 ${filters}
+<details class="legend-box" open><summary>Legend</summary><ul class="legend">${legend}</ul></details>
 <p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
-<div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
+<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
 <caption class="sr">Instruction files by tool, with source and check date per cell</caption>
 <thead><tr><th scope="col"><a href="/files/">File</a></th>${head}</tr></thead>
 <tbody>
 ${rows}
 </tbody></table></div>
-<h2>Legend</h2>
-<ul class="legend">${legend}</ul>
 <h2>Data</h2>
 <p>The same data is published as <a href="/data/matrix.json">matrix.json</a>. Need a starting file? Use the <a href="/generator/">generator</a>.</p>
 <p>Each file type also has <a href="/files/">its own page</a>, and the cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
@@ -307,7 +328,7 @@ ${citeBlock(config, matrix)}
   return layout(config, {
     path: '/matrix/', title: 'Which coding agent reads which instruction file',
     description: `Matrix of ${matrix.tools.length} AI coding tools and ${matrix.files.length} instruction file types, with an official source and a check date for each cell.`,
-    body, script: '/assets/matrix.js',
+    body, script: '/assets/matrix.js', headScript: '/assets/js-flag.js',
     jsonLd: [
       { '@type': 'Dataset', name: 'Instruction files read by AI coding agents', description: `Which of ${matrix.files.length} instruction file types each of ${matrix.tools.length} AI coding tools reads, with source URL and check date per cell.`, url: url(config, '/matrix/'), dateModified: matrix.lastReviewed, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: sources, distribution: [{ '@type': 'DataDownload', encodingFormat: 'application/json', contentUrl: url(config, '/data/matrix.json') }], creator: publisher(config) },
       breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/']])
@@ -339,7 +360,7 @@ export function filePage(ctx, file) {
 <td class="cell note-col"><p class="note">${inlineHtml(cell.note)}</p></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener" aria-label="Source — ${h(file.path)} × ${h(tool.name)}">Source${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
-  const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a></li>`).join('');
+  const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${pathBreaks(f.path)}</code></a></li>`).join('');
   const toolNames = listNames(matrix.tools.map((t) => t.name));
   const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
 <p class="lead">${h(file.description)}</p>
@@ -354,7 +375,7 @@ ${tr}
 <h2>Data</h2>
 <p>These rows come from the <a href="/matrix/">instruction file matrix</a>, also published as <a href="/data/matrix.json">matrix.json</a>. Cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
 <h2 id="other-files">Other instruction files</h2>
-<ul>${others}</ul>
+<ul class="file-links">${others}</ul>
 <p><a href="/files/">All instruction file pages</a></p>
 ${citeBlock(config, matrix)}
 <h2 id="newsletter">Newsletter</h2>
@@ -445,46 +466,79 @@ export function agentsMdSentence(matrix) {
   return `According to the <a href="/matrix/">matrix</a>, ${parts.join(', and ')}.`;
 }
 
+/**
+ * New visible text of the generator: hints, presets and the usage steps. Kept in one place so the
+ * content review can read it, and so tests/generator-page.test.mjs can check that each line is on the page.
+ */
+export const GENERATOR_COPY = {
+  presetsLabel: 'Start from an example:',
+  clear: 'Clear the form',
+  hints: {
+    projectName: 'Becomes the title of the file.',
+    description: 'What the project does, in one sentence. It goes right under the title.',
+    stack: 'Languages, frameworks and main tools, with versions when they matter.',
+    commands: 'The exact commands the agent should run. Leave a field empty to skip it.',
+    rules: 'Each list becomes its own section. Leave a list empty to skip it.',
+    always: 'What the agent should do on every task.',
+    askFirst: 'What the agent must ask you about before doing it.',
+    never: 'Hard limits the agent must not cross.',
+    pr: 'How to write commit messages and pull requests.',
+    cursorGlobs: 'With globs, Cursor attaches the rule when a matching file is in context. Without globs, the rule always applies.'
+  },
+  steps: [
+    'Save `AGENTS.md` at the root of your repository and commit it.',
+    'Save each extra file at the path shown in its title, relative to the repository root.',
+    'Start a new agent session. The matrix shows which tool reads which file.'
+  ]
+};
 export function generatorPage(ctx) {
   const { config, matrix } = ctx;
-  const field = (id, label, hint, rows) => `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off">`}</div>`;
+  // Each field has a hint that says what it is for and a placeholder with a concrete example.
+  const field = (id, label, hint, rows, example) => {
+    const ph = example ? ` placeholder="${h(`e.g. ${example}`).replace(/\n/g, '&#10;')}"` : '';
+    const describedBy = hint ? ` aria-describedby="${id}-hint"` : '';
+    return `<div class="field"><label for="${id}">${label}</label>${hint ? `<span class="muted block" id="${id}-hint">${hint}</span>` : ''}${rows ? `<textarea id="${id}" name="${id}" rows="${rows}"${describedBy}${ph}></textarea>` : `<input id="${id}" name="${id}" type="text" autocomplete="off"${describedBy}${ph}>`}</div>`;
+  };
+  // The preset buttons are in the page from the start, disabled until the script runs, so showing them moves nothing.
+  const presets = GENERATOR_PRESETS.map((p) => `<button type="button" class="chip" data-preset="${h(p.id)}" disabled>${h(p.label)}</button>`).join('');
   const body = `<h1>Instruction file generator</h1>
 <p class="lead">Fill in the form and copy the files. Everything runs in your browser. Nothing is sent or stored.</p>
 <noscript><p><strong>This page needs JavaScript to generate files.</strong> The <a href="/matrix/">matrix</a> works without it.</p></noscript>
 <div class="gen">
 <form id="gen-form" class="gen-form" autocomplete="off">
+<div class="gen-presets" id="gen-presets" role="group" aria-labelledby="gen-presets-label"><span id="gen-presets-label">${h(GENERATOR_COPY.presetsLabel)}</span><div class="chips">${presets}<button type="button" class="btn-quiet chip" data-preset="clear" disabled>${h(GENERATOR_COPY.clear)}</button></div></div>
 <fieldset><legend>Project</legend>
-${field('projectName', 'Project name', '', 0)}
-${field('description', 'One-line description', '', 0)}
-${field('stack', 'Stack', 'One item per line.', 3)}
+${field('projectName', 'Project name', GENERATOR_COPY.hints.projectName, 0, 'my-app')}
+${field('description', 'One-line description', GENERATOR_COPY.hints.description, 0, 'Web app for booking meeting rooms, built with Next.js.')}
+${field('stack', 'Stack', `${GENERATOR_COPY.hints.stack} One item per line.`, 3, 'TypeScript\nNext.js 15\nPostgreSQL')}
 </fieldset>
 <fieldset><legend>Commands</legend>
-${field('installCmd', 'Install', '', 0)}${field('devCmd', 'Run in development', '', 0)}${field('buildCmd', 'Build', '', 0)}${field('testCmd', 'Test', '', 0)}${field('lintCmd', 'Lint', '', 0)}
+<p class="muted">${h(GENERATOR_COPY.hints.commands)}</p>
+${field('installCmd', 'Install', '', 0, 'npm ci')}${field('devCmd', 'Run in development', '', 0, 'npm run dev')}${field('buildCmd', 'Build', '', 0, 'npm run build')}${field('testCmd', 'Test', '', 0, 'npm test')}${field('lintCmd', 'Lint', '', 0, 'npm run lint')}
 </fieldset>
 <fieldset><legend>Rules</legend>
-${field('style', 'Code style', 'One rule per line.', 3)}
-${field('architecture', 'Project layout', 'One line per directory or module.', 3)}
-${field('always', 'Always', '', 2)}
-${field('askFirst', 'Ask first', '', 2)}
-${field('never', 'Never', '', 2)}
-${field('pr', 'Commits and pull requests', '', 2)}
+<p class="muted">${h(GENERATOR_COPY.hints.rules)}</p>
+${field('style', 'Code style', 'One rule per line.', 3, 'Use TypeScript strict mode\nPrefer named exports')}
+${field('architecture', 'Project layout', 'One line per directory or module.', 3, 'src/app/: pages and routes\nsrc/lib/: shared code')}
+${field('always', 'Always', h(GENERATOR_COPY.hints.always), 2, 'Run npm test before you finish a task')}
+${field('askFirst', 'Ask first', h(GENERATOR_COPY.hints.askFirst), 2, 'Adding a dependency')}
+${field('never', 'Never', h(GENERATOR_COPY.hints.never), 2, 'Commit secrets or .env files')}
+${field('pr', 'Commits and pull requests', h(GENERATOR_COPY.hints.pr), 2, 'Use Conventional Commits: feat:, fix:, docs:')}
 </fieldset>
 <fieldset><legend>Files to generate</legend>
-<div id="gen-main"></div>
 <p class="muted">AGENTS.md is the main file and is always generated. ${agentsMdSentence(matrix)} Add the files below only for tools that need their own.</p>
 <p>Optional extra files:</p>
 <div id="gen-targets"></div>
-</fieldset>
-<fieldset><legend>Options</legend>
-<div class="field"><span id="claude-mode-label">CLAUDE.md content</span>
+<div class="gen-opt" data-option-for="claude-md"><span id="claude-mode-label">CLAUDE.md content</span>
 <label class="check"><input type="radio" name="claudeMode" value="import" checked> Import AGENTS.md with <code>@AGENTS.md</code></label>
 <label class="check"><input type="radio" name="claudeMode" value="full"> Full copy of the instructions</label></div>
-<div class="field"><label for="cursorGlobs">Cursor rule globs</label><span class="muted block">Leave empty for none. Example: <code>src/**/*.ts</code></span><input id="cursorGlobs" name="cursorGlobs" type="text"></div>
-<label class="check"><input type="checkbox" name="cursorAlwaysApply" checked> Cursor rule: always apply</label>
-<div class="field"><label for="copilotApplyTo">Copilot applyTo glob</label><span class="muted block">Used for the path-specific file. Default: <code>**</code></span><input id="copilotApplyTo" name="copilotApplyTo" type="text"></div>
+<div class="gen-opt field" data-option-for="cursor-mdc"><label for="cursorGlobs">Cursor rule globs</label><span class="muted block" id="cursorGlobs-hint">Leave empty for none. Example: <code>src/**/*.ts</code> ${h(GENERATOR_COPY.hints.cursorGlobs)}</span><input id="cursorGlobs" name="cursorGlobs" type="text" aria-describedby="cursorGlobs-hint"></div>
+<div class="gen-opt field" data-option-for="copilot-path"><label for="copilotApplyTo">Copilot applyTo glob</label><span class="muted block" id="copilotApplyTo-hint">Used for the path-specific file. Default: <code>**</code></span><input id="copilotApplyTo" name="copilotApplyTo" type="text" aria-describedby="copilotApplyTo-hint"></div>
 </fieldset>
 </form>
-<div class="gen-out" aria-live="polite"><h2>Output</h2><div id="gen-output"></div></div>
+<div class="gen-out" aria-live="polite"><h2>Output</h2>
+<ol class="gen-steps">${GENERATOR_COPY.steps.map((t) => `<li>${inlineHtml(t).replace('The matrix', '<a href="/matrix/">The matrix</a>')}</li>`).join('')}</ol>
+<div id="gen-output"></div></div>
 </div>
 <p class="muted">Which tool reads which file is in the <a href="/matrix/">matrix</a>. Check it before you rely on a file.</p>`;
   return layout(config, {
@@ -776,7 +830,7 @@ export function renderHeaders(config) {
 ${hsts}`;
 }
 
-export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#3a3fd8}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5aaff}.l{fill:#0d1018}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
+export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#4338ca}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5b4fc}.l{fill:#0b0c10}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
 `;
 
 export { path, daysBetween };

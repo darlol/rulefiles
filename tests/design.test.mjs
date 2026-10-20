@@ -58,7 +58,8 @@ const PAIRS = [
   ['config-fg', 'config-bg', TEXT, 'status: configurable, notices, stale flag'], ['migration-fg', 'migration-bg', TEXT, 'status: migration only'],
   ['notread-fg', 'notread-bg', TEXT, 'status: not read'], ['unverified-fg', 'unverified-bg', TEXT, 'status: unverified'],
   ['unverified-fg', 'surface', UI, 'unverified dashed border on cards'],
-  ['control', 'bg', UI, 'input and button borders on the page'], ['control', 'surface', UI, 'input and button borders on cards'],
+  ['control', 'bg', UI, 'input borders on the page'], ['control', 'surface', UI, 'input borders on cards'],
+  ['ctl-line', 'bg', UI, 'button and chip borders on the page'], ['ctl-line', 'surface', UI, 'button and chip borders on cards'],
   ['accent', 'bg', UI, 'focus ring on the page'], ['accent', 'surface', UI, 'focus ring on cards'], ['accent', 'sunken', UI, 'focus ring on sunken areas']
 ];
 
@@ -159,7 +160,6 @@ test('the reduced-motion check fails when a neutralisation is removed', () => {
     'catch-all transition duration': ['transition-duration: 0.01ms !important;', ''],
     'catch-all animation duration': ['animation-duration: 0.01ms !important;', ''],
     'catch-all animation delay': ['animation-delay: 0s !important;', ''],
-    'archive card lift reset': ['.issue:hover { transform: none; }', ''],
     'button press reset': [', button:active, .btn:active { transform: none; }', ' { transform: none; }'],
     'arrow nudge reset': ['.cta .btn-primary:hover .ic { transform: none; }', '']
   };
@@ -385,7 +385,7 @@ test('the fallback check fails when a fallback is removed or a recent feature is
   const mutations = {
     'body vh fallback': ['min-height: 100vh; min-height: 100dvh;', 'min-height: 100dvh;'],
     'table-wrap vh fallback': ['max-height: 64rem; max-height: min(82vh, 64rem); max-height: min(82dvh, 64rem);', 'max-height: min(82dvh, 64rem);'],
-    'generator vh fallback': ['max-height: calc(100vh - 2rem); max-height: calc(100dvh - 2rem);', 'max-height: calc(100dvh - 2rem);'],
+    'generator vh fallback': ['max-height: calc(100vh - 6rem); max-height: calc(100dvh - 6rem);', 'max-height: calc(100dvh - 6rem);'],
     'wrap margin fallback': ['margin-left: auto; margin-right: auto; margin-inline: auto;', 'margin-inline: auto;'],
     'wrap padding fallback': ['padding-left: var(--s4); padding-right: var(--s4); padding-inline: var(--s4);', 'padding-inline: var(--s4);'],
     'button padding fallback': ['padding-left: var(--s4); padding-right: var(--s4); padding-inline: var(--s4); }', 'padding-inline: var(--s4); }'],
@@ -452,7 +452,7 @@ test('the current page is marked in the main navigation and tables have a captio
   assert.equal((main.match(/aria-current="page"/g) || []).length, 1);
   assert.match(main, /<a href="\/matrix\/" aria-current="page">Matrix<\/a>/);
   assert.match(html, /<caption class="sr">/);
-  assert.match(html, /<div class="table-wrap" tabindex="0" role="region" aria-label="Instruction file matrix">/);
+  assert.match(html, /<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix">/);
   assert.ok(!/<th>/.test(html), 'every th declares a scope');
 });
 
@@ -685,4 +685,115 @@ test('the mini-matrix check fails when the hiding entry animation comes back', (
   assert.ok(specimenHidingProblems(minified.replace('{from{transform', '{from{opacity:0;transform'), html).length > 0, 'a hiding step in minified keyframes must fail');
   assert.ok(specimenHidingProblems(css, html.replace(/ c3">/, ' c2">')).length > 0, 'a tile moved to another column must fail');
   assert.ok(specimenHidingProblems(css, html.replace(/<span class="tile [^>]*>.*?<\/span>/, '')).length > 0, 'a missing tile must fail');
+});
+
+// ---------- Main navigation: never clipped on narrow screens ----------
+
+// Every declaration block of a selector, in source order, media queries included.
+function rulesFor(selector) {
+  const out = [];
+  const src = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = re.exec(src))) {
+    if (m[1].split(',').map((s) => s.trim()).includes(selector)) out.push(m[2]);
+  }
+  return out;
+}
+
+test('the main navigation wraps instead of clipping a link, at 360 and 390 px and below', () => {
+  const nav = rulesFor('.site-header nav');
+  assert.ok(nav.length > 0, 'the nav has rules');
+  for (const decl of nav) {
+    assert.doesNotMatch(decl, /overflow(-x)?\s*:\s*(hidden|auto|scroll|clip)/, 'the nav never hides or scrolls its links');
+    assert.doesNotMatch(decl, /flex-wrap\s*:\s*nowrap/, 'the nav may wrap onto a second line');
+    assert.doesNotMatch(decl, /(^|;)\s*(width|max-width)\s*:\s*[\d.]+(px|rem|em|ch)/, 'the nav has no fixed width');
+  }
+  assert.ok(nav.some((d) => /flex-wrap\s*:\s*wrap/.test(d)), 'the nav wraps');
+  // One link alone always fits a 360 px screen: the longest label, set in the widest case (every glyph 0.7em),
+  // plus its padding, stays under the 328 px left inside the page padding.
+  const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  const labels = [...(/<nav aria-label="Main">([\s\S]*?)<\/nav>/.exec(html)[1]).matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1]);
+  assert.equal(labels.length, 5);
+  const longest = Math.max(...labels.map((l) => l.length));
+  for (const vw of [360, 390]) assert.ok(longest * 0.7 * 15 + 2 * 12 <= vw - 32, `the longest link fits at ${vw} px`);
+});
+
+test('the current page link keeps the weight of the other links, so marking it never widens the nav', () => {
+  const current = rulesFor('.site-header nav a[aria-current="page"]');
+  assert.ok(current.length > 0);
+  for (const decl of current) assert.doesNotMatch(decl, /font-weight|font-size|padding|letter-spacing/);
+});
+
+test('the favicon uses the accent colour of each theme', () => {
+  const svg = fs.readFileSync(path.join(out, 'favicon.svg'), 'utf8');
+  assert.ok(svg.includes(`.b{fill:${light.accent}}`), 'light accent');
+  assert.ok(svg.includes(`.b{fill:${dark.accent}}`), 'dark accent');
+});
+
+test('anchor targets clear the header only where the header is sticky', () => {
+  assert.match(css, /@media \(min-width: 48rem\) \{ \[id\] \{ scroll-margin-top:/);
+  assert.doesNotMatch(css, /^\[id\] \{/m);
+});
+
+// ---------- Narrow screens: file links and matrix filters never overflow ----------
+
+// Pessimistic width of a run of text: every glyph 0.7em, as in the nav check above.
+const runWidth = (chars, fontPx) => chars * 0.7 * fontPx;
+const CONTENT = (vw) => vw - 2 * 16; // .wrap keeps 1rem on each side below 48rem.
+
+test('the other instruction files on each reference page are a .file-links row whose paths break only after a slash', () => {
+  const refs = pages().filter(([rel]) => /^files\/[^/]+\/index\.html$/.test(rel));
+  assert.ok(refs.length >= 9, 'one page per file type');
+  for (const [rel, html] of refs) {
+    const list = /<h2 id="other-files">Other instruction files<\/h2>\n<ul class="file-links">([\s\S]*?)<\/ul>/.exec(html);
+    assert.ok(list, `${rel}: the other files are a ul.file-links`);
+    for (const [, inner] of list[1].matchAll(/<code>([\s\S]*?)<\/code>/g)) {
+      const plain = inner.replace(/<span class="seg">|<\/span>|<wbr>/g, '');
+      assert.doesNotMatch(plain, /</, `${rel}: only seg spans and wbr inside the path`);
+      if (plain.includes('/')) {
+        assert.equal(inner, plain.split('/').map((s) => `<span class="seg">${s}</span>`).join('/<wbr>'), `${rel}: ${plain} breaks after each slash`);
+      }
+    }
+  }
+});
+
+test('a file link fits a 320 and a 360 px screen: it may wrap after a slash, and every segment fits on one line', () => {
+  const a = rulesFor('.file-links a').join(';');
+  const code = rulesFor('.file-links code').join(';');
+  const seg = rulesFor('.file-links .seg').join(';');
+  assert.match(a, /max-width:\s*100%/, 'the link is never wider than its line');
+  assert.match(code, /overflow-wrap:\s*anywhere/, 'the path can break when it must');
+  assert.match(code, /min-width:\s*0/, 'the flex item can shrink below its longest word');
+  for (const d of [a, code]) assert.doesNotMatch(d, /white-space:\s*nowrap/, 'only a segment is kept whole');
+  assert.match(seg, /white-space:\s*nowrap/, 'a segment is kept whole, so a hyphen is not a break point');
+  const html = fs.readFileSync(path.join(out, 'files', 'agents-md', 'index.html'), 'utf8');
+  const segs = [...html.matchAll(/<span class="seg">([^<]*)<\/span>/g)].map((m) => m[1].length);
+  assert.ok(segs.length > 0);
+  const longest = Math.max(...segs) + 1; // with its slash
+  // 0.88em code on a 16px body, the link padding (0.75rem each side) and its 1px borders.
+  for (const vw of [320, 360]) assert.ok(runWidth(longest, 16 * 0.88) + 2 * 12 + 2 <= CONTENT(vw), `the longest segment fits at ${vw} px`);
+});
+
+test('the pill border of a file link uses the control line colour, at least 3:1 on the page and on cards', () => {
+  assert.match(rulesFor('.file-links a').join(';'), /border:\s*1px solid var\(--ctl-line\)/);
+  for (const set of [light, dark]) for (const bg of ['bg', 'surface']) assert.ok(contrast(set['ctl-line'], set[bg]) >= 3);
+});
+
+test('the matrix filters wrap onto new lines instead of scrolling sideways, and every chip fits at 390 px', () => {
+  for (const sel of ['.chips', '.filters .chips', '.filters', '.filter-group']) {
+    for (const decl of rulesFor(sel)) {
+      assert.doesNotMatch(decl, /flex-wrap\s*:\s*nowrap/, `${sel} never stays on one line`);
+      assert.doesNotMatch(decl, /overflow(-x)?\s*:\s*(auto|scroll|hidden|clip)/, `${sel} never scrolls or clips`);
+    }
+  }
+  assert.ok(rulesFor('.chips').some((d) => /flex-wrap\s*:\s*wrap/.test(d)), 'the chips wrap');
+  const html = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
+  const chips = [...html.matchAll(/<button type="button" class="chip[^"]*" aria-pressed="false" data-filter-(tool|status)="[^"]+">([\s\S]*?)<\/button>/g)]
+    .map((m) => m[2].replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  assert.ok(chips.includes('GitHub Copilot'), 'the GitHub Copilot chip is there');
+  assert.equal(chips.filter((c) => /\d+$/.test(c)).length, 6, 'six status chips with a count');
+  const longest = Math.max(...chips.map((c) => c.length));
+  // 0.875rem text, 0.8rem padding each side, a 1em icon and a gap, 1px borders; the filter box has 1rem padding and a 1px border.
+  for (const vw of [360, 390]) assert.ok(runWidth(longest, 14) + 2 * 12.8 + 14 + 8 + 2 <= CONTENT(vw) - 2 * 16 - 2, `the widest chip fits at ${vw} px`);
 });

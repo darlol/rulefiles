@@ -1,11 +1,17 @@
 import { TARGETS, generateFiles } from './generator-core.js';
+import { presetValues } from './generator-presets.js';
 
 const form = document.getElementById('gen-form');
 const out = document.getElementById('gen-output');
 const targetBox = document.getElementById('gen-targets');
-const mainBox = document.getElementById('gen-main');
+const presetBar = document.getElementById('gen-presets');
 
+// AGENTS.md is always generated, so it gets no checkbox. Each extra file gets one, and the options of a
+// file sit right under its checkbox and show only while that file is selected.
+const options = {};
+for (const el of form.querySelectorAll('[data-option-for]')) options[el.dataset.optionFor] = el;
 for (const t of TARGETS) {
+  if (t.main) continue;
   const label = document.createElement('label');
   label.className = 'check';
   const input = document.createElement('input');
@@ -13,29 +19,45 @@ for (const t of TARGETS) {
   input.name = 'target';
   input.value = t.id;
   input.checked = t.checked;
-  if (t.main) {
-    input.disabled = true;
-    label.append(input, ' ' + t.label + ' (main file)');
-    mainBox.append(label);
-  } else {
-    label.append(input, ' ' + t.label);
-    targetBox.append(label);
+  label.append(input, ' ' + t.label);
+  targetBox.append(label);
+  if (options[t.id]) targetBox.append(options[t.id]);
+}
+
+function syncOptions() {
+  for (const input of targetBox.querySelectorAll('input[name="target"]')) {
+    if (options[input.value]) options[input.value].hidden = !input.checked;
   }
 }
 
 function values() {
   const data = Object.fromEntries(new FormData(form).entries());
-  const targets = [...form.querySelectorAll('input[name="target"]:checked')].map((i) => i.value);
+  const main = TARGETS.filter((t) => t.main).map((t) => t.id);
+  const extra = [...form.querySelectorAll('input[name="target"]:checked')].map((i) => i.value);
+  const globs = (data.cursorGlobs || '').trim();
   return {
     data,
-    targets,
+    targets: main.concat(extra),
     options: {
       claudeMode: data.claudeMode,
       cursorGlobs: data.cursorGlobs,
-      cursorAlwaysApply: form.elements.cursorAlwaysApply.checked,
+      // A rule with globs applies to the matching files; a rule without globs always applies.
+      cursorAlwaysApply: globs === '',
       copilotApplyTo: data.copilotApplyTo
     }
   };
+}
+
+if (presetBar) {
+  presetBar.addEventListener('click', (e) => {
+    const button = e.target.closest('button[data-preset]');
+    if (!button) return;
+    const v = presetValues(button.dataset.preset);
+    if (!v) return;
+    for (const name of Object.keys(v)) if (form.elements[name]) form.elements[name].value = v[name];
+    render();
+  });
+  for (const b of presetBar.querySelectorAll('button')) b.disabled = false;
 }
 
 function render() {
@@ -93,6 +115,7 @@ function render() {
 }
 
 form.addEventListener('input', render);
-form.addEventListener('change', render);
+form.addEventListener('change', () => { syncOptions(); render(); });
 form.addEventListener('submit', (e) => e.preventDefault());
+syncOptions();
 render();

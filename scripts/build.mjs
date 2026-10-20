@@ -72,10 +72,10 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   put('data/matrix.json', JSON.stringify(ctx.matrix, null, 2) + '\n');
   put('data/digests.json', JSON.stringify(ctx.digests, null, 2) + '\n');
 
-  // Static assets. generator-core.js and matrix-filter.js are shared with the tests and are copied unchanged.
+  // Static assets. generator-core.js, generator-presets.js and matrix-filter.js are shared with the tests and are copied unchanged.
   fs.mkdirSync(path.join(outDir, 'assets'), { recursive: true });
   fs.cpSync(path.join(root, 'src', 'static'), path.join(outDir, 'assets'), { recursive: true });
-  for (const f of ['generator-core.js', 'matrix-filter.js']) fs.copyFileSync(path.join(root, 'src', 'js', f), path.join(outDir, 'assets', f));
+  for (const f of ['generator-core.js', 'generator-presets.js', 'matrix-filter.js']) fs.copyFileSync(path.join(root, 'src', 'js', f), path.join(outDir, 'assets', f));
 
   const warnings = launchWarnings(built, ctx.config);
   const problems = strict ? [...warnings, ...releaseProblems(ctx.config)] : [];

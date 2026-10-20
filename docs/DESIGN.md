@@ -6,7 +6,7 @@ How the site looks and why, so the next change does not have to guess.
 
 The site is a reference, so it reads like one: dates, source links and status badges first, decoration last. The one picture it allows itself is a small grid on the home page and in the share image. It is drawn from the real matrix data, one tile per cell, colored by status.
 
-The type is Hanken Grotesk for everything except code, which uses the system monospace stack. Cards use one device, a 1px border. There are no shadows and no gradients.
+The type is Hanken Grotesk for everything except code, which uses the system monospace stack. Cards use one device, a 1px border. There are no shadows and no gradients. The palette is neutral grey with one indigo accent, and the header stays at the top of the window from 48rem wide.
 
 ## Tokens
 
@@ -41,6 +41,8 @@ The mark is a page with one highlighted line. It has no letters, so it does not 
 
 `src/js/matrix-filter.js` holds the logic and has no DOM access. `src/static/matrix.js` wires it to the page. An empty selection means no filter. Without JavaScript the filter bar stays hidden and the whole table shows. Nothing is stored and nothing is fetched.
 
+The search reads the file path, its description, the tool name and the note of each cell, and keeps the cells that hold every word typed. The notes are shown by default, with or without JavaScript, because they carry the conditions a status depends on. The Hide notes toggle folds them for a compact grid, and they come back while a search is typed. Below 48rem the table becomes one card per file, with the tool name on each cell, so nothing scrolls sideways. The legend sits above the table in a `details` element. All of it is CSS and the same two scripts, so the page needs nothing new from the CSP.
+
 ## Browser support
 
 The versions below are the first release of each engine that supports the feature without a prefix or a flag. They come from MDN's browser-compat-data (the `@mdn/browser-compat-data` package, version 8.1.6, built on 15 October 2026), which feeds the compatibility tables on MDN. WOFF2 comes from caniuse (`Fyrd/caniuse`, read on 16 October 2026). `dvh` and `text-wrap` were also checked against their MDN pages. Where two numbers are given for Chrome / Edge, the second is the first EdgeHTML version; Chromium-based Edge starts at 79. "No" means the engine has no support.
@@ -61,7 +63,7 @@ Floors that follow from the table:
 | Grid with `repeat(auto-fit)` and `minmax()` | home, cards, legend | 57 / 16 | 52 | 10.1 | Block layout. |
 | `gap` in flexbox | header, chips, footers | 84 | 63 | 14.1 | Items touch. |
 | `gap` in grid | layouts | 66 / 16 | 61 | 12 | Items touch. |
-| `position: sticky` | matrix header row and first column | 56 / 16 | 32 | 13 | They scroll with the table. |
+| `position: sticky` | site header from 48rem, matrix header row and first column | 56 / 16 | 32 | 13 | They scroll with the page or the table. |
 | `margin-inline`, `padding-inline` | page width, buttons | 87 | 66 | 14.1 | `margin-left`, `margin-right`, `padding-left` and `padding-right` come first in the same rule. |
 | `dvh` | page height, table and generator panel | 108 | 101 | 15.4 | A `vh` declaration comes first. |
 | `text-wrap: balance` | headings | 114 | 121 | 17.5 | Normal wrapping. |
