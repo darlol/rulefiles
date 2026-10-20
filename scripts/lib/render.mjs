@@ -363,7 +363,7 @@ ${tr}
 <h2>Data</h2>
 <p>These rows come from the <a href="/matrix/">instruction file matrix</a>, also published as <a href="/data/matrix.json">matrix.json</a>. Cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>
 <h2 id="other-files">Other instruction files</h2>
-<ul>${others}</ul>
+<ul class="file-links">${others}</ul>
 <p><a href="/files/">All instruction file pages</a></p>
 ${citeBlock(config, matrix)}
 <h2 id="newsletter">Newsletter</h2>

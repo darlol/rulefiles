@@ -315,6 +315,10 @@ table.matrix { border-collapse: separate; border-spacing: 0; width: 100%; }
 /* A citation line carries a long URL that cannot wrap on a narrow screen without a break opportunity. */
 #cite ~ p { overflow-wrap: anywhere; }
 .ref time { white-space: nowrap; }
+.file-links { list-style: none; margin: 0 0 var(--s4); padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
+.file-links a { display: inline-flex; min-height: 2.25rem; align-items: center; padding: 0 var(--s3); border: 1px solid var(--line); border-radius: 999px; background: var(--surface); text-decoration: none; }
+.file-links a:hover { border-color: var(--control); }
+.file-links code { background: none; padding: 0; overflow-wrap: normal; }
 .matrix tbody tr:hover > * { background: var(--sunken); }
 .cell p { margin: 0; }
 .cell .cell-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
