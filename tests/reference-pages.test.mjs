@@ -15,6 +15,8 @@ process.env.NEWSLETTER_FORM_ACTION = '';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const MATRIX = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'matrix.json'), 'utf8'));
+// The footer links the public repository when repoUrl is set: an address the site already allows on every page.
+const REPO_URL = JSON.parse(fs.readFileSync(path.join(ROOT, 'site.config.json'), 'utf8')).repoUrl || '';
 const BASE = 'https://rulefiles.dev';
 const LICENSE = 'https://creativecommons.org/licenses/by/4.0/';
 const LABEL = { reads: 'Reads', 'reads-conditionally': 'Reads, with conditions', configurable: 'Only if configured', 'migration-only': 'Migration only', 'not-read': 'Not read', unverified: 'Unverified' };
@@ -179,7 +181,7 @@ test('the new pages link no external URL other than the sourceUrl of their own c
   const pages = ['files/index.html', 'unverified/index.html', ...MATRIX.files.map((f) => `files/${f.id}/index.html`)];
   for (const rel of pages) {
     const html = read(rel);
-    const allowed = new Set([...allowedHere(rel), LICENSE]);
+    const allowed = new Set([...allowedHere(rel), LICENSE, ...(REPO_URL ? [REPO_URL] : [])]);
     for (const m of html.matchAll(/https?:\/\/[^"'\s<>)\\;]+/g)) {
       const u = unescape(m[0]);
       if (u.startsWith(`${BASE}/`) || u === BASE || u === 'https://schema.org' || u === 'https://static.cloudflareinsights.com') continue;
