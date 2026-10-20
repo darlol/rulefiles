@@ -41,6 +41,11 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   const contentDate = (file, p) => parseFrontmatter(fs.readFileSync(path.join(root, 'content', file), 'utf8')).meta.updated || pageUpdated[p];
   page('/', r.homePage(ctx), latest ? latest.verifiedOn : undefined);
   page('/matrix/', r.matrixPage(ctx), ctx.matrix.lastReviewed);
+  // The reference pages change only when a cell is checked again, so their lastmod is the newest verifiedOn of the cells they show.
+  page('/files/', r.filesIndexPage(ctx), r.latestCheck(ctx.matrix.cells));
+  for (const f of ctx.matrix.files) page(`/files/${f.id}/`, r.filePage(ctx, f), r.latestCheck(ctx.matrix.cells.filter((c) => c.file === f.id)));
+  const unverified = ctx.matrix.cells.filter((c) => c.status === 'unverified');
+  page('/unverified/', r.unverifiedPage(ctx), unverified.length ? r.latestCheck(unverified) : ctx.matrix.lastReviewed);
   page('/generator/', r.generatorPage(ctx), pageUpdated['/generator/']);
   page('/digest/', r.digestIndexPage(ctx), latest ? latest.verifiedOn : undefined);
   for (const d of ctx.digests) page(`/digest/${d.week}/`, r.digestWeekPage(ctx, d), d.verifiedOn);
