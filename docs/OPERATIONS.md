@@ -1,6 +1,6 @@
 # Operations
 
-The GitHub repository is `darlol/rulefiles`, and it is private. It was created on 2026-10-16 when the history was rewritten (`docs/HISTORY-REWRITE.md`). Nothing in the code depends on the repository name.
+The GitHub repository is `darlol/rulefiles`, and it is public. `gh repo view darlol/rulefiles --json visibility` returned `PUBLIC` on 2026-10-20. It was created on 2026-10-16 when the history was rewritten (`docs/HISTORY-REWRITE.md`). Nothing in the code depends on the repository name.
 
 ## Hosting
 

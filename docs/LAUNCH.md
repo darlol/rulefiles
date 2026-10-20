@@ -152,9 +152,9 @@ Status on 2026-10-16:
 
 ## Before the repository becomes public
 
-These items wait until the repository is public. Nothing on the built site needs them today.
+These items were written while the repository was private. On 2026-10-20 it is public (`gh repo view darlol/rulefiles --json visibility` returns `PUBLIC`), and each item below gives its state on that day.
 
-1. Link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository. `repoUrl` in `site.config.json` is set to the public repository, and the About page links to it, in the "Data files" section. No other page, file or JSON-LD block carries the link.
-2. The repository is now named `rulefiles` (option A, 2026-10-16), and `docs/OPERATIONS.md` shows the owner's GitHub handle in a command. A public repository shows the handle in its URL anyway, and the owner accepts that by publishing the name on the legal pages.
-3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan. The command and the settings already made are in `docs/OPERATIONS.md`, under "Recommended protection for main".
+1. Open: link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository. Both files are at the root of the repository. `LICENSE` is the MIT license, with "Rulefiles contributors" in the copyright line. `LICENSE-DATA.md` puts the data and the text under CC BY 4.0 and points to a copy of the legal code in `docs/licenses/CC-BY-4.0.txt`. The About page names both licenses but links neither file. `repoUrl` in `site.config.json` is set to the public repository, and the About page links to it, in the "Data files" section. No other page, file or JSON-LD block carries the link.
+2. Done: the repository is named `rulefiles` (option A, 2026-10-16), and `docs/OPERATIONS.md` shows the owner's GitHub handle in a command. The repository is public, so its URL shows the handle, and so does the link on the About page, the only page of the site that links the repository. The owner accepts that by publishing the name on the legal pages.
+3. Done: apply the branch ruleset (`docs/ruleset-main.json`). GitHub refused it while the repository was private on the free plan. On 2026-10-20 the repository has one active ruleset, "main: pull request, CI, no force push", created on 2026-10-18. Every value set in `docs/ruleset-main.json` matches it. The live ruleset also has three fields the file leaves out: `required_reviewers` (empty), `require_extra_approval_for_unattributed_changes` (on) and `do_not_enforce_on_create` (off). The command and the settings already made are in `docs/OPERATIONS.md`, under "Recommended protection for main".
 4. Decide what happens to the old, archived repository. Deleting it is the owner's call.

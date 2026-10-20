@@ -165,7 +165,9 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
   assert.ok(text('docs/NEWSLETTER.md').includes('Confirmed on 2026-10-16: the API works on the free plan'));
   assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('Deleting the old repository stays the owner\'s call.'));
-  assert.ok(launch.includes('3. Apply the branch ruleset (`docs/ruleset-main.json`). GitHub refuses it while the repository is private on the free plan.'));
+  assert.ok(launch.includes('3. Done: apply the branch ruleset (`docs/ruleset-main.json`). GitHub refused it while the repository was private on the free plan.'));
+  assert.ok(launch.includes('1. Open: link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository.'));
+  for (const f of ['LICENSE', 'LICENSE-DATA.md', 'docs/licenses/CC-BY-4.0.txt']) assert.ok(fs.existsSync(path.join(root, f)), `${f}, named in docs/LAUNCH.md, exists`);
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
   assert.ok(launch.includes('which say "will" while the form is closed'));
@@ -358,7 +360,8 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.ok(ops.includes('reported as skipped with its reason, not passed'), 'the skipped commit-message check is documented');
   assert.doesNotMatch(ops, /assistant|this box|\bbox\b/i, 'no internal wording in docs/OPERATIONS.md');
   assert.ok(ops.includes('which was not installed on the machine used for the checks, so it was not run'));
-  assert.ok(ops.includes('The GitHub repository is `darlol/rulefiles`, and it is private.'));
+  assert.ok(ops.includes('The GitHub repository is `darlol/rulefiles`, and it is public.'));
+  assert.doesNotMatch(ops, /and it is private\./, 'docs/OPERATIONS.md no longer calls the repository private');
   assert.doesNotMatch(ops, /darlol\/agent-diffs|still called/, 'the repository is called rulefiles');
   assert.ok(ops.includes('"Upgrade to GitHub Pro or make this repository public"') && ops.includes('gh api --method POST repos/darlol/rulefiles/rulesets --input docs/ruleset-main.json'));
   assert.ok(ops.includes('Until then nothing blocks a direct push, a force push or the deletion of `main`'));
