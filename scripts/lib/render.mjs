@@ -341,7 +341,7 @@ export function filePage(ctx, file) {
 <td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
   const others = matrix.files.filter((f) => f.id !== file.id).map((f) => `<li><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a></li>`).join('');
   const toolNames = listNames(matrix.tools.map((t) => t.name));
-  const body = `<h1>${h(title)}</h1>
+  const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
 <p class="lead">${h(file.description)}</p>
 <p class="intro">${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
 <ul class="status-counts" aria-label="Tools by status">${statusCounts(rows.map((r) => r.cell))}</ul>
@@ -403,7 +403,7 @@ export function unverifiedPage(ctx) {
     .filter((c) => c && c.status === 'unverified');
   const fileOf = Object.fromEntries(matrix.files.map((f) => [f.id, f]));
   const rows = cells.map((c) => `<tr data-tool="${h(c.tool)}" data-file="${h(c.file)}"><th scope="row">${h(toolOf[c.tool].name)}</th>
-<td class="cell"><a href="/files/${h(c.file)}/"><code>${h(fileOf[c.file].path)}</code></a></td>
+<td class="cell file-col"><a href="/files/${h(c.file)}/"><code>${h(fileOf[c.file].path)}</code></a></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener">${h(c.sourceUrl.replace(/^https:\/\//, ''))}${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></td></tr>`).join('\n');
   const title = 'What the cited official pages don\'t say';

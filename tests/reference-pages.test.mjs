@@ -201,8 +201,14 @@ test('the pages follow the data: a cell that becomes unverified, a new descripti
     cell.note = 'Not mentioned on the page we checked. MUTATIONMARKER';
     const newDate = addDays(max(m.cells.map((c) => c.verifiedOn)), 1);
     cell.verifiedOn = newDate;
-    m.lastReviewed = newDate;
-    m.files.find((f) => f.id === 'gemini-md').description = 'Changed description MUTATIONMARKER.';
+    // The matrix is reviewed a day after the cell is checked: /unverified/ must keep the cell date, not lastReviewed.
+    m.lastReviewed = addDays(newDate, 1);
+    // Hostile values: markup, a closing script tag, an ampersand and quotes must come out escaped in HTML and in the JSON-LD.
+    const HOSTILE = '</script><img src=x onerror=alert(1)> & "q"';
+    const desc = `Changed description MUTATIONMARKER ${HOSTILE}`;
+    m.files.find((f) => f.id === 'gemini-md').description = desc;
+    m.files.find((f) => f.id === 'claude-md').path = `CLAUDE.md${HOSTILE}`;
+    cell.note = `Not mentioned on the page we checked. MUTATIONMARKER ${HOSTILE}`;
     fs.writeFileSync(path.join(root, 'data', 'matrix.json'), JSON.stringify(m, null, 2) + '\n');
     const dir = path.join(root, 'dist');
     build({ root, outDir: dir, quiet: true });
@@ -215,9 +221,37 @@ test('the pages follow the data: a cell that becomes unverified, a new descripti
     assert.equal(ld(filePage('claude-md', dir))[0].dateModified, newDate);
     assert.ok(read('sitemap.xml', dir).includes(`<loc>${BASE}/files/claude-md/</loc><lastmod>${newDate}</lastmod>`));
     assert.ok(read('sitemap.xml', dir).includes(`<loc>${BASE}/unverified/</loc><lastmod>${newDate}</lastmod>`));
-    assert.equal(text(filePage('gemini-md', dir).match(/<p class="lead">([\s\S]*?)<\/p>/)[1]), 'Changed description MUTATIONMARKER.');
-    assert.ok(read('llms.txt', dir).includes('Changed description MUTATIONMARKER.'));
+    assert.ok(!read('sitemap.xml', dir).includes(`<loc>${BASE}/unverified/</loc><lastmod>${m.lastReviewed}</lastmod>`));
+    const ESC = '&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt; &amp; &quot;q&quot;';
+    const gemini = filePage('gemini-md', dir);
+    assert.equal(gemini.match(/<p class="lead">([\s\S]*?)<\/p>/)[1], `Changed description MUTATIONMARKER ${ESC}`);
+    assert.ok(gemini.includes(`<a href="/files/claude-md/"><code>CLAUDE.md${ESC}</code></a>`), 'the other-files list escapes the path');
+    assert.ok(row.tds[1].includes(`MUTATIONMARKER ${ESC}`), 'the note is escaped');
+    for (const html of [gemini, filePage('claude-md', dir), read('unverified/index.html', dir), read('files/index.html', dir)]) {
+      assert.ok(!html.includes('<img src=x'), 'no raw markup from the data');
+      for (const block of html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)) assert.ok(!block[1].includes('<'), 'the JSON-LD escapes "<"');
+    }
+    assert.ok(gemini.includes('\\u003c/script>'), 'the closing script tag in the JSON-LD is written \\u003c/script>');
+    assert.equal(ld(gemini)[0].description, desc);
+    assert.equal(ld(filePage('claude-md', dir))[1].itemListElement[2].name, `CLAUDE.md${HOSTILE}`);
+    assert.ok(read('llms.txt', dir).includes(desc));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+});
+
+test('the longest file path cannot push the page sideways on a phone', () => {
+  // The repository has no browser in its tests, so the check is on the rules that make the h1 wrap: a <wbr> after each
+  // "/" of the path, and overflow-wrap: anywhere on h1 as a backstop for a segment longer than the screen.
+  // Measured with headless Chrome at 360 and 390 px: scrollWidth equals the viewport on every /files/ page.
+  const css = fs.readFileSync(path.join(ROOT, 'src', 'static', 'style.css'), 'utf8');
+  const rule = (sel) => (css.match(new RegExp(`(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\{([^}]*)\\}`)) || [])[1] || '';
+  assert.match(rule('h1'), /overflow-wrap:\s*anywhere/, 'h1 may wrap anywhere');
+  assert.match(rule('#cite ~ p'), /overflow-wrap:\s*anywhere/, 'the citation lines wrap their URL');
+  assert.match(rule('.ref td.file-col code'), /white-space:\s*nowrap/, 'the File column of /unverified/ keeps each path on one line');
+  const longest = [...MATRIX.files].sort((a, b) => b.path.length - a.path.length)[0];
+  const h1 = filePage(longest.id).match(/<h1>([\s\S]*?)<\/h1>/)[1];
+  assert.equal(h1, esc(`Which coding agents read ${longest.path}?`).replace(/\//g, '/<wbr>'), 'a break opportunity after each "/"');
+  assert.doesNotMatch(filePage(longest.id).match(/<title>(.*?)<\/title>/)[1], /<wbr>/, 'the title stays plain text');
+  assert.ok(Math.max(...h1.split(/<wbr>| /).map((s) => s.length)) <= 20, 'no unbreakable run longer than 20 characters');
 });
