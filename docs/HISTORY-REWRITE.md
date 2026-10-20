@@ -11,7 +11,7 @@ This file holds no personal address. Commands read the old and the new address f
 - `main` went from 16 commits to 16 commits. After the rewrite the authors and committers are the owner's GitHub login with its noreply address, and `GitHub <noreply@github.com>` for the squash merges. The personal address has 0 hit in `git log --all -S`, in `git grep` over every revision and in the raw commit objects. The old marker name has 0 hit in the messages and in the files of every revision. No `refs/pull` ref, tag or note was kept, and `git fsck --full` is clean. The GitHub signatures are gone, as expected.
 - Nine commits had a tree difference. In each one, the files that differ are exactly the files that held the old marker name, and the new file is the old file with that name replaced, with as many lines added as removed. Nothing else changed.
 - The new private repository `darlol/rulefiles` received `main` only, and CI is green on it. The old repository was deleted on 2026-10-18.
-- The ruleset could not be applied on the new repository yet, since GitHub refuses rulesets on a private repository on the free plan (see `docs/OPERATIONS.md`).
+- The ruleset could not be applied on the new repository yet (applied on 2026-10-18), since GitHub refuses rulesets on a private repository on the free plan (see `docs/OPERATIONS.md`).
 - Left as it was: the owner's first name remains in two lines of an old revision of a brand note, which the plan does not cover. The name is published on the legal pages anyway.
 
 ## What was found

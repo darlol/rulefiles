@@ -165,13 +165,17 @@ test('the deletion promises on the privacy page match the routine in docs/LAUNCH
   assert.ok(text('tests/build.test.mjs').includes('const DATA_WORD ='), 'the privacy and legal assertions follow the form setting');
   assert.ok(text('docs/NEWSLETTER.md').includes('Confirmed on 2026-10-16: the API works on the free plan'));
   assert.ok(launch.includes('6. Done on 2026-10-16: the history was rewritten with option A') && launch.includes('The old repository was deleted on 2026-10-18.'));
-  for (const [f, body] of [['docs/LAUNCH.md', launch], ['docs/HISTORY-REWRITE.md', text('docs/HISTORY-REWRITE.md')]]) assert.doesNotMatch(body, /archived and (stays )?private|Deleting the old repository stays|Deleting it is not done/, `${f} no longer says the old repository is kept`);
+  for (const [f, body] of [['docs/LAUNCH.md', launch], ['docs/HISTORY-REWRITE.md', text('docs/HISTORY-REWRITE.md')], ['docs/OPERATIONS.md', text('docs/OPERATIONS.md')]]) assert.doesNotMatch(body, /archived and (stays )?private|Deleting the old repository stays|Deleting it is not done/, `${f} no longer says the old repository is kept`);
   assert.ok(launch.includes('3. Done: apply the branch ruleset (`docs/ruleset-main.json`). GitHub refused it while the repository was private on the free plan.'));
   assert.ok(launch.includes('1. Open: link the About page to `LICENSE` and `LICENSE-DATA.md` on the repository.'));
   assert.ok(launch.includes('No other page or file of the built site, and no JSON-LD block, carries the link.') && /^4\. Done: deleted 2026-10-18\.$/m.test(launch));
   assert.doesNotMatch(launch, /Decide what happens to the old, archived repository/, 'item 4 holds only its state');
   assert.ok(text('docs/HISTORY-REWRITE.md').includes('Pull requests #1 to #11 and their review comments stayed in the old repository, which was deleted on 2026-10-18.'));
-  for (const f of ['LICENSE', 'LICENSE-DATA.md', 'docs/licenses/CC-BY-4.0.txt']) assert.ok(fs.existsSync(path.join(root, f)), `${f}, named in docs/LAUNCH.md, exists`);
+  for (const f of ['LICENSE', 'LICENSE-DATA.md', 'docs/licenses/CC-BY-4.0.txt']) assert.ok(fs.existsSync(path.join(root, f)) && text(f).trim().length > 0, `${f}, named in docs/LAUNCH.md, exists and is not empty`);
+  assert.ok(text('LICENSE').startsWith('MIT License\n') && text('LICENSE').includes('Permission is hereby granted, free of charge'), 'LICENSE is the MIT license');
+  assert.ok(text('LICENSE-DATA.md').includes('Creative Commons Attribution 4.0 International license (CC BY 4.0'), 'LICENSE-DATA.md names CC BY 4.0');
+  const ccText = text('docs/licenses/CC-BY-4.0.txt');
+  assert.ok(ccText.startsWith('Attribution 4.0 International\n') && ccText.includes('Creative Commons Attribution 4.0 International Public License'), 'docs/licenses/CC-BY-4.0.txt is the CC BY 4.0 legal code');
   assert.doesNotMatch(launch, /still named after the first project name|if the owner wants the personal address gone/);
   for (const title of ['Content-Security-Policy meta tag locks scripts, styles and connections to self', 'newsletter form is disabled without a provider and enabled with one']) assert.ok(text('tests/build.test.mjs').includes(`test('${title}'`), `the test named in docs/LAUNCH.md exists: ${title}`);
   assert.ok(launch.includes('which say "will" while the form is closed'));
@@ -348,7 +352,7 @@ test('the identity patterns catch an upper-case first name and a handle in a pag
 
 test('the history rewrite plan is written, holds no address, and names both options', () => {
   const plan = text('docs/HISTORY-REWRITE.md');
-  for (const needle of ['Status: written on 2026-10-16. Option A was carried out the same day', '## Result of option A, 2026-10-16', 'The old repository was deleted on 2026-10-18.', 'GitHub refuses rulesets on a private repository on the free plan', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
+  for (const needle of ['Status: written on 2026-10-16. Option A was carried out the same day', '## Result of option A, 2026-10-16', 'The old repository was deleted on 2026-10-18.', 'GitHub refuses rulesets on a private repository on the free plan', 'The ruleset could not be applied on the new repository yet (applied on 2026-10-18), since', 'bundle create', 'git-filter-repo', '--mailmap', 'Option A, without force-push', 'Option B, with force-push', 'refs/pull', 'Keep my email addresses private', 'Block command line pushes that expose my email', 'git grep', '-S"$OLD_EMAIL"', 'Where the address can remain']) {
     assert.ok(plan.includes(needle), needle);
   }
   assert.match(plan, /Option B, with force-push on main \(needs the owner's explicit approval\)/);
