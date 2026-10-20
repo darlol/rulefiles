@@ -6,7 +6,7 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
-import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
+import { layout, renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
 import { matrixStats, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
@@ -647,9 +647,16 @@ test('the footer links the public repository when repoUrl is set, and not when i
   }
   assert.deepEqual(validateConfig(cfg), []);
   assert.deepEqual(validateConfig({ ...cfg, repoUrl: '' }), []);
-  for (const bad of ['http://github.com/a/b', 'https://example.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b"onclick', 42]) {
+  for (const bad of ['http://github.com/a/b', 'https://example.com/a/b', 'https://github.com/a', 'https://github.com/a/b/', 'https://github.com/a/b"onclick', 42,
+    'javascript:alert(1)//https://github.com/a/b', 'https://githubXcom/a/b', 'https://github.com.evil.tld/a/b', 'https://user@github.com/a/b',
+    'https://github.com/a/b?q', 'https://github.com/a/b#f', 'https://github.com/a/..', 'https://github.com/a/.', 'https://github.com/-a/b']) {
     assert.ok(validateConfig({ ...cfg, repoUrl: bad }).some((e) => /repoUrl/.test(e)), String(bad));
   }
+  for (const good of ['https://github.com/a/b', 'https://github.com/a-1/b.c_d-e', 'https://github.com/a/...']) assert.deepEqual(validateConfig({ ...cfg, repoUrl: good }), [], good);
+  // The validation refuses "&", but the footer still escapes the address: rendered directly, past the validation.
+  const amp = layout({ ...cfg, repoUrl: 'https://github.com/a/b?x=1&y=2' }, { path: '/x/', title: 'X', description: 'Escaping check page', body: '<h1>X</h1>' });
+  assert.ok(amp.includes('<a href="https://github.com/a/b?x=1&amp;y=2" rel="noopener">Source code and data on GitHub</a>'));
+  assert.ok(!amp.includes('x=1&y=2'), 'the raw ampersand is not in the page');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rulefiles-norepo-'));
   const src = new URL('..', import.meta.url).pathname;
   try {
