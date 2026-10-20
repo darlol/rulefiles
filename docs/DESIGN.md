@@ -6,7 +6,7 @@ How the site looks and why, so the next change does not have to guess.
 
 The site is a reference, so it reads like one: dates, source links and status badges first, decoration last. The one picture it allows itself is a small grid on the home page and in the share image. It is drawn from the real matrix data, one tile per cell, colored by status.
 
-The type is Hanken Grotesk for everything except code, which uses the system monospace stack. Cards use one device, a 1px border. There are no shadows and no gradients.
+The type is Hanken Grotesk for everything except code, which uses the system monospace stack. Cards use one device, a 1px border. There are no shadows and no gradients. The palette is neutral grey with one indigo accent, and the header stays at the top of the window from 48rem wide.
 
 ## Tokens
 
@@ -61,7 +61,7 @@ Floors that follow from the table:
 | Grid with `repeat(auto-fit)` and `minmax()` | home, cards, legend | 57 / 16 | 52 | 10.1 | Block layout. |
 | `gap` in flexbox | header, chips, footers | 84 | 63 | 14.1 | Items touch. |
 | `gap` in grid | layouts | 66 / 16 | 61 | 12 | Items touch. |
-| `position: sticky` | matrix header row and first column | 56 / 16 | 32 | 13 | They scroll with the table. |
+| `position: sticky` | site header from 48rem, matrix header row and first column | 56 / 16 | 32 | 13 | They scroll with the page or the table. |
 | `margin-inline`, `padding-inline` | page width, buttons | 87 | 66 | 14.1 | `margin-left`, `margin-right`, `padding-left` and `padding-right` come first in the same rule. |
 | `dvh` | page height, table and generator panel | 108 | 101 | 15.4 | A `vh` declaration comes first. |
 | `text-wrap: balance` | headings | 114 | 121 | 17.5 | Normal wrapping. |
