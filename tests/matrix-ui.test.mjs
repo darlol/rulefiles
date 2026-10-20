@@ -56,5 +56,7 @@ test('the stylesheet folds notes only under .notes-off and turns the matrix into
   assert.match(css, /\.notes-off \.note \{ display: none; \}/);
   assert.match(css, /@media \(max-width: 47\.99rem\) \{\n  \.scroll-hint \{ display: none; \}\n  \.table-wrap\.matrix-wrap \{ max-height: none; overflow: visible;/);
   const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
-  assert.match(js, /table\.classList\.toggle\('notes-off', notes\.getAttribute\('aria-pressed'\) !== 'true' && query\.trim\(\) === ''\)/);
+  // Notes are visible by default: the class is set only once "Hide notes" is pressed, and never during a search.
+  assert.match(js, /table\.classList\.toggle\('notes-off', notes\.getAttribute\('aria-pressed'\) === 'true' && query\.trim\(\) === ''\)/);
+  assert.equal(MATRIX_COPY.notesToggle, 'Hide notes');
 });
