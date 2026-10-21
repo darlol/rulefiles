@@ -1,4 +1,4 @@
-import { isIsoDate, isoWeekRange, daysBetween } from './util.mjs';
+import { isIsoDate, isoWeekRange, daysBetween, isSemver } from './util.mjs';
 import { licenseProblems } from './license.mjs';
 import { HARD_MAX_BYTES } from './fetcher.mjs';
 
@@ -167,6 +167,7 @@ export function validateDigest(digest, hosts, today, fileName = '', matrix = nul
     else if (item.text.length > 400) errors.push(`${l}: text is longer than 400 characters`);
     if (item.quote !== undefined && typeof item.quote !== 'boolean') errors.push(`${l}: quote must be true or false`);
     for (const key of ['version', 'figure']) if (item[key] !== undefined && (typeof item[key] !== 'string' || !item[key])) errors.push(`${l}: ${key} must be a non-empty string when present`);
+    if (typeof item.version === 'string' && item.version && !isSemver(item.version)) errors.push(`${l}: version "${item.version}" is not a SemVer version: write MAJOR.MINOR.PATCH, such as 2.1.303, 0.164.0 or 0.164.0-alpha.1 (a leading "v" is allowed; drop tag prefixes such as "rust-v")`);
     const why = hostAllowed(item.sourceUrl, hosts);
     if (why) errors.push(`${l}: sourceUrl ${why}`);
     if (typeof item.sourceLabel !== 'string' || !item.sourceLabel) errors.push(`${l}: sourceLabel is required`);

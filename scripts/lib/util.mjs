@@ -78,6 +78,16 @@ export function listFiles(dir) {
 // numeric parts (missing parts count as 0), then an optional prerelease compared as SemVer 2.0.0 section 11 does.
 const VERSION_RE = /^v?(\d+(?:\.\d+)*)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/;
 
+// What validateDigest accepts in an item's `version`: SemVer 2.0.0 (MAJOR.MINOR.PATCH, optional prerelease and build
+// metadata, no leading zeros), with an optional lowercase "v" as release pages write it. Anything else would sort
+// below every version in compareVersions without a word, so the build refuses it instead.
+const SEMVER_RE = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+
+/** True when the string is a SemVer 2.0.0 version, with or without a leading "v". */
+export function isSemver(value) {
+  return typeof value === 'string' && SEMVER_RE.test(value);
+}
+
 /** Compares two version strings: negative if a < b, positive if a > b, 0 if equal. A string that is not a version sorts below every version. */
 export function compareVersions(a, b) {
   const pa = VERSION_RE.exec(String(a));
