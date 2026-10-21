@@ -103,6 +103,13 @@ export function validateMatrix(matrix, hosts, today) {
     else if (today && c.verifiedOn > today) errors.push(`matrix.json: cell ${key} verifiedOn is in the future`);
     if (c.version !== undefined && typeof c.version !== 'string') errors.push(`matrix.json: cell ${key} version must be a string`);
   }
+  // Each cell has an anchor on /matrix/ (cellAnchor). Ids with dashes could in theory build the same anchor twice.
+  const anchors = new Map();
+  for (const t of toolIds) for (const f of fileIds) {
+    const a = cellAnchor(t, f);
+    if (anchors.has(a)) errors.push(`matrix.json: cells ${anchors.get(a)} and ${t}/${f} would share the anchor #${a}`);
+    anchors.set(a, `${t}/${f}`);
+  }
   for (const t of toolIds) for (const f of fileIds) {
     if (!seen.has(`${t}/${f}`)) errors.push(`matrix.json: missing cell ${t}/${f}`);
   }
@@ -116,7 +123,17 @@ export function staleCells(matrix, today, staleAfterDays) {
   return (matrix.cells || []).filter((c) => isIsoDate(c.verifiedOn) && daysBetween(c.verifiedOn, today) > staleAfterDays);
 }
 
-export function validateDigest(digest, hosts, today, fileName = '') {
+/** Anchor of a matrix cell on /matrix/, which the digest links to. Tool and file ids follow MATRIX_ID_RE, so the anchor is safe in a URL. */
+export function cellAnchor(tool, file) { return `cell-${tool}-${file}`; }
+
+/** Highlights: 3 to 5 ids of items of the same issue. */
+export const HIGHLIGHTS_MIN = 3;
+export const HIGHLIGHTS_MAX = 5;
+
+/**
+ * @param matrix data/matrix.json. It is needed only when an item has a `matrix` field, whose pairs must exist there.
+ */
+export function validateDigest(digest, hosts, today, fileName = '', matrix = null) {
   const errors = [];
   const label = `digest ${digest.week || fileName}`;
   if (digest.schemaVersion !== 1) errors.push(`${label}: schemaVersion must be 1`);
@@ -153,6 +170,40 @@ export function validateDigest(digest, hosts, today, fileName = '') {
     const why = hostAllowed(item.sourceUrl, hosts);
     if (why) errors.push(`${l}: sourceUrl ${why}`);
     if (typeof item.sourceLabel !== 'string' || !item.sourceLabel) errors.push(`${l}: sourceLabel is required`);
+    if (item.matrix !== undefined) errors.push(...itemMatrixProblems(item.matrix, matrix, l));
+    if (item.matrix !== undefined && item.quote !== true) errors.push(`${l}: matrix needs "quote": true, because the Instruction files section shows only the source's own wording`);
+  }
+  if (digest.highlights !== undefined) {
+    const hl = digest.highlights;
+    if (!Array.isArray(hl)) errors.push(`${label}: highlights must be a list of item ids`);
+    else {
+      if (hl.length < HIGHLIGHTS_MIN || hl.length > HIGHLIGHTS_MAX) errors.push(`${label}: highlights must list ${HIGHLIGHTS_MIN} to ${HIGHLIGHTS_MAX} item ids, got ${hl.length}`);
+      const seenHl = new Set();
+      for (const id of hl) {
+        if (typeof id !== 'string' || !ids.has(id)) errors.push(`${label}: highlights names "${id}", which is not an item of this issue`);
+        else if (seenHl.has(id)) errors.push(`${label}: highlights names "${id}" twice`);
+        seenHl.add(id);
+      }
+    }
+  }
+  return errors;
+}
+
+// `matrix` on an item: a list of { tool, file } pairs that exist in matrix.json, and nothing else. No free text.
+function itemMatrixProblems(list, matrix, l) {
+  const errors = [];
+  if (!Array.isArray(list) || list.length === 0) return [`${l}: matrix must be a non-empty list of { "tool", "file" } pairs`];
+  const cells = matrix ? new Set((matrix.cells || []).map((c) => `${c.tool}/${c.file}`)) : null;
+  if (!cells) errors.push(`${l}: matrix cannot be checked without data/matrix.json`);
+  const seen = new Set();
+  for (const pair of list) {
+    if (!pair || typeof pair !== 'object' || Array.isArray(pair) || typeof pair.tool !== 'string' || typeof pair.file !== 'string') { errors.push(`${l}: every matrix entry must be { "tool": "...", "file": "..." }`); continue; }
+    const extra = Object.keys(pair).filter((k) => k !== 'tool' && k !== 'file');
+    if (extra.length) errors.push(`${l}: matrix entry ${pair.tool}/${pair.file} has unknown field(s) ${extra.join(', ')}`);
+    const key = `${pair.tool}/${pair.file}`;
+    if (cells && !cells.has(key)) errors.push(`${l}: matrix entry ${key} is not a cell of data/matrix.json`);
+    if (seen.has(key)) errors.push(`${l}: matrix entry ${key} is listed twice`);
+    seen.add(key);
   }
   return errors;
 }

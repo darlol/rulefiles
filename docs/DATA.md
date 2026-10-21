@@ -64,6 +64,24 @@ Rules:
 - No item without a `sourceUrl` and a `sourceLabel`.
 - Drafts may also hold `candidateLines`, up to three lines from the source, for the reviewer. They are not shown on the site.
 
+Two optional fields add blocks to the issue page. The blocks only repeat fields of the items, so they add no text of their own.
+
+```
+{
+  "highlights": ["claude-code-2026-10-20-v2.1.10", "codex-2026-10-19-0.164.0", "github-copilot-2026-10-20-example"],
+  "items": [ {
+    "id": "github-copilot-2026-10-20-example",
+    "quote": true,
+    "matrix": [ { "tool": "github-copilot", "file": "copilot-instructions-md" } ]
+  } ]
+}
+```
+
+- `highlights` lists 3 to 5 `id`s of items of the same issue, each once. The page then shows an "In short" list under the lead, in that order, in place of the `summary` paragraph. Each bullet is the item `title`, followed by ` (figure)` when the item has a `figure`, and links to its `sourceUrl`. The Atom entry and `llms-full.txt` carry the same list. Without `highlights`, the page shows `summary` as before. `summary` stays required, because the Atom `<summary>` and `llms-full.txt` still use it.
+- `matrix`, on an item, lists `{ "tool", "file" }` pairs. Each pair must be a cell of `matrix.json`, and an entry has no other field. Only an item with `"quote": true` may have `matrix`, because the "Instruction files this week" section shows only the source's own wording. The section appears only when at least one item has `matrix`. It has one line per such item: its `text` as a quote, its date, its source link, and a link to each cell, `/matrix/#cell-<tool>-<file>`. Validation also refuses two matrix cells that would get the same anchor.
+- "Versions this week" needs no field. For each tool with at least one item that has a `version`, it shows one row with the highest version of the issue, the date of that item and its source. Versions compare as SemVer: `2.1.10` is above `2.1.9`, a leading `v` is ignored, and a release is above its prereleases. A tool with no versioned item gets no row. The table starts with 2026-W44 (`VERSIONS_TABLE_FROM` in `scripts/lib/render.mjs`), so the pages of W41 to W43 do not show it.
+- From 2026-W43, `title` is at most 90 characters and no longer starts with "Digest for" (`tests/digest-editorial.test.mjs`). W41 and W42 keep their titles.
+
 ## watch-sources.json and watch-state.json
 
 `watch-sources.json` lists the feeds (`rss` or `github-releases`). `watch-state.json` holds `seen`, which maps an entry id to the date it was listed. The watch script updates it. A reviewer does not need to edit it. Documentation pages are not fetched by the script.

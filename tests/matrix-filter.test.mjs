@@ -79,7 +79,7 @@ test('matrix page: filter bar is hidden until the script runs, and every control
   assert.match(html, /<script type="module" src="\/assets\/matrix\.js"><\/script>/);
   // Without the script the table is complete: no row, column or cell is hidden in the markup.
   assert.doesNotMatch(html, /<(tr|th|td)\b[^>]*\bhidden\b/);
-  assert.equal((html.match(/<td class="st-[a-z-]+" data-tool="[a-z-]+" data-file="[a-z0-9-]+" data-status="[a-z-]+">/g) || []).length, data.cells.length);
+  assert.equal((html.match(/<td id="cell-[a-z0-9-]+" class="st-[a-z-]+" data-tool="[a-z-]+" data-file="[a-z0-9-]+" data-status="[a-z-]+">/g) || []).length, data.cells.length);
 });
 
 test('every status badge carries an icon and the status text, never colour alone', () => {

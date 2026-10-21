@@ -19,7 +19,7 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   const errors = [
     ...validateConfig(data.config),
     ...validateMatrix(data.matrix, data.hosts, today).errors,
-    ...data.digests.flatMap((d) => validateDigest(d.data, data.hosts, today, d.file))
+    ...data.digests.flatMap((d) => validateDigest(d.data, data.hosts, today, d.file, data.matrix))
   ];
   if (errors.length) throw new Error('Data is invalid, refusing to build:\n' + errors.join('\n'));
 

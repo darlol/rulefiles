@@ -182,7 +182,7 @@ test('Atom feed is well formed and has one entry per issue', () => {
 test('matrix page shows every cell with its source link and date', () => {
   const html = read('matrix/index.html');
   const data = loadData();
-  assert.equal((html.match(/<td class="st-/g) || []).length, data.matrix.cells.length);
+  assert.equal((html.match(/<td id="cell-[a-z0-9-]+" class="st-/g) || []).length, data.matrix.cells.length);
   assert.equal((html.match(/checked <time datetime="\d{4}-\d\d-\d\d">/g) || []).length, data.matrix.cells.length);
   for (const date of new Set(data.matrix.cells.map((c) => c.verifiedOn))) {
     const n = data.matrix.cells.filter((c) => c.verifiedOn === date).length;

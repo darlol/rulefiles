@@ -9,7 +9,7 @@ const today = todayIso();
 const errors = [...validateConfig(data.config), ...validateWatchSources(data.watchSources)];
 const m = validateMatrix(data.matrix, data.hosts, today);
 errors.push(...m.errors);
-for (const d of data.digests) errors.push(...validateDigest(d.data, data.hosts, today, d.file));
+for (const d of data.digests) errors.push(...validateDigest(d.data, data.hosts, today, d.file, data.matrix));
 
 // Drafts produced by the watch script must follow the same schema.
 const draftDir = path.join(data.root, 'data', 'drafts');
@@ -17,7 +17,7 @@ if (fs.existsSync(draftDir)) {
   for (const f of fs.readdirSync(draftDir).filter((x) => x.endsWith('.draft.json'))) {
     const draft = readJson(path.join(draftDir, f));
     if (draft.status !== 'draft') errors.push(`drafts/${f}: status must be "draft"`);
-    errors.push(...validateDigest(draft, data.hosts, today, f).map((e) => `drafts/${f}: ${e}`));
+    errors.push(...validateDigest(draft, data.hosts, today, f, data.matrix).map((e) => `drafts/${f}: ${e}`));
   }
 }
 
