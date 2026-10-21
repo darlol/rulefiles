@@ -61,6 +61,7 @@ Rules:
 - Every item date lies inside the week and not in the future. `tool` is `cursor`, `claude-code`, `codex` or `github-copilot`.
 - `text` is at most 400 characters. With `"quote": true` it is the source's own wording, with only trailing pull request references removed. Set `"quote": false` for any wording that is not the source's, and keep it to facts the source states.
 - `version` and `figure` are optional. Put a number there only if the source states it.
+- `version` must be SemVer: `MAJOR.MINOR.PATCH`, with an optional prerelease and build metadata, such as `2.1.303` or `0.164.0-alpha.1`. A leading lowercase `v` is allowed. Validation refuses anything else, such as a tag prefix (`rust-v0.164.0`), `V1.0.0`, `1.4` or a date, and names the value in its error.
 - No item without a `sourceUrl` and a `sourceLabel`.
 - Drafts may also hold `candidateLines`, up to three lines from the source, for the reviewer. They are not shown on the site.
 

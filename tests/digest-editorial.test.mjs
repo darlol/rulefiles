@@ -9,8 +9,8 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
 import { validateDigest, validateMatrix, cellAnchor } from '../scripts/lib/validate.mjs';
-import { compareVersions } from '../scripts/lib/util.mjs';
-import { versionRows, highlightText, VERSIONS_TABLE_FROM } from '../scripts/lib/render.mjs';
+import { compareVersions, isSemver } from '../scripts/lib/util.mjs';
+import { versionRows, highlightText, VERSIONS_TABLE_FROM, labelWithIcon, icon } from '../scripts/lib/render.mjs';
 import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -81,6 +81,21 @@ test('editorial: every matrix cell has its own anchor, and validation refuses tw
   for (const t of m.tools) if (!m.cells.some((c) => c.tool === t.id && c.file === 'code-agents-md')) m.cells.push({ ...m.cells[0], tool: t.id, file: 'code-agents-md' });
   // claude-code × agents-md and claude × code-agents-md both make #cell-claude-code-agents-md.
   assert.match(validateMatrix(m, data.hosts, TEST_DATE).errors.join('\n'), /would share the anchor #cell-claude-code-agents-md/);
+});
+
+test('editorial: an item version must be SemVer, and the error names the value and the expected form', () => {
+  const withVersion = (v) => { const d = clone(FIXTURE); d.items.find((i) => i.version).version = v; return d; };
+  for (const bad of ['rust-v0.164.0', 'V1.0.0', '2026-10-20', '1.0.0-alpha..1', '1.4', '01.2.3', '1.0.0-01', ' 2.1.10']) {
+    const errors = errorsOf(withVersion(bad));
+    assert.ok(errors.includes(`version "${bad}" is not a SemVer version: write MAJOR.MINOR.PATCH, such as 2.1.303`), `${bad}: ${errors}`);
+    assert.ok(!isSemver(bad), bad);
+  }
+  for (const good of ['2.1.10', 'v2.1.10', '0.164.0-alpha.1', '1.0.0-alpha.beta', '1.0.0-0.3.7', '1.0.0+build.5', '10.20.30']) {
+    assert.equal(errorsOf(withVersion(good)), '', good);
+    assert.ok(isSemver(good), good);
+  }
+  // An empty version keeps its own message and is not reported twice.
+  assert.equal(errorsOf(withVersion('')).match(/version/g).length, 1);
 });
 
 // ---------- Versions ----------
@@ -190,6 +205,23 @@ test('editorial: from W44, "Versions this week" lists the highest version per to
   const d = withoutNewFields(FIXTURE);
   for (const i of d.items) delete i.version;
   assert.deepEqual(versionRows(d), []);
+});
+
+test('editorial: in "Versions this week" the external icon stays on the line of the last word of the source label', () => {
+  const s = section(read('w44', 'digest/2026-W44/index.html'), 'versions');
+  const links = [...s.matchAll(/<a class="src" [^>]*>([\s\S]*?)<\/a>/g)].map((m) => m[1]);
+  assert.equal(links.length, 2);
+  for (const inner of links) {
+    // The last word and the icon share one nowrap span, with no break opportunity between them.
+    assert.match(inner, /^[^<]* <span class="nowrap">[^\s<]+<svg class="ic"[^>]*><use href="#ic-external"\/><\/svg><\/span>$/, inner);
+  }
+  assert.equal(labelWithIcon('Codex release notes', 'external'), `Codex release <span class="nowrap">notes${icon('external')}</span>`);
+  assert.equal(labelWithIcon('Changelog', 'external'), `<span class="nowrap">Changelog${icon('external')}</span>`);
+  assert.equal(labelWithIcon('a <b> & "c"', 'external'), `a &lt;b&gt; &amp; <span class="nowrap">&quot;c&quot;${icon('external')}</span>`);
+  // The table link is display:inline, so the icon must be inline too: the global svg rule makes it a block.
+  const css = fs.readFileSync(path.join(root, 'src/static/style.css'), 'utf8');
+  assert.match(css, /\.versions-table \.src \.ic \{ display: inline-block;/);
+  assert.match(css, /\.nowrap \{ white-space: nowrap; \}/);
 });
 
 test('editorial: "Instruction files this week" appears only with item matrix, one line per item linking the cells', () => {
