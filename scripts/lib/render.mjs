@@ -70,6 +70,18 @@ const ICON_PATHS = {
 };
 
 /**
+ * Link text that ends with an icon, for an inline link that may wrap: the last word and the icon sit in one
+ * nowrap span, so the icon never starts a line on its own. The label is escaped here.
+ */
+export function labelWithIcon(label, name) {
+  const text = String(label);
+  const cut = text.search(/\S+\s*$/);
+  const head = cut > 0 ? text.slice(0, cut) : '';
+  const tail = cut >= 0 ? text.slice(cut).trimEnd() : text;
+  return `${h(head)}<span class="nowrap">${h(tail)}${icon(name)}</span>`;
+}
+
+/**
  * Inline SVG icon that points at the sprite. layout() adds the sprite to any page whose body uses an icon.
  * width and height are attributes on purpose: an SVG without them fills its container, so an icon would
  * render huge whenever style.css is missing, blocked or an old cached copy. The stylesheet overrides them.
@@ -617,7 +629,7 @@ export function versionsBlock(digest) {
   if (digest.week < VERSIONS_TABLE_FROM) return '';
   const rows = versionRows(digest);
   if (!rows.length) return '';
-  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h(TOOL_NAME[tool])}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${h(item.sourceLabel)}${icon('external')}</a></td></tr>`).join('\n');
+  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h(TOOL_NAME[tool])}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${labelWithIcon(item.sourceLabel, 'external')}</a></td></tr>`).join('\n');
   return `<section class="versions" aria-labelledby="versions"><h2 id="versions">Versions this week</h2>
 <div class="versions-wrap" tabindex="0" role="region" aria-label="Versions this week"><table class="versions-table">
 <thead><tr><th scope="col">Tool</th><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Source</th></tr></thead>

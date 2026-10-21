@@ -213,6 +213,9 @@ label { font-weight: 620; }
 .versions-table td:nth-child(2) { white-space: nowrap; }
 @media (min-width: 30.01rem) { .versions-table td:last-child { min-width: 8rem; } }
 .versions-table .src { display: inline; }
+/* An inline link: the icon flows with the text and stays on the line of the last word (labelWithIcon). */
+.versions-table .src .ic { display: inline-block; vertical-align: -0.125em; margin-left: var(--s1); }
+.nowrap { white-space: nowrap; }
 @media (max-width: 30rem) { .versions-table th, .versions-table td { padding: var(--s2); font-size: 0.875rem; } }
 .instruction-files q { quotes: "\201C" "\201D"; }
 /* A digest links to one cell of the matrix: the cell is outlined when it is the target of the address. */
