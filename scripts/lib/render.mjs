@@ -199,7 +199,7 @@ export function sourceLinkName(it) {
 export function itemHtml(it) {
   const version = it.version ? `<span class="tag tag-quiet">version ${h(it.version)}</span>` : '';
   const figure = it.figure ? `<span class="item-figure">${h(it.figure)}</span> ` : '';
-  return `<li class="item" id="${h(it.id)}">
+  return `<li class="item" id="${h(it.id)}" data-tool="${h(it.tool)}">
 <p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span>${version}</p>
 <h3 class="item-title">${inlineHtml(it.title)}</h3>
 <p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
@@ -214,10 +214,16 @@ export function homePage(ctx) {
   const { config, matrix, digests } = ctx;
   const latest = digests[0];
   const stats = matrixStats(matrix);
+  const reviewed = shortDate(matrix.lastReviewed);
+  const latestItemDate = latest ? latest.items.map((it) => it.date).sort().at(-1) : null;
+  const toolChips = Object.keys(TOOL_NAME).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(TOOL_NAME[id])}</button>`).join('');
   const digestBlock = latest
     ? `<section class="home-section" aria-labelledby="latest"><h2 id="latest">Latest digest</h2>
-<p>${`<a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>`}: ${latest.items.length} dated items from official sources.</p>
-<ul class="items items-grid">${latest.items.slice(0, 4).map(itemHtml).join('\n')}</ul>
+<p><a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>: ${latest.items.length} dated items from official sources.</p>
+<div class="home-digest-filters" id="home-digest-filters">
+<div class="chips" role="group" aria-label="Filter by tool">${toolChips}<button type="button" class="btn btn-quiet" data-filter-reset disabled>All tools</button></div>
+</div>
+<ul class="items items-grid" id="home-digest-items">${latest.items.map(itemHtml).join('\n')}</ul>
 <p class="section-link"><a href="/digest/">All issues</a></p></section>` : '';
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
   const tiles = matrix.files.map((f) => matrix.tools.map((t, col) => {
@@ -227,6 +233,12 @@ export function homePage(ctx) {
   const heads = matrix.tools.map((t) => `<span class="specimen-tool">${h(t.name)}</span>`).join('');
   const statusCounts = Object.keys(STATUS_LABEL).filter((k) => stats.byStatus[k]).map((k) => `<li>${statusBadge(k)} <span class="status-count">${stats.byStatus[k]}</span></li>`).join('');
   const specimenFoot = `${matrix.cells.length} cells, each with an official source and a check date.`;
+  const trust = latest
+    ? `<p class="trust-strip" role="status">${matrix.tools.length} tools · ${matrix.cells.length} cells sourced · Last reviewed ${h(reviewed)} · ${latest.items.length} items in ${h(latest.week)}</p>`
+    : `<p class="trust-strip" role="status">${matrix.tools.length} tools · ${matrix.cells.length} cells sourced · Last reviewed ${h(reviewed)}</p>`;
+  const rythme = latest && latestItemDate
+    ? `<p class="rythme">Latest item · <time datetime="${h(latestItemDate)}">${h(shortDate(latestItemDate))}</time> · ${h(latest.week)} · <a href="/digest/${h(latest.week)}/">Read the digest</a></p>`
+    : '';
   const body = `<section class="hero" aria-labelledby="hero-title">
 <div class="hero-copy">
 <h1 id="hero-title">${h(HERO_TITLE)}</h1>
@@ -240,17 +252,25 @@ export function homePage(ctx) {
 <span class="specimen-foot">${specimenFoot}</span>
 </a>
 </section>
+${trust}
+${rythme}
 ${digestBlock}
 <section class="home-section" aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
 <ul class="status-counts" aria-label="Cells by status">${statusCounts}</ul>
-<p>The <a href="/matrix/">instruction file matrix</a> covers ${matrix.tools.length} tools and ${matrix.files.length} file types. Each of its ${matrix.cells.length} cells links to an official page and shows the date it was checked. ${stats.unverified} of them are marked unverified because the cited official page does not mention the file, and ${stats.byStatus['migration-only']} are marked migration only. The data was last reviewed on ${h(matrix.lastReviewed)}.</p>
-<p>The <a href="/generator/">generator</a> writes a first version of those files from a short form, in your browser.</p></section>
+<p>Last reviewed ${h(reviewed)}.</p>
+<p class="cta"><a class="btn btn-primary" href="/matrix/">Open the matrix${icon('arrow')}</a></p></section>
+<section class="home-section home-generator" aria-label="Generator">
+<p>Generate instruction files in your browser.</p>
+<p class="muted">Node.js and Python presets included.</p>
+<p class="cta"><a class="btn" href="/generator/">Try the generator</a></p></section>
 <section class="home-section callout" aria-labelledby="news"><h2 id="news">Newsletter</h2>
-${newsletterEnabled(config)
-  ? '<p>A weekly email with the digest is open for signup. <a href="/newsletter/">Subscribe</a>. The <a href="/digest/feed.xml">Atom feed</a> carries the same issues.</p>'
-  : '<p>A weekly email with the digest is planned. <a href="/newsletter/">Signup status</a>. The <a href="/digest/feed.xml">Atom feed</a> works today.</p>'}</section>`;
+<p class="lead">The weekly digest by email, sent through Buttondown.</p>
+${newsletterForm(config, { idPrefix: 'home-nl' })}
+<p><a href="/newsletter/">Open the newsletter page</a>. The <a href="/digest/feed.xml">Atom feed</a> carries the same issues.</p></section>`;
   return layout(config, {
     path: '/', title: config.name, description: config.description, body,
+    script: latest ? '/assets/home-digest-filter.js' : undefined,
+    headScript: latest ? '/assets/js-flag.js' : undefined,
     jsonLd: [{ '@type': 'WebSite', name: config.name, url: config.baseUrl, description: config.description, inLanguage: config.language, publisher: publisher(config) }]
   });
 }
@@ -727,24 +747,26 @@ export function contentPage(ctx, file, pagePath) {
   });
 }
 
-/** The signup form of the newsletter page, open or switched off. The reference pages carry the same form. */
-function newsletterForm(config) {
+/** The signup form of the newsletter page, open or switched off. Home reuses it with a distinct idPrefix. */
+export function newsletterForm(config, { idPrefix = 'nl' } = {}) {
   const nl = config.newsletter;
   const enabled = newsletterEnabled(config);
+  const emailId = `${idPrefix}-email`;
+  const statusId = `${idPrefix}-status`;
   const hidden = Object.entries(nl.hiddenFields || {}).map(([k, v]) => `<input type="hidden" name="${h(k)}" value="${h(v)}">`).join('');
   const form = enabled
     ? `<form class="nl-form" method="${h(nl.method || 'post')}" action="${h(nl.formAction)}">
-<label for="nl-email">Email address</label>
-<input id="nl-email" name="${h(nl.emailFieldName || 'email')}" type="email" required autocomplete="email">
+<label for="${h(emailId)}">Email address</label>
+<input id="${h(emailId)}" name="${h(nl.emailFieldName || 'email')}" type="email" required autocomplete="email">
 ${hidden}
 <p class="muted">Submitting sends your address to the newsletter provider. You will get a confirmation email first (double opt-in). See <a href="/privacy/">Privacy</a>.</p>
 <button type="submit">Subscribe</button>
 </form>`
     : `<form class="nl-form" aria-disabled="true">
-<label for="nl-email">Email address</label>
-<input id="nl-email" name="email" type="email" disabled aria-describedby="nl-status">
+<label for="${h(emailId)}">Email address</label>
+<input id="${h(emailId)}" name="email" type="email" disabled aria-describedby="${h(statusId)}">
 <button type="button" disabled>Subscribe</button>
-<p id="nl-status" class="notice" role="status">${icon('warn')}<span>Signup is switched off until the publication. Nothing can be submitted or sent.</span></p>
+<p id="${h(statusId)}" class="notice" role="status">${icon('warn')}<span>Signup is switched off until the publication. Nothing can be submitted or sent.</span></p>
 </form>`;
   return form;
 }

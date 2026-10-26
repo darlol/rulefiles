@@ -295,6 +295,25 @@ label { font-weight: 620; }
 @media (min-width: 48rem) { .callout { padding: var(--s6) var(--s6) var(--s4); } }
 @media (prefers-reduced-motion: reduce) { .tile { animation: none; } .cta .btn-primary:hover .ic { transform: none; } }
 
+.trust-strip {
+  margin: var(--s4) 0 0;
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.45;
+  max-width: none;
+}
+.rythme { margin: var(--s3) 0 0; font-weight: 600; }
+.rythme a { font-weight: 650; }
+.home-digest-filters { display: none; margin: var(--s4) 0 var(--s3); }
+.js .home-digest-filters { display: block; }
+.home-digest-filters .chips { align-items: center; }
+.home-generator > p:first-child { margin-top: 0; font-weight: 650; }
+
+
 /* Matrix page */
 [hidden] { display: none !important; }
 .intro { max-width: var(--measure); color: var(--muted); }

@@ -90,7 +90,7 @@ function rulesFor(css, selector) {
   return [...src.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(selector)).map((m) => m[2]);
 }
 
-test('the matrix loads assets/js-flag.js synchronously in the head, and only the matrix does', () => {
+test('the matrix and home load assets/js-flag.js synchronously in the head', () => {
   const head = /<head>([\s\S]*?)<\/head>/.exec(html)[1];
   const tag = /<script src="\/assets\/js-flag\.js"><\/script>/.exec(head);
   assert.ok(tag, 'the flag script is in the head');
@@ -98,7 +98,9 @@ test('the matrix loads assets/js-flag.js synchronously in the head, and only the
   assert.ok(head.indexOf(tag[0]) < head.indexOf('rel="stylesheet"'), 'it does not wait for the stylesheet');
   const flag = fs.readFileSync(new URL('../src/static/js-flag.js', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '').trim();
   assert.equal(flag, "document.documentElement.classList.add('js');", 'the file does one thing');
-  for (const f of fs.readdirSync(out, { recursive: true }).filter((x) => String(x).endsWith('.html') && !String(x).startsWith('matrix'))) {
+  const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
+  assert.match(home, /<script src="\/assets\/js-flag\.js"><\/script>/, 'home loads the flag for digest chips');
+  for (const f of fs.readdirSync(out, { recursive: true }).filter((x) => String(x).endsWith('.html') && !String(x).startsWith('matrix') && String(x) !== 'index.html')) {
     assert.ok(!fs.readFileSync(path.join(out, String(f)), 'utf8').includes('js-flag.js'), `${f} does not load the flag`);
   }
   // script-src 'self' allows it, in the meta CSP and in _headers.
