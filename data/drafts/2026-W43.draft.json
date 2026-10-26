@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W43",
+  "start": "2026-10-19",
+  "end": "2026-10-25",
+  "status": "draft",
+  "verifiedOn": "2026-10-26",
+  "title": "Draft for 2026-10-19 to 2026-10-25",
+  "summary": "Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.",
+  "items": [
+    {
+      "id": "claude-code-2026-10-19-2-1-304",
+      "date": "2026-10-19",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.304",
+      "text": "Added a transcript line when a plugin that runs first skips one of your mod's hooks, naming the event and the plugin",
+      "quote": true,
+      "version": "2.1.304",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.304",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added a transcript line when a plugin that runs first skips one of your mod's hooks, naming the event and the plugin",
+        "Added decider: \"person\" to a mod's tool.check answer: only the permission dialog or a host's callback can approve the ask, and it is refused with the mod's reason where nobody can be asked",
+        "Added e.isReadOnly to a mod's tool.check event, set when the tool call is read-only"
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-19-copilot-model-policy-api-for-enterprise-orgs-and-teams",
+      "date": "2026-10-19",
+      "tool": "github-copilot",
+      "title": "Copilot model policy API for enterprise, orgs, and teams",
+      "text": "You can now use the REST API to retrieve and update Copilot model policies for enterprises, enterprise teams, agent apps, and organizations.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-19-copilot-model-policy-api-for-enterprise-orgs-and-teams",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "You can now use the REST API to retrieve and update Copilot model policies for enterprises, enterprise teams, agent apps, and organizations."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-19-github-copilot-models-deprecated-on-october-19-2026",
+      "date": "2026-10-19",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot models deprecated on October 19, 2026",
+      "text": "As of today, October 19, 2026, we have deprecated the following models across most GitHub Copilot experiences (including Copilot Chat, inline edits, ask and agent modes, and code completions).",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-19-github-copilot-models-deprecated-on-october-19-2026",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "As of today, October 19, 2026, we have deprecated the following models across most GitHub Copilot experiences (including Copilot Chat, inline edits, ask and agent modes, and code completions)."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-20-2-1-305",
+      "date": "2026-10-20",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.305",
+      "text": "Added sandbox.allowNestedUserNamespaces so sandboxed commands on Linux can create user namespaces (Chromium, rootless podman); this lets them get around the sandbox's file protections",
+      "quote": true,
+      "version": "2.1.305",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.305",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added sandbox.allowNestedUserNamespaces so sandboxed commands on Linux can create user namespaces (Chromium, rootless podman); this lets them get around the sandbox's file protections",
+        "Added CLAUDE_CODE_RETRY_WATCHDOG_USAGE_LIMIT_RECHECK_MS so unattended retry mode (CLAUDE_CODE_RETRY_WATCHDOG) notices a usage limit that was lifted before its reset",
+        "Fixed every request failing on Vertex, Bedrock and other providers when the endpoint or a gateway rejects tool search, and behind gateways with ToolSearch disallowed or left out of --tools (a 2.1.304 regression): Claude Code now retries without it"
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-21-2-1-306",
+      "date": "2026-10-21",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.306",
+      "text": "Fixed claude -p inside cloud sessions reporting \"Not logged in\" when started without the session's environment variables",
+      "quote": true,
+      "version": "2.1.306",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.306",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Fixed claude -p inside cloud sessions reporting \"Not logged in\" when started without the session's environment variables",
+        "Fixed an API error being replaced by \"prompt is too long\", and an unneeded compaction, in sessions with many MCP tools"
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-21-2-1-307",
+      "date": "2026-10-21",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.307",
+      "text": "Added /claude-api api-version to move Claude API code to API version 2026-10-21",
+      "quote": true,
+      "version": "2.1.307",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.307",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added /claude-api api-version to move Claude API code to API version 2026-10-21",
+        "Added the claude_code.safety_event OpenTelemetry event for each tool call a permission rule, auto mode, a safety check, a hook or the sandbox stopped, prompted or sent back",
+        "Fixed requests failing with a model-not-found error when CLAUDE_CODE_DISABLE_1M_CONTEXT is set and the model is an alias with the [1m] suffix, such as opus[1m]"
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-22-2-1-308",
+      "date": "2026-10-22",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.308",
+      "text": "Bug fixes and reliability improvements",
+      "quote": true,
+      "version": "2.1.308",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.308",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Bug fixes and reliability improvements"
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-22-2-1-309",
+      "date": "2026-10-22",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.309",
+      "text": "Fixed sandboxed Bash commands on macOS and Linux running the shell's startup files outside the sandbox before each command",
+      "quote": true,
+      "version": "2.1.309",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.309",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Fixed sandboxed Bash commands on macOS and Linux running the shell's startup files outside the sandbox before each command",
+        "Fixed macOS sandbox denyWrite glob patterns not applying at a path's real location when the pattern's folder is reached through a symlink",
+        "Fixed sandboxed commands and auto-accepted edits being able to modify the MCP config file passed with --mcp-config"
+      ]
+    },
+    {
+      "id": "codex-2026-10-22-chatgpt-for-ios",
+      "date": "2026-10-22",
+      "tool": "codex",
+      "title": "ChatGPT for iOS",
+      "text": "View and stop background commands from a new pill above the composer on supported remote hosts.",
+      "quote": true,
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#codex-2026-10-22-mobile",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "View and stop background commands from a new pill above the composer on supported remote hosts.",
+        "Mention chats from other connected hosts with @.",
+        "A loading indicator now shows when saved messages are refreshing."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-22-custom-skills-agents-and-mcp-servers-in-usage-metrics-api",
+      "date": "2026-10-22",
+      "tool": "github-copilot",
+      "title": "Custom skills, agents, and MCP servers in usage metrics API",
+      "text": "Custom skills, agents, and MCP servers in usage metrics API",
+      "quote": false,
+      "sourceUrl": "https://github.blog/changelog/2026-10-22-custom-skills-agents-and-mcp-servers-in-usage-metrics-api",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": []
+    },
+    {
+      "id": "github-copilot-2026-10-22-github-copilot-in-visual-studio-september-update",
+      "date": "2026-10-22",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot in Visual Studio — September update",
+      "text": "GitHub Copilot in Visual Studio — September update",
+      "quote": false,
+      "sourceUrl": "https://github.blog/changelog/2026-10-22-github-copilot-in-visual-studio-september-update-2",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": []
+    },
+    {
+      "id": "github-copilot-2026-10-22-global-default-for-copilot-features-generally-available",
+      "date": "2026-10-22",
+      "tool": "github-copilot",
+      "title": "Global default for Copilot features generally available",
+      "text": "In September, we announced a global default policy for generally available GitHub Copilot features and supported client capabilities on Copilot Business and Copilot Enterprise plans.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-22-global-default-for-copilot-features-generally-available",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "In September, we announced a global default policy for generally available GitHub Copilot features and supported client capabilities on Copilot Business and Copilot Enterprise plans."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-22-industry-comparisons-in-the-copilot-impact-dashboard",
+      "date": "2026-10-22",
+      "tool": "github-copilot",
+      "title": "Industry comparisons in the Copilot impact dashboard",
+      "text": "The Copilot impact dashboard now includes an “Industry comparison” section.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-22-industry-comparisons-in-the-copilot-impact-dashboard",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "The Copilot impact dashboard now includes an “Industry comparison” section."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-23-2-1-310",
+      "date": "2026-10-23",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.310",
+      "text": "Added the Monitor tool and plugin monitors on Bedrock, Vertex, and Foundry, and when telemetry or nonessential traffic is disabled; long foreground sleeps are now blocked there too",
+      "quote": true,
+      "version": "2.1.310",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.310",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added the Monitor tool and plugin monitors on Bedrock, Vertex, and Foundry, and when telemetry or nonessential traffic is disabled; long foreground sleeps are now blocked there too",
+        "Fixed requests failing behind some gateways and compatible servers that reject the effort-2025-11-24 beta value or mid-conversation system messages; Claude Code now retries without them",
+        "Fixed background cleanup deleting some recent files, such as pasted images, when cleanupPeriodDays is set to a very large value"
+      ]
+    },
+    {
+      "id": "codex-2026-10-23-0-164-0",
+      "date": "2026-10-23",
+      "tool": "codex",
+      "title": "Codex 0.164.0",
+      "text": "Save reusable prompts and slash commands in ten numbered /presets slots, with a keyboard menu for quick access.",
+      "quote": true,
+      "version": "0.164.0",
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#github-release-421457270",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "Save reusable prompts and slash commands in ten numbered /presets slots, with a keyboard menu for quick access.",
+        "Set model, reasoning effort, speed, and permission profiles directly with inline /model and /permissions arguments.",
+        "Preview viewed and generated images in the fullscreen transcript on terminals supporting Kitty or Sixel graphics."
+      ]
+    },
+    {
+      "id": "codex-2026-10-23-0-164-0-2",
+      "date": "2026-10-23",
+      "tool": "codex",
+      "title": "Codex 0.164.0",
+      "text": "Save reusable prompts and slash commands in ten numbered /presets slots, with a keyboard menu for quick access.",
+      "quote": true,
+      "version": "0.164.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.164.0",
+      "sourceLabel": "Codex release notes",
+      "candidateLines": [
+        "Save reusable prompts and slash commands in ten numbered /presets slots, with a keyboard menu for quick access.",
+        "Set model, reasoning effort, speed, and permission profiles directly with inline /model and /permissions arguments.",
+        "Preview viewed and generated images in the fullscreen transcript on terminals supporting Kitty or Sixel graphics."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-23-turn-notifications-into-code-with-github-copilot-in-teams",
+      "date": "2026-10-23",
+      "tool": "github-copilot",
+      "title": "Turn notifications into code with GitHub Copilot in Teams",
+      "text": "The new GitHub app in Teams brings notifications and Copilot together, helping teams turn issues into fixes and ship code faster without leaving the conversation.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-23-turn-notifications-into-code-with-github-copilot-in-teams",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "The new GitHub app in Teams brings notifications and Copilot together, helping teams turn issues into fixes and ship code faster without leaving the conversation."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-23-usage-metrics-api-adds-usage-from-tools-like-opencode",
+      "date": "2026-10-23",
+      "tool": "github-copilot",
+      "title": "Usage metrics API adds usage from tools like OpenCode",
+      "text": "Usage metrics API adds usage from tools like OpenCode",
+      "quote": false,
+      "sourceUrl": "https://github.blog/changelog/2026-10-23-usage-metrics-api-adds-usage-from-tools-like-opencode",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": []
+    }
+  ]
+}
