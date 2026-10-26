@@ -362,7 +362,7 @@ test('a draft digest stays out of the build: no page, no sitemap or feed entry, 
     const { start, end } = isoWeekRange(week);
     const marker = 'DRAFTONLYMARKER';
     const draft = {
-      ...structuredClone(latest), week, start, end, status: 'draft', verifiedOn: end,
+      ...structuredClone(latest), week, start, end, status: 'draft', verifiedOn: end, highlights: undefined,
       title: `${marker} digest`, summary: `${marker} summary.`,
       items: latest.items.slice(0, 2).map((it, n) => ({ ...it, id: `${it.tool}-${start}-${marker.toLowerCase()}-${n}`, date: start, title: `${marker} item ${n}`, sourceUrl: `${it.sourceUrl.split('#')[0]}#${marker.toLowerCase()}-${n}` }))
     };
