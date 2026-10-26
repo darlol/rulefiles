@@ -510,7 +510,7 @@ test('every Source link on the digest cards has a unique accessible name that st
   for (const week of weeks) assert.deepEqual(digestSourceLinkProblems(fs.readFileSync(path.join(out, 'digest', week, 'index.html'), 'utf8'), digestOf(week).items, week), []);
   const latest = weeks[weeks.length - 1];
   const home = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
-  assert.deepEqual(digestSourceLinkProblems(home, digestOf(latest).items.slice(0, 4), 'home'), []);
+  assert.deepEqual(digestSourceLinkProblems(home, digestOf(latest).items, 'home'), []);
   // The count comes from the week's own data file, so a week with another number of items still passes.
   const latestItems = digestOf(latest).items;
   assert.ok(latestItems.length > 0, 'the latest week has items');
@@ -529,7 +529,7 @@ test('the digest link check follows the number of items in the data, whether 3 o
     const html = `<ul class="items">${items.map(itemHtml).join('\n')}</ul>`;
     assert.deepEqual(digestSourceLinkProblems(html, items, `${count} items`), [], `${count} items must pass`);
     assert.ok(digestSourceLinkProblems(html, items.slice(1), `${count} items`).length > 0, `${count} items against one item fewer in the data must fail`);
-    assert.ok(digestSourceLinkProblems(html.replace('<li class="item" id="item-0">', '<li class="item" id="item-0" hidden>').replace(/<p class="item-foot">[\s\S]*?<\/p>/, ''), items, `${count} items`).length > 0, 'a card without its Source link must fail');
+    assert.ok(digestSourceLinkProblems(html.replace(/<li class="item" id="item-0"[^>]*>/, '<li class="item" id="item-0" hidden>').replace(/<p class="item-foot">[\s\S]*?<\/p>/, ''), items, `${count} items`).length > 0, 'a card without its Source link must fail');
   }
 });
 
@@ -559,7 +559,8 @@ test('the home page leads with the promise and the three entry points, in tab or
   const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
   assert.match(html, /<h1 id="hero-title">What changed in AI coding tools, with sources\.<\/h1>/);
   const order = [...html.matchAll(/<a class="btn[^"]*" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['/matrix/', '/generator/', '/digest/']);
+  assert.deepEqual(order.slice(0, 3), ['/matrix/', '/generator/', '/digest/'], 'hero CTAs stay first in tab order');
+  assert.ok(order.filter((h) => h === '/matrix/').length >= 1 && order.includes('/generator/'));
   // Document order is tab order: skip link, brand, nav, then the hero actions.
   const idx = (s) => html.indexOf(s);
   assert.ok(idx('class="skip"') < idx('class="brand"') && idx('class="brand"') < idx('<nav aria-label="Main">') && idx('<nav aria-label="Main">') < idx('class="btn btn-primary"'));

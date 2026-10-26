@@ -9,7 +9,7 @@ import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
 import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
 import { matrixStats, validateMatrix, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
-import { loadData } from '../scripts/lib/data.mjs';
+import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
 import { markerFields } from '../scripts/lib/placeholders.mjs';
 import { renderMarkdown } from '../scripts/lib/markdown.mjs';
 import { TEST_DATE, LATEST_DATA_DATE, addDays } from './helpers/test-date.mjs';
@@ -37,7 +37,7 @@ after(() => fs.rmSync(out, { recursive: true, force: true }));
 
 
 test('all expected pages and files exist', () => {
-  for (const p of [...PAGES, 'sitemap.xml', 'robots.txt', 'llms.txt', 'llms-full.txt', 'digest/feed.xml', 'data/matrix.json', 'data/digests.json', 'assets/style.css', 'assets/generator.js', 'assets/generator-core.js', '_headers', 'favicon.svg']) {
+  for (const p of [...PAGES, 'sitemap.xml', 'robots.txt', 'llms.txt', 'llms-full.txt', 'digest/feed.xml', 'data/matrix.json', 'data/digests.json', 'assets/style.css', 'assets/generator.js', 'assets/generator-core.js', 'assets/home-digest-filter.js', 'assets/js-flag.js', '_headers', 'favicon.svg']) {
     assert.ok(fs.existsSync(path.join(out, p)), p);
   }
 });
@@ -261,7 +261,12 @@ test('newsletter form is disabled without a provider and enabled with one', () =
   assert.ok(off.includes('How signup will work'));
   assert.doesNotMatch(off, /No newsletter provider has been configured|once a provider is chosen/);
   assert.match(html, /name="description" content="Weekly email digest of what changed in AI coding tools\. Signup is switched off until the publication; the Atom feed works now\."/);
-  assert.ok(textOf('index.html').replace(/\s+([).,])/g, '$1').includes('A weekly email with the digest is planned. Signup status. The Atom feed works today.'));
+  assert.ok(textOf('index.html').includes('The weekly digest by email, sent through Buttondown.'));
+  assert.ok(textOf('index.html').includes('Signup is switched off until the publication'));
+  assert.ok(textOf('index.html').includes('Open the newsletter page'));
+  assert.match(read('index.html'), /<input id="home-nl-email" name="email" type="email" disabled/);
+  assert.match(read('index.html'), /<button type="button" disabled>Subscribe<\/button>/);
+  assert.doesNotMatch(textOf('index.html'), /is planned|Signup status|open for signup/);
   assert.ok(textOf('legal/index.html').includes('The personal data planned is the email address of people who subscribe'));
   for (const s of NL_TEXT.off) assert.ok(textOf('privacy/index.html').includes(s), `closed: ${s}`);
   for (const s of NL_TEXT.on) assert.equal(textOf('privacy/index.html').includes(s), false, `closed, not present: ${s}`);
@@ -286,8 +291,12 @@ test('newsletter form is disabled without a provider and enabled with one', () =
     for (const s of NL_TEXT.off) assert.equal(privOn.includes(s), false, `open, not future: ${s}`);
     assert.doesNotMatch(privOn, /\bwill (also )?(record|send|carry|be hosted|apply)\b/);
     const flat = (f) => fs.readFileSync(path.join(out2, f), 'utf8').replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/\s+([).,])/g, '$1');
-    assert.ok(flat('index.html').includes('A weekly email with the digest is open for signup. Subscribe. The Atom feed carries the same issues.'));
-    assert.doesNotMatch(flat('index.html'), /is planned|Signup status/);
+    assert.match(fs.readFileSync(path.join(out2, 'index.html'), 'utf8'), /<form class="nl-form" method="post" action="https:\/\/news\.example\.com\/subscribe">/);
+    assert.match(fs.readFileSync(path.join(out2, 'index.html'), 'utf8'), /<input id="home-nl-email" name="email" type="email" required autocomplete="email">/);
+    assert.ok(flat('index.html').includes('The weekly digest by email, sent through Buttondown.'));
+    assert.ok(flat('index.html').includes('Subscribe'));
+    assert.ok(flat('index.html').includes('Open the newsletter page'));
+    assert.doesNotMatch(flat('index.html'), /is planned|Signup status|switched off/);
     assert.ok(flat('legal/index.html').includes('The personal data collected is the email address of people who subscribe'));
     assert.doesNotMatch(flat('legal/index.html'), /data planned/);
     assert.match(fs.readFileSync(path.join(out2, 'privacy/index.html'), 'utf8'), /name="description" content="What data Rulefiles collects, who is responsible for it, and your rights\. The data collected is the email address you give for the newsletter and the messages you send us\."/);
@@ -446,7 +455,9 @@ test('matrix totals on every page come from the data', () => {
   const migration = String(stats.byStatus['migration-only']);
   const cells = String(stats.total);
   const text = (rel) => read(rel).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  assert.match(text('index.html'), new RegExp(`Each of its ${cells} cells .*? ${unverified} of them are marked unverified .*? ${migration} are marked migration only`));
+  assert.match(text('index.html'), new RegExp(`${data.matrix.tools.length} tools`));
+  assert.match(text('index.html'), new RegExp(`${cells} cells sourced`));
+  assert.match(text('index.html'), /Last reviewed \d{1,2} [A-Z][a-z]{2} \d{4}\./);
   assert.match(text('matrix/index.html'), new RegExp(`${cells} cells\\. Last reviewed`));
   // The counts are the status list under the intro, which shows without JavaScript (the filter chips do not).
   const counts = /<ul class="status-counts" aria-label="Cells by status">([\s\S]*?)<\/ul>/.exec(read('matrix/index.html'))[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
@@ -459,6 +470,40 @@ test('matrix totals on every page come from the data', () => {
   cell.status = 'migration-only';
   assert.equal(matrixStats(m2).unverified, stats.unverified - 1);
   assert.equal(matrixStats(m2).byStatus['migration-only'], stats.byStatus['migration-only'] + 1);
+});
+
+test('home Layout A proof digest: trust strip, rythme, chips, form', () => {
+  const data = loadData();
+  const latest = publishedDigests(data)[0];
+  const html = read('index.html');
+  const flat = textOf('index.html');
+  // Trust strip numbers from matrix + latest digest only.
+  assert.match(flat, new RegExp(`${data.matrix.tools.length} tools`));
+  assert.match(flat, new RegExp(`${data.matrix.cells.length} cells sourced`));
+  assert.match(flat, new RegExp(`${latest.items.length} items in ${latest.week}`));
+  assert.match(html, /class="trust-strip"/);
+  const maxDate = latest.items.map((it) => it.date).sort().at(-1);
+  assert.match(html, new RegExp(`Latest item · <time datetime="${maxDate}">`));
+  assert.match(html, new RegExp(`href="/digest/${latest.week}/">Read the digest</a>`));
+  assert.match(html, /data-filter-tool="cursor"[^>]*>Cursor</);
+  assert.match(html, /data-filter-tool="claude-code"[^>]*>Claude Code</);
+  assert.match(html, /data-filter-tool="codex"[^>]*>Codex</);
+  assert.match(html, /data-filter-tool="github-copilot"[^>]*>GitHub Copilot</);
+  assert.match(html, />All tools</);
+  assert.match(html, /id="home-digest-items"/);
+  assert.ok(html.includes('id="home-digest-items"'));
+  for (const it of latest.items) {
+    assert.match(html, new RegExp(`id="${it.id}" data-tool="${it.tool}"`));
+  }
+  assert.match(html, /Generate instruction files in your browser\./);
+  assert.match(html, /Node\.js and Python presets included\./);
+  assert.match(html, /The weekly digest by email, sent through Buttondown\./);
+  assert.match(html, /Open the newsletter page/);
+  assert.match(html, /src="\/assets\/home-digest-filter\.js"/);
+  assert.match(html, /src="\/assets\/js-flag\.js"/);
+  assert.doesNotMatch(html, /github\.com\/darlol\/rulefiles/);
+  assert.ok(flat.includes('What changed in AI coding tools, with sources.'));
+  assert.ok(flat.includes('Latest digest'));
 });
 
 test('the three Claude Code cells that /init mentions are migration-only with a note that says so', () => {
