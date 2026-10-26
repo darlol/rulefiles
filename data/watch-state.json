@@ -1,1 +1,22 @@
-{ "seen": {} }
+{
+  "seen": {
+    "claude-code-releases:v2.1.304": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-19-copilot-model-policy-api-for-enterprise-orgs-and-teams": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-19-github-copilot-models-deprecated-on-october-19-2026": "2026-10-26",
+    "claude-code-releases:v2.1.305": "2026-10-26",
+    "claude-code-releases:v2.1.306": "2026-10-26",
+    "claude-code-releases:v2.1.307": "2026-10-26",
+    "claude-code-releases:v2.1.308": "2026-10-26",
+    "claude-code-releases:v2.1.309": "2026-10-26",
+    "codex-changelog:https://developers.openai.com/codex/changelog/#codex-2026-10-22-mobile": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-22-custom-skills-agents-and-mcp-servers-in-usage-metrics-api": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-22-github-copilot-in-visual-studio-september-update-2": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-22-global-default-for-copilot-features-generally-available": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-22-industry-comparisons-in-the-copilot-impact-dashboard": "2026-10-26",
+    "claude-code-releases:v2.1.310": "2026-10-26",
+    "codex-changelog:https://developers.openai.com/codex/changelog/#github-release-421457270": "2026-10-26",
+    "codex-releases:rust-v0.164.0": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-23-turn-notifications-into-code-with-github-copilot-in-teams": "2026-10-26",
+    "copilot-changelog:https://github.blog/changelog/2026-10-23-usage-metrics-api-adds-usage-from-tools-like-opencode": "2026-10-26"
+  }
+}
