@@ -273,7 +273,7 @@ test('editorial: W41 and W42 keep their summary and get none of the new blocks',
     assert.match(html, /<p class="summary">/, w);
     assert.doesNotMatch(html, /class="(in-short|versions|instruction-files)"|In short|Versions this week|Instruction files this week/, w);
   }
-  for (const d of data.digests) {
+  for (const d of data.digests.filter((d) => /2026-W4[12]\.json$/.test(d.file))) {
     assert.equal(d.data.highlights, undefined, d.file);
     assert.ok(d.data.items.every((i) => i.matrix === undefined), d.file);
   }
