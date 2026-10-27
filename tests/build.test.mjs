@@ -472,7 +472,7 @@ test('matrix totals on every page come from the data', () => {
   assert.equal(matrixStats(m2).byStatus['migration-only'], stats.byStatus['migration-only'] + 1);
 });
 
-test('home Layout A proof digest: trust strip, rythme, chips, form', () => {
+test('home Signal Press proof digest: trust strip, rythme, chips, form', () => {
   const data = loadData();
   const latest = publishedDigests(data)[0];
   const html = read('index.html');

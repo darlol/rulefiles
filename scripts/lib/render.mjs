@@ -97,7 +97,7 @@ function iconSprite() {
 /** The site mark: a page with one highlighted line. It carries no text, so it survives a rename. */
 const MARK = '<svg class="mark" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect class="m-bg" width="32" height="32" rx="8"/><rect class="m-line" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect class="m-hi" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="m-line" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>';
 
-export const THEME_COLOR = { light: '#fafafa', dark: '#0b0c10' };
+export const THEME_COLOR = { light: '#f6f1e7', dark: '#1a1612' };
 
 export function layout(config, page) {
   const canonical = url(config, page.path);
@@ -128,7 +128,8 @@ ${page.noindex ? '' : `<meta property="og:url" content="${h(canonical)}">\n`}<me
 <meta name="theme-color" content="${THEME_COLOR.light}" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="${THEME_COLOR.dark}" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="/assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/source-serif-4-600.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/source-sans-3-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/atom+xml" title="${h(config.name)} digest" href="/digest/feed.xml">
 <link rel="stylesheet" href="/assets/style.css">
 ${ld}
@@ -218,8 +219,8 @@ export function homePage(ctx) {
   const latestItemDate = latest ? latest.items.map((it) => it.date).sort().at(-1) : null;
   const toolChips = Object.keys(TOOL_NAME).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(TOOL_NAME[id])}</button>`).join('');
   const digestBlock = latest
-    ? `<section class="home-section" aria-labelledby="latest"><h2 id="latest">Latest digest</h2>
-<p><a href="/digest/${h(latest.week)}/">${h(latest.title)}</a>: ${latest.items.length} dated items from official sources.</p>
+    ? `<section class="home-section" aria-labelledby="latest">
+<div class="section-head"><h2 id="latest">Latest digest</h2><a href="/digest/">Full archive</a></div>
 <div class="home-digest-filters" id="home-digest-filters">
 <div class="chips" role="group" aria-label="Filter by tool">${toolChips}<button type="button" class="btn btn-quiet" data-filter-reset disabled>All tools</button></div>
 </div>
@@ -234,39 +235,74 @@ export function homePage(ctx) {
   const statusCounts = Object.keys(STATUS_LABEL).filter((k) => stats.byStatus[k]).map((k) => `<li>${statusBadge(k)} <span class="status-count">${stats.byStatus[k]}</span></li>`).join('');
   const specimenFoot = `${matrix.cells.length} cells, each with an official source and a check date.`;
   const trust = latest
-    ? `<p class="trust-strip" role="status">${matrix.tools.length} tools · ${matrix.cells.length} cells sourced · Last reviewed ${h(reviewed)} · ${latest.items.length} items in ${h(latest.week)}</p>`
-    : `<p class="trust-strip" role="status">${matrix.tools.length} tools · ${matrix.cells.length} cells sourced · Last reviewed ${h(reviewed)}</p>`;
-  const rythme = latest && latestItemDate
-    ? `<p class="rythme">Latest item · <time datetime="${h(latestItemDate)}">${h(shortDate(latestItemDate))}</time> · ${h(latest.week)} · <a href="/digest/${h(latest.week)}/">Read the digest</a></p>`
-    : '';
-  const body = `<section class="hero" aria-labelledby="hero-title">
+    ? `<div class="trust-strip" role="status">
+<div><b>${matrix.tools.length}</b><span>${matrix.tools.length} tools</span></div>
+<div><b>${matrix.cells.length}</b><span>${matrix.cells.length} cells sourced</span></div>
+<div><b>${h(reviewed)}</b><span>Last reviewed ${h(reviewed)}</span></div>
+<div><b>${latest.items.length}</b><span>${latest.items.length} items in ${h(latest.week)}</span></div>
+</div>`
+    : `<div class="trust-strip" role="status">
+<div><b>${matrix.tools.length}</b><span>${matrix.tools.length} tools</span></div>
+<div><b>${matrix.cells.length}</b><span>${matrix.cells.length} cells sourced</span></div>
+<div><b>${h(reviewed)}</b><span>Last reviewed ${h(reviewed)}</span></div>
+</div>`;
+  const issueBand = latest && latestItemDate
+    ? `<div class="issue-band">
+<span class="rythme"><strong>Latest week · ${h(latest.week)}</strong> · Latest item · <time datetime="${h(latestItemDate)}">${h(shortDate(latestItemDate))}</time></span>
+<a href="/digest/${h(latest.week)}/">Read the digest</a>
+</div>`
+    : latest
+      ? `<div class="issue-band"><span><strong>Latest week · ${h(latest.week)}</strong></span><a href="/digest/${h(latest.week)}/">Read the digest</a></div>`
+      : '';
+  const sideCard = latest
+    ? `<aside class="hero-side">
+<h2>${h(latest.title)}</h2>
+<p>${latest.items.length} items · checked ${h(shortDate(latest.verifiedOn || latest.end || matrix.lastReviewed))} · ${h(latest.week)}</p>
+<a class="btn" href="/digest/${h(latest.week)}/">Open ${h(latest.week)}</a>
+</aside>`
+    : `<a class="specimen" href="/matrix/">
+<span class="sr">Open the full matrix. Preview of ${matrix.files.length} file types by ${matrix.tools.length} tools.</span>
+<span class="specimen-heads" aria-hidden="true">${heads}</span>
+<span class="specimen-grid" aria-hidden="true">${tiles}</span>
+<span class="specimen-foot">${specimenFoot}</span>
+</a>`;
+  const body = `${issueBand}
+<section class="hero" aria-labelledby="hero-title">
 <div class="hero-copy">
 <h1 id="hero-title">${h(HERO_TITLE)}</h1>
 <p class="lead">${h(config.description)}</p>
-<p class="cta"><a class="btn btn-primary" href="/matrix/">Open the matrix${icon('arrow')}</a><a class="btn" href="/generator/">Try the generator</a><a class="btn" href="/digest/">Read the digest</a></p>
+<p class="cta"><a class="btn btn-primary" href="/digest/">Read the digest${icon('arrow')}</a><a class="btn" href="/matrix/">Open the matrix</a><a class="btn" href="/generator/">Try the generator</a></p>
 </div>
+${sideCard}
+</section>
+${trust}
+${digestBlock}
+<section class="home-section" aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
+<ul class="status-counts" aria-label="Cells by status">${statusCounts}</ul>
+<p>Last reviewed ${h(reviewed)}.</p>
 <a class="specimen" href="/matrix/">
 <span class="sr">Open the full matrix. Preview of ${matrix.files.length} file types by ${matrix.tools.length} tools.</span>
 <span class="specimen-heads" aria-hidden="true">${heads}</span>
 <span class="specimen-grid" aria-hidden="true">${tiles}</span>
 <span class="specimen-foot">${specimenFoot}</span>
 </a>
-</section>
-${trust}
-${rythme}
-${digestBlock}
-<section class="home-section" aria-labelledby="matrix"><h2 id="matrix">Which agent reads which file</h2>
-<ul class="status-counts" aria-label="Cells by status">${statusCounts}</ul>
-<p>Last reviewed ${h(reviewed)}.</p>
 <p class="cta"><a class="btn btn-primary" href="/matrix/">Open the matrix${icon('arrow')}</a></p></section>
-<section class="home-section home-generator" aria-label="Generator">
+<section class="home-band home-generator" aria-label="Generator">
+<div>
+<h2>Generator</h2>
 <p>Generate instruction files in your browser.</p>
 <p class="muted">Node.js and Python presets included.</p>
-<p class="cta"><a class="btn" href="/generator/">Try the generator</a></p></section>
-<section class="home-section callout" aria-labelledby="news"><h2 id="news">Newsletter</h2>
+</div>
+<p class="cta"><a class="btn" href="/generator/">Try the generator</a></p>
+</section>
+<section class="home-band nl-band" aria-labelledby="news" id="newsletter">
+<div>
+<h2 id="news">Newsletter</h2>
 <p class="lead">The weekly digest by email, sent through Buttondown.</p>
 ${newsletterForm(config, { idPrefix: 'home-nl' })}
-<p><a href="/newsletter/">Open the newsletter page</a>. The <a href="/digest/feed.xml">Atom feed</a> carries the same issues.</p></section>`;
+<p><a href="/newsletter/">Open the newsletter page</a>. The <a href="/digest/feed.xml">Atom feed</a> carries the same issues.</p>
+</div>
+</section>`;
   return layout(config, {
     path: '/', title: config.name, description: config.description, body,
     script: latest ? '/assets/home-digest-filter.js' : undefined,
@@ -275,7 +311,6 @@ ${newsletterForm(config, { idPrefix: 'home-nl' })}
   });
 }
 
-/** New visible text of the matrix controls, kept in one place for the content review. */
 export const MATRIX_COPY = {
   searchLabel: 'Search files and notes',
   searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
@@ -938,7 +973,7 @@ export function renderHeaders(config) {
 ${hsts}`;
 }
 
-export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#4338ca}.l{fill:#fff}@media (prefers-color-scheme:dark){.b{fill:#a5b4fc}.l{fill:#0b0c10}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#ffe066" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
+export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>.b{fill:#14110e}.l{fill:#f6f1e7}@media (prefers-color-scheme:dark){.b{fill:#f6f1e7}.l{fill:#1a1612}}</style><rect class="b" width="32" height="32" rx="8"/><rect class="l" x="7" y="8.5" width="12" height="3.2" rx="1.6" opacity=".6"/><rect fill="#c45c26" x="7" y="14.4" width="18" height="3.2" rx="1.6"/><rect class="l" x="7" y="20.3" width="9" height="3.2" rx="1.6" opacity=".6"/></svg>
 `;
 
 export { path, daysBetween };

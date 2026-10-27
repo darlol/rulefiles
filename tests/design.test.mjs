@@ -233,8 +233,12 @@ test('the CSP stays strict and the pages need no inline style or script', () => 
 });
 
 test('fonts are served from the site, licensed and referenced by the stylesheet', () => {
-  assert.match(css, /@font-face\s*\{[^}]*url\("\/assets\/fonts\/hanken-grotesk\.woff2"\)/);
-  assert.ok(fs.existsSync(path.join(out, 'assets', 'fonts', 'hanken-grotesk.woff2')));
+  assert.match(css, /@font-face\s*\{[^}]*url\("\/assets\/fonts\/source-serif-4-600\.woff2"\)/);
+  assert.match(css, /@font-face\s*\{[^}]*url\("\/assets\/fonts\/source-sans-3-400\.woff2"\)/);
+  assert.match(css, /@font-face\s*\{[^}]*url\("\/assets\/fonts\/ibm-plex-mono-400\.woff2"\)/);
+  assert.ok(fs.existsSync(path.join(out, 'assets', 'fonts', 'source-serif-4-600.woff2')));
+  assert.ok(fs.existsSync(path.join(out, 'assets', 'fonts', 'source-sans-3-400.woff2')));
+  assert.ok(fs.existsSync(path.join(out, 'assets', 'fonts', 'ibm-plex-mono-400.woff2')));
   assert.match(fs.readFileSync(path.join(out, 'assets', 'fonts', 'OFL.txt'), 'utf8'), /SIL OPEN FONT LICENSE Version 1\.1/);
 });
 
@@ -559,7 +563,7 @@ test('the home page leads with the promise and the three entry points, in tab or
   const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
   assert.match(html, /<h1 id="hero-title">What changed in AI coding tools, with sources\.<\/h1>/);
   const order = [...html.matchAll(/<a class="btn[^"]*" href="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(order.slice(0, 3), ['/matrix/', '/generator/', '/digest/'], 'hero CTAs stay first in tab order');
+  assert.deepEqual(order.slice(0, 3), ['/digest/', '/matrix/', '/generator/'], 'hero CTAs stay first in tab order');
   assert.ok(order.filter((h) => h === '/matrix/').length >= 1 && order.includes('/generator/'));
   // Document order is tab order: skip link, brand, nav, then the hero actions.
   const idx = (s) => html.indexOf(s);
@@ -569,7 +573,7 @@ test('the home page leads with the promise and the three entry points, in tab or
 test('favicon and share image use the same mark and the pages announce both', () => {
   const svg = fs.readFileSync(path.join(out, 'favicon.svg'), 'utf8');
   assert.match(svg, /prefers-color-scheme:dark/);
-  assert.match(svg, /fill="#ffe066"/);
+  assert.match(svg, /fill="#c45c26"/);
   const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
   assert.match(html, /<link rel="icon" href="\/favicon\.svg" type="image\/svg\+xml">/);
   assert.match(html, /<meta property="og:image:alt" content="[^"]+: What changed in AI coding tools, with sources\.">/);
@@ -726,10 +730,11 @@ test('the current page link keeps the weight of the other links, so marking it n
   for (const decl of current) assert.doesNotMatch(decl, /font-weight|font-size|padding|letter-spacing/);
 });
 
-test('the favicon uses the accent colour of each theme', () => {
+test('the favicon uses the ink ground of each theme and the signal bar', () => {
   const svg = fs.readFileSync(path.join(out, 'favicon.svg'), 'utf8');
-  assert.ok(svg.includes(`.b{fill:${light.accent}}`), 'light accent');
-  assert.ok(svg.includes(`.b{fill:${dark.accent}}`), 'dark accent');
+  assert.ok(svg.includes(`.b{fill:${light.ink}}`), 'light ink ground');
+  assert.ok(svg.includes(`.b{fill:${light.bg}}`), 'dark scheme uses paper ground');
+  assert.ok(svg.includes('fill="#c45c26"') || svg.includes(`fill="${light.signal}"`), 'signal hi bar');
 });
 
 test('anchor targets clear the header only where the header is sticky', () => {
