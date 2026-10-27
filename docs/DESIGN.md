@@ -4,44 +4,55 @@ How the site looks and why, so the next change does not have to guess.
 
 ## Direction
 
-The site is a reference, so it reads like one: dates, source links and status badges first, decoration last. The one picture it allows itself is a small grid on the home page and in the share image. It is drawn from the real matrix data, one tile per cell, colored by status.
+**Signal Press** (Direction A, brief-pinned 2026-10-27). The site is a weekly sourced wire: dates, source links and status badges first. Paper ground, serif display, one signal-orange accent used for interaction at AA depth. Cards use a 1px border. There are no drop-shadows and no gradients. The header stays sticky.
 
-The type is Hanken Grotesk for everything except code, which uses the system monospace stack. Cards use one device, a 1px border. There are no shadows and no gradients. The palette is neutral grey with one indigo accent, and the header stays at the top of the window from 48rem wide.
+Incumbent Layout A (Hanken + indigo) is anti-reference for this world.
 
 ## Tokens
 
-All colors, spacing steps and radii are CSS custom properties at the top of `src/static/style.css`. The dark theme redefines every color token inside `@media (prefers-color-scheme: dark)`. Colors are plain hex values so the contrast test can read them.
+All colors, spacing steps and radii are CSS custom properties at the top of `src/static/style.css`. The dark theme redefines every color token inside `@media (prefers-color-scheme: dark)`. Colors are plain hex so the contrast test can read them.
+
+| Role | Light | Notes |
+|------|-------|-------|
+| `--bg` | `#f6f1e7` | Paper |
+| `--surface` | `#fffdf8` | Cards |
+| `--sunken` | `#ebe4d6` | Tags, footer, hover rows |
+| `--ink` | `#14110e` | Body |
+| `--muted` | `#5c564e` | Secondary |
+| `--line` | `#ddd4c5` | Hairlines |
+| `--accent` | `#9a4318` | Links and primary buttons (BAR signal-deep; AA on paper) |
+| `--signal` | `#c45c26` | Brand mark highlight only |
+| `--mark` | `#ffe066` | Selection / Latest tag |
 
 Status colors come in pairs (`--reads-fg` on `--reads-bg`, and so on). A status never relies on color alone: every badge has an icon and the status text.
 
-## Font
+## Type
 
-`src/static/fonts/hanken-grotesk.woff2` is a Latin subset of Hanken Grotesk (variable weight), under the SIL Open Font License 1.1. The license text sits next to it. The CSP allows fonts from the site itself (`font-src 'self'`) and nothing else.
+- **Display:** Source Serif 4 (self-hosted latin woff2 400/600/700)
+- **UI:** Source Sans 3 (400/600/700)
+- **Data:** IBM Plex Mono (400/500)
 
-The subset keeps U+0020-007E, U+00A0-00FF, the dashes and quotes U+2013, U+2014, U+2018, U+2019, U+201C and U+201D, the bullet U+2022, the ellipsis U+2026 and the arrow U+2192. It also keeps name IDs 0-6, 13 and 14 (copyright, license description and license URL) and 256-267 (variation names). To rebuild it from the `HankenGrotesk[wght].ttf` file in google/fonts (`ofl/hankengrotesk`), with fonttools and brotli installed, run the command below. Keep the quotes, because the brackets are shell wildcards. The output is byte for byte the file in the repository.
+Files live under `src/static/fonts/`. License text is `OFL.txt` (SIL OFL 1.1 for all three families). The CSP allows fonts from the site itself (`font-src 'self'`) and nothing else. Latin files come from Fontsource mirrors of google/fonts OFL packages; see `src/static/fonts/README.txt`.
 
-```
-pyftsubset "HankenGrotesk[wght].ttf" \
-  --unicodes=U+0020-007E,U+00A0-00FF,U+2013,U+2014,U+2018,U+2019,U+201C,U+201D,U+2022,U+2026,U+2192 \
-  --layout-features=kern,liga,ss01 \
-  --name-IDs=0,1,2,3,4,5,6,13,14,256,257,258,259,260,261,262,263,264,265,266,267 \
-  --flavor=woff2 \
-  --output-file=hanken-grotesk.woff2
-```
+Share-image glyph outlines in `scripts/lib/og-font.json` remain Hanken Grotesk Bold paths (separate asset; license in `scripts/lib/og-font.README.txt`).
 
 ## The mark and the name
 
-The mark is a page with one highlighted line. It has no letters, so it does not change when the project is renamed. The header, the footer, `favicon.svg` and the share image all draw it. The site name always comes from `site.config.json`. The home headline lives in `HERO_TITLE` in `scripts/lib/render.mjs`, and the share image reuses it.
+The mark is a page with one highlighted signal line on an ink plate. It has no letters. The header, the footer, `favicon.svg` and the share image all draw it. The site name always comes from `site.config.json`. The home headline lives in `HERO_TITLE` in `scripts/lib/render.mjs`.
 
-## Share image
+## Home composition
 
-`scripts/lib/ogimage.mjs` draws `og.png` with `node:zlib` and a small scanline rasteriser. Text comes from glyph outlines in `scripts/lib/og-font.json`, converted from the same font at weight 720. The name, the headline and the grid are arguments, so a rename needs no change in this file.
+Sticky masthead → issue band (latest week / latest item / Read digest) → H1 + lead + CTAs + side card for this week's issue (no eyebrow/kicker) → trust strip from build data → digest cards with tool chips → matrix teaser + specimen → generator band → newsletter band. GitHub darlol appears on About only.
 
-## Matrix filters
+## Modes
 
-`src/js/matrix-filter.js` holds the logic and has no DOM access. `src/static/matrix.js` wires it to the page. An empty selection means no filter. Without JavaScript the filter bar stays hidden and the whole table shows. Nothing is stored and nothing is fetched.
+- Home: Persuade-lite
+- Digest / About / legal: Read
+- Matrix / Generator: Operate
 
-The search reads the file path, its description, the tool name and the note of each cell, and keeps the cells that hold every word typed. The notes are shown by default, with or without JavaScript, because they carry the conditions a status depends on. The Hide notes toggle folds them for a compact grid, and they come back while a search is typed. Below 48rem the table becomes one card per file, with the tool name on each cell, so nothing scrolls sideways. The legend sits above the table in a `details` element. All of it is CSS and the same two scripts, so the page needs nothing new from the CSP.
+## Craft floor
+
+No eyebrows/kickers. No indigo. No Hanken on the site surface. No card drop-shadows. ASCII hyphens in client-facing copy.
 
 ## Browser support
 
@@ -81,7 +92,7 @@ Floors that follow from the table:
 | `font-variant-numeric` | tabular digits | 52 / 79 | 34 | 9.1 | Proportional digits. |
 | `overflow-wrap: anywhere` | long code strings | 80 | 65 | 15.4 | Long strings can overflow. |
 | WOFF2 (caniuse) | the web font | 36 / 14 | 39 | 12 | System font stack in `--font`. |
-| Variable fonts (`font-variation-settings`) | weights 100 to 900 from one file | 62 / 17 | 62 | 11 | System font stack. |
+| Static WOFF2 files (Source Serif 4, Source Sans 3, IBM Plex Mono) | display, UI and data type | 36 / 14 | 39 | 12 | System stacks in `--serif`, `--font`, `--mono`. |
 | `font-display` | font loading | 60 / 79 | 58 | 11.1 | Browser default loading. |
 | `@keyframes`, `animation` | tile entry effect | 43 / 12 | 16 | 9 | Tiles appear without the effect. |
 | `<use href="#id">` without `xlink:href` | icons from the inline sprite | 50 / 12 | 1.5 | 12.1 | Empty icon boxes. They keep their 20 by 20 size. |

@@ -3,7 +3,7 @@ import zlib from 'node:zlib';
 
 // Draws the share image (1200x630) with node:zlib and a small scanline rasteriser, no dependency and no
 // system font. The text comes from the site config, so a rename needs no change here. The glyph outlines in
-// og-font.json are Hanken Grotesk Bold (SIL OFL 1.1, see src/static/fonts/OFL.txt) at weight 720, converted
+// og-font.json are Hanken Grotesk Bold (SIL OFL 1.1, see scripts/lib/og-font.README.txt) at weight 720, converted
 // to quadratic paths. The output is deterministic.
 
 export const OG_WIDTH = 1200;
@@ -14,8 +14,9 @@ const SUB = 4; // vertical sub-scanlines per pixel; horizontal coverage is exact
 
 // The dark palette of the site (src/static/style.css).
 const C = {
-  bg: [13, 16, 24], panel: [21, 25, 38], line: [42, 48, 69], ink: [237, 239, 247], muted: [165, 172, 194],
-  accent: [165, 170, 255], onAccent: [13, 16, 24], mark: [255, 224, 102]
+  // Signal Press dark theme (src/static/style.css). Mark ground = paper, hi bar = signal.
+  bg: [26, 22, 18], panel: [34, 30, 25], line: [58, 52, 44], ink: [246, 241, 231], muted: [196, 184, 168],
+  accent: [246, 241, 231], onAccent: [26, 22, 18], mark: [196, 92, 38]
 };
 const STATUS = {
   reads: [[18, 48, 31], [127, 224, 164]],
