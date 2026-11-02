@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build } from '../scripts/build.mjs';
 import { listFiles } from '../scripts/lib/util.mjs';
-import { itemHtml } from '../scripts/lib/render.mjs';
+import { itemHtml, versionRows, VERSIONS_TABLE_FROM } from '../scripts/lib/render.mjs';
 import { TEST_DATE } from './helpers/test-date.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -520,7 +520,11 @@ test('every Source link on the digest cards has a unique accessible name that st
   assert.ok(latestItems.length > 0, 'the latest week has items');
   const latestHtml = fs.readFileSync(path.join(out, 'digest', latest, 'index.html'), 'utf8');
   assert.equal((latestHtml.match(/<p class="item-foot">/g) || []).length, latestItems.length, 'one item card per item in the data');
-  assert.equal((latestHtml.match(/<a class="src"/g) || []).length, latestItems.length, 'one Source link per item in the data');
+  // From VERSIONS_TABLE_FROM, the "Versions this week" table adds one Source link per row (one per tool with a version).
+  const versionLinks = latest >= VERSIONS_TABLE_FROM ? versionRows(digestOf(latest)).length : 0;
+  const versionsSection = (latestHtml.match(/<section class="versions"[\s\S]*?<\/section>/) || [''])[0];
+  assert.equal((versionsSection.match(/<a class="src"/g) || []).length, versionLinks, 'one Source link per row of the versions table');
+  assert.equal((latestHtml.match(/<a class="src"/g) || []).length, latestItems.length + versionLinks, 'one Source link per item in the data, plus one per versions row');
   const rule = parseRules(css).find((r) => !r.reduce && r.selectors.includes('.item-foot .src'));
   assert.ok(rule, 'a rule sizes .item-foot .src');
   for (const prop of ['min-width', 'min-height']) assert.ok(parseFloat(rule.props[prop]) >= 24 && /px$/.test(rule.props[prop]), `${prop} is at least 24px`);
