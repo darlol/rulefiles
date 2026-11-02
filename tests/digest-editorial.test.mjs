@@ -262,8 +262,21 @@ test('editorial: the Atom entry and llms-full.txt carry the same "In short" list
   const full = read('with', 'llms-full.txt');
   const block = full.split('### ').find((b) => b.includes('(2026-W43)'));
   assert.ok(block.includes(['In short:', '', ...FIXTURE.highlights.map((id) => `- ${highlightText(byId[id])}: ${byId[id].sourceUrl}`), ''].join('\n')));
-  assert.equal(full.match(/In short:/g).length, 1, 'only W43 has the list');
-  assert.doesNotMatch(read('without', 'llms-full.txt'), /In short:/);
+  // The list is the line "In short:" alone; a summary may also start with "In short: …" in prose, so match the whole line.
+  // Every issue of the build with highlights gets the list, in both outputs, and no other issue does, whatever the latest week.
+  for (const variant of ['with', 'without']) {
+    const digests = loadData(path.dirname(out[variant])).digests.map((d) => d.data);
+    const expected = digests.filter((d) => Array.isArray(d.highlights) && d.highlights.length).map((d) => d.week).sort();
+    const llms = read(variant, 'llms-full.txt').split('### ').slice(1);
+    const listed = llms.filter((b) => /^In short:$/m.test(b)).map((b) => b.match(/\((\d{4}-W\d{2})\)\n/)[1]).sort();
+    assert.deepEqual(listed, expected, `${variant}: llms-full.txt lists "In short" for exactly the issues with highlights`);
+    for (const d of digests) {
+      const has = /&lt;h2&gt;In short&lt;\/h2&gt;/.test(entryOf(variant, d.week));
+      assert.equal(has, expected.includes(d.week), `${variant}: Atom entry ${d.week}`);
+    }
+  }
+  const w43Without = read('without', 'llms-full.txt').split('### ').find((b) => b.includes('(2026-W43)'));
+  assert.doesNotMatch(w43Without, /^In short:$/m, 'W43 without highlights has no list');
 });
 
 test('editorial: W41 and W42 keep their summary and get none of the new blocks', () => {

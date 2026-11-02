@@ -1,1 +1,23 @@
-{ "seen": {} }
+{
+  "seen": {
+    "claude-code-releases:v2.1.311": "2026-11-02",
+    "codex-changelog:https://developers.openai.com/codex/changelog/#codex-2026-10-26-gpt-61-terra": "2026-11-02",
+    "claude-code-releases:v2.1.312": "2026-11-02",
+    "codex-changelog:https://developers.openai.com/codex/changelog/#github-release-425927431": "2026-11-02",
+    "codex-releases:rust-v0.165.0": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-build-shared-workflows-for-your-team-with-copilot-automations": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-generate-and-edit-images-directly-in-copilot": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-github-copilot-app-universe-releases": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-github-copilot-in-vs-code-universe-releases": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-github-enterprise-now-includes-access-to-github-copilot": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-github-intelligence-puts-your-code-context-and-history-to-work": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-repository-plugin-defaults-and-enterprise-plugin-controls-generally-available": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion": "2026-11-02",
+    "copilot-changelog:https://github.blog/changelog/2026-10-28-security-extension-for-the-github-copilot-app": "2026-11-02",
+    "codex-changelog:https://developers.openai.com/codex/changelog/#github-release-428320524": "2026-11-02",
+    "codex-releases:rust-v0.166.0": "2026-11-02",
+    "claude-code-releases:v2.1.314": "2026-11-02",
+    "claude-code-releases:v2.1.316": "2026-11-02"
+  }
+}

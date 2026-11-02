@@ -1,0 +1,256 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W44",
+  "start": "2026-10-26",
+  "end": "2026-11-01",
+  "status": "published",
+  "verifiedOn": "2026-11-02",
+  "title": "Copilot in Enterprise, Fusion GA, Opus 4.8 fast mode ends",
+  "summary": "In short: [GitHub Enterprise now includes access to GitHub Copilot](https://github.blog/changelog/2026-10-28-github-enterprise-now-includes-access-to-github-copilot/) (account-team customers on Enterprise Cloud for now): Copilot for every licensed user, with AI usage metered from the first request against the enterprise budget and no monthly AI credits per seat; [Route and orchestrate models with GitHub Copilot Fusion](https://github.blog/changelog/2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion/): Generally available; Copilot picks the models for each prompt, you pick the effort level, and it only uses models your policies enable; [Claude Code v2.1.316](https://github.com/anthropics/claude-code/releases/tag/v2.1.316): Opus 4.8 fast mode will be removed on 30 November; after that, fast mode requests on Opus 4.8 return an error and do not fall back to standard Opus 4.8",
+  "highlights": [
+    "github-copilot-2026-10-28-github-enterprise-now-includes-access-to-github-copilot",
+    "github-copilot-2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion",
+    "claude-code-2026-10-31-2.1.316"
+  ],
+  "items": [
+    {
+      "id": "claude-code-2026-10-26-2.1.311",
+      "date": "2026-10-26",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.311",
+      "text": "Changed `ultrathink` in the interactive terminal to run its turn at xhigh effort on Opus 5.5, Sonnet 5.5, Haiku 5.5 and Fable 5.1 through Anthropic's API; typed while Claude is working, it raises the rest of that turn",
+      "quote": true,
+      "version": "2.1.311",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.311",
+      "sourceLabel": "Claude Code releases"
+    },
+    {
+      "id": "codex-2026-10-26-gpt-6-1-terra-in-work-and-codex",
+      "date": "2026-10-26",
+      "tool": "codex",
+      "title": "GPT-6.1 Terra in Work and Codex",
+      "text": "GPT-6.1 Terra is now available in ChatGPT Work and Codex on Plus, Pro, Business, Enterprise, and Edu plans.",
+      "quote": true,
+      "sourceUrl": "https://learn.chatgpt.com/docs/changelog#codex-2026-10-26-gpt-61-terra",
+      "sourceLabel": "Codex changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-26-github-copilot-assisted-permissions-generally-available",
+      "date": "2026-10-26",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot assisted permissions generally available",
+      "text": "When Copilot requests permission to run a command, access a file system path, or open a URL, a large language model evaluates the request.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-26-github-copilot-assisted-permissions-generally-available/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-26-gpt-6-1-terra-in-github-copilot",
+      "date": "2026-10-26",
+      "tool": "github-copilot",
+      "title": "GPT-6.1 Terra in GitHub Copilot",
+      "text": "GPT-6.1 Terra, OpenAI’s newest model, is now generally available in GitHub Copilot.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-26-gpt-6-1-terra-in-github-copilot/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "claude-code-2026-10-27-2.1.312",
+      "date": "2026-10-27",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.312",
+      "text": "Changed Claude Code to stop sending the `claude_code.safety_event` OpenTelemetry event",
+      "quote": true,
+      "version": "2.1.312",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.312",
+      "sourceLabel": "Claude Code releases"
+    },
+    {
+      "id": "codex-2026-10-27-0-165-0",
+      "date": "2026-10-27",
+      "tool": "codex",
+      "title": "Codex 0.165.0",
+      "text": "Enabled memory v2 by default for fresh profiles and added support for importing external-agent memories into it.",
+      "quote": true,
+      "version": "0.165.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.165.0",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "github-copilot-2026-10-27-github-copilot-supports-server-to-server-authentication",
+      "date": "2026-10-27",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot supports server-to-server authentication",
+      "text": "GitHub Copilot now supports server-to-server authentication for GitHub Apps installed on organizations, available in public preview.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-27-github-copilot-supports-server-to-server-authentication/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-agent-merge-watches-and-fixes-pull-requests-in-the-cloud",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Agent Merge watches and fixes pull requests in the cloud",
+      "text": "When a selected blocker appears, Copilot starts working in a cloud development environment to fix it.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-agent-merge-watches-and-fixes-pull-requests-in-the-cloud/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-build-shared-workflows-for-your-team-with-copilot-automation",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Build shared workflows for your team with Copilot Automations",
+      "text": "Shared Copilot Automations are rolling out, enabling teams to build and maintain AI-powered workflows together.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-build-shared-workflows-for-your-team-with-copilot-automations/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-generate-and-edit-images-directly-in-copilot",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Generate and edit images directly in Copilot",
+      "text": "You can now generate and edit images using natural language in GitHub Copilot.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-generate-and-edit-images-directly-in-copilot/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-agentic-workflows-generally-available",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Agentic Workflows generally available",
+      "text": "Define your automation in natural language Markdown files, and GitHub Agentic Workflows compiles them into standard Actions YAML.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-agentic-workflows-generally-available/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-app-universe-releases",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot app, Universe releases",
+      "text": "Copilot Projects are now in public preview.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-app-universe-releases/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot Fusion now supports selection of local models",
+      "text": "Today we are shipping intelligent routing for local models into experimental preview.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-in-vs-code-universe-releases",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot in VS Code, Universe releases",
+      "text": "The Copilot harness, built on the Microsoft Copilot SDK, is now the default for new sessions in both the editor and the Agents window.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-in-vs-code-universe-releases/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-sdk-is-becoming-microsoft-copilot-sdk",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot SDK is becoming Microsoft Copilot SDK",
+      "text": "No immediate changes are required for existing users.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-sdk-is-becoming-microsoft-copilot-sdk/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-enterprise-now-includes-access-to-github-copilot",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Enterprise now includes access to GitHub Copilot",
+      "text": "Enterprises working with a GitHub or Microsoft account team can now get Copilot included with GitHub Enterprise for every licensed user.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-enterprise-now-includes-access-to-github-copilot/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-intelligence-puts-your-code-context-and-history-to-wo",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub intelligence puts your code, context, and history to work",
+      "text": "Changes to checked-in skills and instructions are proposed in pull requests for your team to review.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-intelligence-puts-your-code-context-and-history-to-work/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-repository-plugin-defaults-and-enterprise-plugin-controls-ge",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Repository plugin defaults and enterprise plugin controls generally available",
+      "text": "Trusted repositories can install and enable default plugins for contributors.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-repository-plugin-defaults-and-enterprise-plugin-controls-generally-available/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Route and orchestrate models with GitHub Copilot Fusion",
+      "text": "Instead of picking a model for each task, choose Copilot Fusion and let Copilot intelligently route and orchestrate which models it uses for you.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "github-copilot-2026-10-28-security-extension-for-the-github-copilot-app",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Security extension for the GitHub Copilot app",
+      "text": "You can now work through your repository’s GitHub code scanning alerts without leaving the GitHub Copilot app.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-security-extension-for-the-github-copilot-app/",
+      "sourceLabel": "GitHub changelog"
+    },
+    {
+      "id": "codex-2026-10-29-0-166-0",
+      "date": "2026-10-29",
+      "tool": "codex",
+      "title": "Codex 0.166.0",
+      "text": "Added keyboard-driven transcript selection with word, line, and page motions, integrated search, and configurable shortcuts.",
+      "quote": true,
+      "version": "0.166.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.166.0",
+      "sourceLabel": "Codex release notes"
+    },
+    {
+      "id": "claude-code-2026-10-30-2.1.314",
+      "date": "2026-10-30",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.314",
+      "text": "Added `permissions.blockWritesOutsideWorkingDirectories`: Write, Edit and NotebookEdit refuse paths outside the working directories in every permission mode",
+      "quote": true,
+      "version": "2.1.314",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.314",
+      "sourceLabel": "Claude Code releases"
+    },
+    {
+      "id": "claude-code-2026-10-31-2.1.316",
+      "date": "2026-10-31",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.316",
+      "text": "Deprecated fast mode for Opus 4.8 as of October 30, 2026; it will be removed on November 30, 2026.",
+      "quote": true,
+      "version": "2.1.316",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.316",
+      "sourceLabel": "Claude Code releases"
+    }
+  ]
+}
