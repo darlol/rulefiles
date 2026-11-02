@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 1,
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution": "Rulefiles contributors",
+  "week": "2026-W44",
+  "start": "2026-10-26",
+  "end": "2026-11-01",
+  "status": "draft",
+  "verifiedOn": "2026-11-02",
+  "title": "Draft for 2026-10-26 to 2026-11-01",
+  "summary": "Listed automatically from official feeds. Not reviewed. Each item quotes its source; check it before it moves into a published digest.",
+  "items": [
+    {
+      "id": "claude-code-2026-10-26-2-1-311",
+      "date": "2026-10-26",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.311",
+      "text": "Added --hold-idle-file and --max-hold-min to self-hosted-runner, to keep an idle session while your host reports processes it left running",
+      "quote": true,
+      "version": "2.1.311",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.311",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added --hold-idle-file and --max-hold-min to self-hosted-runner, to keep an idle session while your host reports processes it left running",
+        "Added a tip for the Explanatory output style, shown when you ask Claude for explanations",
+        "Fixed long freezes at startup and after reading or editing files when a CLAUDE.md file holds a very long list item"
+      ]
+    },
+    {
+      "id": "codex-2026-10-26-gpt-6-1-terra-in-work-and-codex",
+      "date": "2026-10-26",
+      "tool": "codex",
+      "title": "GPT-6.1 Terra in Work and Codex",
+      "text": "GPT-6.1 Terra is now available in ChatGPT Work and Codex on Plus, Pro, Business, Enterprise, and Edu plans. It's a fast, efficient model for professional work that combines strong image understanding with precise computer use.",
+      "quote": true,
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#codex-2026-10-26-gpt-61-terra",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "GPT-6.1 Terra is now available in ChatGPT Work and Codex on Plus, Pro, Business, Enterprise, and Edu plans. It's a fast, efficient model for professional work that combines strong image understanding with precise computer use.",
+        "Reason about images and screens, then act on what you find across your browser, desktop, and apps. Terra also provides clear, direct writing that puts results first and explains supporting details in plain language.",
+        "Choose GPT-6.1 Terra from the model list in Advanced in the ChatGPT desktop app or ChatGPT Work on the web. Work also supports Terra on mobile. The model isn't available in Chat and does not support UAE inference residency. Enterprise access depends on workspace availability and administrator controls."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-27-2-1-312",
+      "date": "2026-10-27",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.312",
+      "text": "Added oidc.user_id_claim to the Claude apps gateway, to identify people by an id_token claim other than sub, such as Microsoft Entra ID's oid",
+      "quote": true,
+      "version": "2.1.312",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.312",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added oidc.user_id_claim to the Claude apps gateway, to identify people by an id_token claim other than sub, such as Microsoft Entra ID's oid",
+        "Added click to send: in fullscreen, clicking the \"to send now\" hint under a queued message sends it right away, as its key does",
+        "Fixed managed settings and organization policy not being fetched for the rest of the session after signing in from the VS Code extension"
+      ]
+    },
+    {
+      "id": "codex-2026-10-27-0-165-0",
+      "date": "2026-10-27",
+      "tool": "codex",
+      "title": "Codex 0.165.0",
+      "text": "Added a built-in Google Cloud Vertex AI provider, configured with model_provider = \"gcp\" .",
+      "quote": true,
+      "version": "0.165.0",
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#github-release-425927431",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "Added a built-in Google Cloud Vertex AI provider, configured with model_provider = \"gcp\" .",
+        "Added GPT-6.1 Terra to the model catalogs.",
+        "Added a repository filter to the session picker and directory grouping to the agent command center, making it easier to navigate sessions across linked worktrees."
+      ]
+    },
+    {
+      "id": "codex-2026-10-27-0-165-0-2",
+      "date": "2026-10-27",
+      "tool": "codex",
+      "title": "Codex 0.165.0",
+      "text": "Added a built-in Google Cloud Vertex AI provider, configured with model_provider = \"gcp\".",
+      "quote": true,
+      "version": "0.165.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.165.0",
+      "sourceLabel": "Codex release notes",
+      "candidateLines": [
+        "Added a built-in Google Cloud Vertex AI provider, configured with model_provider = \"gcp\".",
+        "Added GPT-6.1 Terra to the model catalogs.",
+        "Added a repository filter to the session picker and directory grouping to the agent command center, making it easier to navigate sessions across linked worktrees."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-build-shared-workflows-for-your-team-with-copilot-automation",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Build shared workflows for your team with Copilot Automations",
+      "text": "Shared Copilot Automations are rolling out, enabling teams to build and maintain AI-powered workflows together.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-build-shared-workflows-for-your-team-with-copilot-automations",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Shared Copilot Automations are rolling out, enabling teams to build and maintain AI-powered workflows together."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-generate-and-edit-images-directly-in-copilot",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Generate and edit images directly in Copilot",
+      "text": "You can now generate and edit images using natural language in GitHub Copilot.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-generate-and-edit-images-directly-in-copilot",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "You can now generate and edit images using natural language in GitHub Copilot."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-app-universe-releases",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot app, Universe releases",
+      "text": "Work doesn’t always fit in a single repository or session.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-app-universe-releases",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Work doesn’t always fit in a single repository or session."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot Fusion now supports selection of local models",
+      "text": "Today we are shipping intelligent routing for local models into experimental preview.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-fusion-now-supports-selection-of-local-models",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Today we are shipping intelligent routing for local models into experimental preview."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-copilot-in-vs-code-universe-releases",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Copilot in VS Code, Universe releases",
+      "text": "GitHub Copilot in VS Code, Universe releases",
+      "quote": false,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-copilot-in-vs-code-universe-releases",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": []
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-enterprise-now-includes-access-to-github-copilot",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub Enterprise now includes access to GitHub Copilot",
+      "text": "Enterprises working with a GitHub or Microsoft account team can now get Copilot included with GitHub Enterprise for every licensed user.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-enterprise-now-includes-access-to-github-copilot",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Enterprises working with a GitHub or Microsoft account team can now get Copilot included with GitHub Enterprise for every licensed user."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-github-intelligence-puts-your-code-context-and-history-to-wo",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "GitHub intelligence puts your code, context, and history to work",
+      "text": "Agents should understand more than your codebase—they should understand how your team works.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-github-intelligence-puts-your-code-context-and-history-to-work",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Agents should understand more than your codebase—they should understand how your team works."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-repository-plugin-defaults-and-enterprise-plugin-controls-ge",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Repository plugin defaults and enterprise plugin controls generally available",
+      "text": "Repository plugin defaults and enterprise-managed plugin controls are now generally available in VS Code, Copilot CLI, and the GitHub Copilot app.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-repository-plugin-defaults-and-enterprise-plugin-controls-generally-available",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "Repository plugin defaults and enterprise-managed plugin controls are now generally available in VS Code, Copilot CLI, and the GitHub Copilot app."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Route and orchestrate models with GitHub Copilot Fusion",
+      "text": "GitHub Copilot Fusion is generally available.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-route-and-orchestrate-models-with-github-copilot-fusion",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "GitHub Copilot Fusion is generally available."
+      ]
+    },
+    {
+      "id": "github-copilot-2026-10-28-security-extension-for-the-github-copilot-app",
+      "date": "2026-10-28",
+      "tool": "github-copilot",
+      "title": "Security extension for the GitHub Copilot app",
+      "text": "You can now work through your repository’s GitHub code scanning alerts without leaving the GitHub Copilot app.",
+      "quote": true,
+      "sourceUrl": "https://github.blog/changelog/2026-10-28-security-extension-for-the-github-copilot-app",
+      "sourceLabel": "GitHub changelog",
+      "candidateLines": [
+        "You can now work through your repository’s GitHub code scanning alerts without leaving the GitHub Copilot app."
+      ]
+    },
+    {
+      "id": "codex-2026-10-29-0-166-0",
+      "date": "2026-10-29",
+      "tool": "codex",
+      "title": "Codex 0.166.0",
+      "text": "Added keyboard-driven transcript selection with word, line, and page motions, integrated search, and configurable shortcuts.",
+      "quote": true,
+      "version": "0.166.0",
+      "sourceUrl": "https://developers.openai.com/codex/changelog/#github-release-428320524",
+      "sourceLabel": "Codex changelog",
+      "candidateLines": [
+        "Added keyboard-driven transcript selection with word, line, and page motions, integrated search, and configurable shortcuts.",
+        "Rendered Markdown consistently in async questions, choices, answers, and transcript replies.",
+        "Added GPT-6.1 Terra to the bundled, Vertex AI, and Amazon Bedrock model catalogs."
+      ]
+    },
+    {
+      "id": "codex-2026-10-29-0-166-0-2",
+      "date": "2026-10-29",
+      "tool": "codex",
+      "title": "Codex 0.166.0",
+      "text": "Added keyboard-driven transcript selection with word, line, and page motions, integrated search, and configurable shortcuts.",
+      "quote": true,
+      "version": "0.166.0",
+      "sourceUrl": "https://github.com/openai/codex/releases/tag/rust-v0.166.0",
+      "sourceLabel": "Codex release notes",
+      "candidateLines": [
+        "Added keyboard-driven transcript selection with word, line, and page motions, integrated search, and configurable shortcuts.",
+        "Rendered Markdown consistently in async questions, choices, answers, and transcript replies.",
+        "Added GPT-6.1 Terra to the bundled, Vertex AI, and Amazon Bedrock model catalogs."
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-30-2-1-314",
+      "date": "2026-10-30",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.314",
+      "text": "Added permissions.blockWritesOutsideWorkingDirectories: Write, Edit and NotebookEdit refuse paths outside the working directories in every permission mode",
+      "quote": true,
+      "version": "2.1.314",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.314",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added permissions.blockWritesOutsideWorkingDirectories: Write, Edit and NotebookEdit refuse paths outside the working directories in every permission mode",
+        "Added an optional groups list to Claude apps gateway upstreams: only developers in the listed IdP groups are sent to that upstream, on failover too",
+        "Added guardrail_trace to Claude apps gateway Bedrock upstreams, to log which Amazon Bedrock guardrail filter fired on a request, without the matched text"
+      ]
+    },
+    {
+      "id": "claude-code-2026-10-31-2-1-316",
+      "date": "2026-10-31",
+      "tool": "claude-code",
+      "title": "Claude Code v2.1.316",
+      "text": "Added CLAUDE_CODE_DISABLE_ULTRATHINK, which turns the ultrathink keyword off",
+      "quote": true,
+      "version": "2.1.316",
+      "sourceUrl": "https://github.com/anthropics/claude-code/releases/tag/v2.1.316",
+      "sourceLabel": "Claude Code releases",
+      "candidateLines": [
+        "Added CLAUDE_CODE_DISABLE_ULTRATHINK, which turns the ultrathink keyword off",
+        "Added pooled group budgets to the Claude apps gateway: one monthly budget that a group's members share, on top of each member's own limit, set with pooled_budget on the spend limits admin API",
+        "Added CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP to keep system cross-certificates that certify each other in a loop, for servers whose private CA needs one"
+      ]
+    }
+  ]
+}
