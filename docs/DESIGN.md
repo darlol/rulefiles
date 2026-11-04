@@ -42,7 +42,7 @@ The mark is a page with one highlighted signal line on an ink plate. It has no l
 
 ## Home composition
 
-Sticky masthead → issue band (latest week / latest item / Read digest) → H1 + lead + CTAs + side card for this week's issue (no eyebrow/kicker) → trust strip from build data → digest cards with tool chips → matrix teaser + specimen → generator band → newsletter band. GitHub darlol appears on About only.
+Sticky masthead → issue band (latest week / latest item / Read digest) → H1 + lead + CTAs + side card for this week's issue (no eyebrow/kicker) → trust strip from build data → digest cards with tool chips → matrix teaser + specimen → generator band → newsletter band. The GitHub repository link appears on About only.
 
 ## Modes
 

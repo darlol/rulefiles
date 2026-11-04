@@ -30,7 +30,7 @@ web
 - Content language: English; ASCII hyphens client-facing
 - CSP cookieless (O5); font-src 'self' only; no Google Fonts CDN
 - Counts and claims from build data only — never invent
-- GitHub darlol link on About only (not site-wide footer)
+- GitHub repository link on About only (not site-wide footer)
 - Preview deploy may be noindex; production custom domain changes are out of scope for this redesign job
 
 ## Accessibility

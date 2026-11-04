@@ -22,7 +22,7 @@ It is an independent project. It is not affiliated with Cursor, Anthropic, OpenA
 
 The matrix and the digests are available as JSON files: [matrix.json](/data/matrix.json) and [digests.json](/data/digests.json). The [llms.txt](/llms.txt) file lists the pages for chatbots and crawlers.
 
-The source code for this site is public on GitHub: [{{repoLabel}}]({{repoUrl}}).
+The source code for this site is public on GitHub: [{{repoLabel}}]({{repoUrl}}), in the [rulefiles](https://github.com/rulefiles) organization.
 
 ## License
 
