@@ -411,13 +411,13 @@ ${head}
 ${rows}
 </div>
 ${scoped.length ? `<ul class="scopes muted">${scoped.map((t) => `<li><span aria-hidden="true">*</span> <strong>${h(t.name)}</strong>: ${h(t.scope)}</li>`).join('')}</ul>` : ''}
+${filters}
 </div>
 <div class="mx-side">
 <div class="panel" id="matrix-panel" role="region" aria-label="Cell details">
 <div class="panel-empty"><ul class="legend">${legend}</ul></div>
 <div class="panel-cell" hidden><div class="panel-head"><h2 class="panel-title" tabindex="-1"></h2><button type="button" class="btn btn-quiet panel-close">${icon('close')}<span class="sr">Close</span></button></div><div class="panel-body"></div></div>
 </div>
-${filters}
 </div>
 </div>
 <div class="scrim" id="matrix-scrim" hidden></div>
