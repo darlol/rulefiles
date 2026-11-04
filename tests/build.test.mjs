@@ -501,7 +501,7 @@ test('home Signal Press proof digest: trust strip, rythme, chips, form', () => {
   assert.match(html, /Open the newsletter page/);
   assert.match(html, /src="\/assets\/home-digest-filter\.js"/);
   assert.match(html, /src="\/assets\/js-flag\.js"/);
-  assert.doesNotMatch(html, /github\.com\/darlol\/rulefiles/);
+  assert.doesNotMatch(html, /github\.com\/(?:darlol|rulefiles)\b/);
   assert.ok(flat.includes('What changed in AI coding tools, with sources.'));
   assert.ok(flat.includes('Latest digest'));
 });
@@ -711,10 +711,12 @@ test('no page still says the site has no trackers or no analytics, and the foote
 
 test('the public repository is linked from the About page only, and nowhere when repoUrl is empty', () => {
   const cfg = JSON.parse(fs.readFileSync(new URL('../site.config.json', import.meta.url), 'utf8'));
-  const label = `github.com/${['dar', 'lol'].join('')}/rulefiles`;
+  const label = 'github.com/rulefiles/rulefiles';
+  const org = 'https://github.com/rulefiles';
+  const oldLabel = `github.com/${['dar', 'lol'].join('')}/rulefiles`;
   const repo = `https://${label}`;
   assert.equal(cfg.repoUrl, repo);
-  const sentence = `<p>The source code for this site is public on GitHub: <a href="${repo}">${label}</a>.</p>`;
+  const sentence = `<p>The source code for this site is public on GitHub: <a href="${repo}">${label}</a>, in the <a href="${org}">rulefiles</a> organization.</p>`;
   const about = read('about/index.html');
   assert.equal(about.split(sentence).length - 1, 1, 'about: the sentence, once');
   assert.equal(about.split(label).length - 1, 2, 'about: the address only in that link (href and label)');
@@ -727,6 +729,9 @@ test('the public repository is linked from the About page only, and nowhere when
   assert.ok(files.length > 20, 'the build has files');
   const holders = files.filter((f) => fs.readFileSync(f).includes(label)).map((f) => path.relative(out, f));
   assert.deepEqual(holders, [path.join('about', 'index.html')]);
+  // The organization link is on the About page only, and the old address of the repository is nowhere.
+  assert.deepEqual(files.filter((f) => fs.readFileSync(f).includes(`href="${org}"`)).map((f) => path.relative(out, f)), [path.join('about', 'index.html')]);
+  assert.deepEqual(files.filter((f) => fs.readFileSync(f).includes(oldLabel)).map((f) => path.relative(out, f)), []);
   for (const f of ['llms.txt', 'llms-full.txt', 'sitemap.xml', 'data/matrix.json', 'data/digests.json', 'digest/feed.xml']) assert.ok(fs.existsSync(path.join(out, f)), f);
 
   assert.deepEqual(validateConfig(cfg), []);
@@ -751,7 +756,7 @@ test('the public repository is linked from the About page only, and nowhere when
     build({ root, outDir: dir, quiet: true });
     for (const f of listFiles(dir)) {
       const body = fs.readFileSync(f);
-      assert.ok(!body.includes(label) && !body.includes('public on GitHub') && !body.includes('{{repo'), path.relative(dir, f));
+      assert.ok(!body.includes(label) && !body.includes(org) && !body.includes('public on GitHub') && !body.includes('{{repo'), path.relative(dir, f));
     }
     assert.match(fs.readFileSync(path.join(dir, 'about', 'index.html'), 'utf8'), /<a href="\/llms\.txt">llms\.txt<\/a> file lists the pages/);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
