@@ -5,7 +5,7 @@ import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats, cellAnchor, ITEM_TOOLS } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
-import { QUESTION_COPY, COMPARE_COPY, CITE_COPY, SPEC_LABELS } from './copy.mjs';
+import { QUESTION_COPY, COMPARE_COPY, CITE_COPY, SPEC_LABELS, MATRIX_GRID_COPY } from './copy.mjs';
 import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
 
 export const STATUS_LABEL = {
@@ -68,7 +68,8 @@ const ICON_PATHS = {
   unverified: '<circle cx="12" cy="12" r="8.5" stroke-dasharray="3 3"/><path d="M9.7 9.6a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.1.9-1.1 1.7M12 17h.01"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-  warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'
+  warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17h.01"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>'
 };
 
 /**
@@ -232,10 +233,11 @@ export function homePage(ctx) {
 <ul class="items items-grid" id="home-digest-items">${latest.items.map((it) => itemHtml(it, names)).join('\n')}</ul>
 <p class="section-link"><a href="/digest/">All issues</a></p></section>` : '';
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
-  const tiles = matrix.files.map((f) => matrix.tools.map((t, col) => {
+  // One row per file; the row lays its tiles out in as many columns as there are tools (grid-auto-flow: column).
+  const tiles = matrix.files.map((f) => `<span class="specimen-row">${matrix.tools.map((t, col) => {
     const c = cellMap.get(`${t.id}/${f.id}`);
     return `<span class="tile tile-${c.status} c${col}">${icon(c.status)}</span>`;
-  }).join('')).join('');
+  }).join('')}</span>`).join('');
   const heads = matrix.tools.map((t) => `<span class="specimen-tool">${h(t.name)}</span>`).join('');
   const statusCounts = Object.keys(STATUS_LABEL).filter((k) => stats.byStatus[k]).map((k) => `<li>${statusBadge(k)} <span class="status-count">${stats.byStatus[k]}</span></li>`).join('');
   const specimenFoot = `${matrix.cells.length} cells, each with an official source and a check date.`;
@@ -318,8 +320,7 @@ ${newsletterForm(config, { idPrefix: 'home-nl' })}
 
 export const MATRIX_COPY = {
   searchLabel: 'Search files and notes',
-  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
-  notesToggle: 'Hide notes'
+  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob'
 };
 
 /**
@@ -354,43 +355,69 @@ export function matrixPage(ctx) {
   const { config, matrix, today } = ctx;
   const stale = new Set(staleCells(matrix, today, config.staleAfterDays).map((c) => `${c.tool}/${c.file}`));
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
-  const head = matrix.tools.map((t) => `<th scope="col" data-tool="${h(t.id)}"><a href="${h(t.docsUrl)}" rel="noopener">${h(t.name)}</a>${t.scope ? `<span class="muted block">${h(t.scope)}</span>` : ''}</th>`).join('');
-  const rows = matrix.files.map((f) => {
-    const cells = matrix.tools.map((t) => {
-      const c = cellMap.get(`${t.id}/${f.id}`);
-      const isStale = stale.has(`${t.id}/${f.id}`);
-      return `<td id="${h(cellAnchor(t.id, f.id))}" class="st-${c.status}" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}"><div class="cell">
-<p class="cell-tool">${h(t.name)}</p>
-<p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
+  const scoped = matrix.tools.filter((t) => t.scope);
+  const mark = (t) => (t.scope ? '<span aria-hidden="true">*</span>' : '');
+  // The grid is a table for assistive tech; matrix.js turns it into an ARIA grid with arrow keys. Each row holds
+  // its tiles in .tiles, whose columns come from the markup (grid-auto-flow: column), so the number of tools
+  // is never written in the stylesheet.
+  const head = `<div class="mrow mhead" role="row"><span class="mfile" role="columnheader"><a href="/files/">File</a></span><div class="tiles" role="none">${matrix.tools.map((t) => `<span class="mtool" role="columnheader" data-tool="${h(t.id)}"><a href="${h(t.docsUrl)}" rel="noopener">${h(t.name)}</a>${mark(t)}</span>`).join('')}</div></div>`;
+  const rows = matrix.files.map((f) => `<div class="mrow" role="row" data-file="${h(f.id)}"><span class="mfile" role="rowheader"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></span><div class="tiles" role="none">${matrix.tools.map((t) => {
+    const c = cellMap.get(`${t.id}/${f.id}`);
+    return `<span role="cell" data-tool="${h(t.id)}"><a class="mt mt-${c.status}" href="#d-${h(t.id)}--${h(f.id)}" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}" aria-label="${h(f.path)} × ${h(t.name)}: ${h(STATUS_LABEL[c.status])}">${icon(c.status)}<span class="mt-label">${h(STATUS_LABEL[c.status])}</span></a></span>`;
+  }).join('')}</div></div>`).join('\n');
+  // Every cell in full, never filtered: the panel copies its content from here, and without JavaScript a tile
+  // jumps to its entry. The entry keeps the old cell-{tool}-{file} anchor that digests and answer pages link to.
+  const allNotes = matrix.files.map((f) => `<h2 class="an-file" id="an-${h(f.id)}"><code>${h(f.path)}</code></h2>
+<p class="muted an-desc">${h(f.description)}</p>
+<ul class="an-list">${matrix.tools.map((t) => {
+    const c = cellMap.get(`${t.id}/${f.id}`);
+    return `<li id="${h(cellAnchor(t.id, f.id))}" class="an-cell" data-tool="${h(t.id)}" data-file="${h(f.id)}" data-status="${c.status}"><div class="cell" id="d-${h(t.id)}--${h(f.id)}">
+<p class="cell-status"><strong class="an-tool">${h(t.name)}</strong>${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
-<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a>${hasQuestion(ctx, t.id, f.id) ? `<a href="${questionPath(t.id, f.id)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${h(SPEC_LABELS.answerPage)}</a>` : ''}<span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
-    }).join('');
-    return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
-  }).join('\n');
+${c.quote ? `<blockquote class="quote" cite="${h(c.sourceUrl)}">${inlineHtml(c.quote)}</blockquote>\n` : ''}<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a>${hasQuestion(ctx, t.id, f.id) ? `<a href="${questionPath(t.id, f.id)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${h(SPEC_LABELS.answerPage)}</a>` : ''}<span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${stale.has(`${t.id}/${f.id}`) ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></li>`;
+  }).join('\n')}</ul>`).join('\n');
   const legend = Object.keys(STATUS_LABEL).map((k) => `<li>${statusBadge(k)}<span>${h(STATUS_HELP[k])}</span></li>`).join('');
   const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
   const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
   // Without JavaScript the bar is hidden by CSS; assets/js-flag.js sets html.js before the first paint, so the
-  // bar shows from the first render and never pushes the page down.
+  // bar shows from the first render and never pushes the page down. It sits after the grid in the source and
+  // beside it on wide screens, so the first screen of a phone shows statuses, not controls.
   const filters = `<div class="filters" id="matrix-filters">
 <div class="filter-search"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"></div>
 <fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
 <fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
-<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><span class="filter-actions"><button type="button" class="chip" aria-pressed="false" data-notes>${h(MATRIX_COPY.notesToggle)}</button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></span></div>
+<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div>
 </div>`;
+  // Both folds are open in the markup. matrix-fold.js closes the intro on phones before the first paint and
+  // matrix.js closes the list once the panel works; without scripts everything stays open.
   const body = `<h1>Which coding agent reads which instruction file</h1>
-<p class="lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
+<p class="help">${h(MATRIX_GRID_COPY.help)}</p>
+<p class="lead mx-lead">${matrix.tools.length} tools, ${matrix.files.length} file types, ${matrix.cells.length} cells. Last reviewed ${h(matrix.lastReviewed)}.</p>
+<details class="fold intro-fold" id="matrix-intro" open><summary>${h(MATRIX_GRID_COPY.introFold)}</summary>
 <p class="intro">Each cell cites an official page and the date we checked it. ${h(UNVERIFIED_MEANING)} ${h(NO_SOURCE_SENTENCE)} ${h(MIGRATION_MEANING)}</p>
+</details>
+<script src="/assets/matrix-fold.js"></script>
 <ul class="status-counts" aria-label="Cells by status">${statusCounts(matrix.cells)}</ul>
-${filters}
-<details class="legend-box" open><summary>Legend</summary><ul class="legend">${legend}</ul></details>
-<p class="scroll-hint muted">Scroll sideways to see every tool. The file column stays in place.</p>
-<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix"><table class="matrix">
-<caption class="sr">Instruction files by tool, with source and check date per cell</caption>
-<thead><tr><th scope="col"><a href="/files/">File</a></th>${head}</tr></thead>
-<tbody>
+<div class="mx">
+<div class="mx-main">
+<div class="mgrid" id="matrix-grid" role="table" aria-label="Instruction file matrix">
+${head}
 ${rows}
-</tbody></table></div>
+</div>
+${scoped.length ? `<ul class="scopes muted">${scoped.map((t) => `<li><span aria-hidden="true">*</span> <strong>${h(t.name)}</strong>: ${h(t.scope)}</li>`).join('')}</ul>` : ''}
+</div>
+<div class="mx-side">
+${filters}
+<div class="panel" id="matrix-panel" role="region" aria-label="Cell details">
+<div class="panel-empty"><ul class="legend">${legend}</ul></div>
+<div class="panel-cell" hidden><div class="panel-head"><h2 class="panel-title" tabindex="-1"></h2><button type="button" class="btn btn-quiet panel-close">${icon('close')}<span class="sr">Close</span></button></div><div class="panel-body"></div></div>
+</div>
+</div>
+</div>
+<div class="scrim" id="matrix-scrim" hidden></div>
+<details class="fold allnotes" id="matrix-notes" open><summary>${h(MATRIX_GRID_COPY.allNotes(matrix.cells.length))}</summary>
+${allNotes}
+</details>
 <h2>Data</h2>
 <p>The same data is published as <a href="/data/matrix.json">matrix.json</a>. Need a starting file? Use the <a href="/generator/">generator</a>.</p>
 <p>Each file type also has <a href="/files/">its own page</a>, and the cells marked unverified are listed on <a href="/unverified/">one page</a>.</p>

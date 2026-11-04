@@ -138,8 +138,8 @@ test('/files/ lists one page per file with the path, the description and the cou
 
 test('the matrix links each file row and the File column to the reference pages', () => {
   const html = read('matrix/index.html');
-  for (const f of MATRIX.files) assert.ok(html.includes(`<tr data-file="${f.id}"><th scope="row"><a href="/files/${f.id}/"><code>${esc(f.path)}</code></a>`), f.id);
-  assert.ok(html.includes('<th scope="col"><a href="/files/">File</a></th>'));
+  for (const f of MATRIX.files) assert.ok(html.includes(`<div class="mrow" role="row" data-file="${f.id}"><span class="mfile" role="rowheader"><a href="/files/${f.id}/"><code>${esc(f.path)}</code></a>`), f.id);
+  assert.ok(html.includes('<span class="mfile" role="columnheader"><a href="/files/">File</a></span>'));
   assert.ok(html.includes('href="/unverified/"'));
 });
 

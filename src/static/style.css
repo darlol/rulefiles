@@ -271,8 +271,6 @@ label { font-weight: 620; }
 .nowrap { white-space: nowrap; }
 @media (max-width: 30rem) { .versions-table th, .versions-table td { padding: var(--s2); font-size: 0.875rem; } }
 .instruction-files q { quotes: "\201C" "\201D"; }
-/* A digest links to one cell of the matrix: the cell is outlined when it is the target of the address. */
-.matrix td:target { box-shadow: inset 0 0 0 3px var(--accent); scroll-margin-top: 4rem; scroll-margin-left: 11rem; }
 .back { margin-top: var(--s7); }
 
 @media (min-width: 52rem) {
@@ -317,11 +315,12 @@ label { font-weight: 620; }
 
 .specimen { display: grid; gap: var(--s3); padding: var(--s5); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); color: var(--muted); text-decoration: none; transition: border-color 0.2s var(--ease); }
 .specimen:hover { border-color: var(--control); color: var(--muted); }
-.specimen-heads, .specimen-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: var(--s2); }
-.specimen-heads { grid-auto-flow: column; font-size: 0.75rem; font-weight: 650; line-height: 1.25; color: var(--muted); }
-.specimen-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
-/* Eight tool columns: on a phone the tool names cannot fit above 30px tiles, so each head turns vertical and reads bottom to top above its column, and the tiles get shorter. */
-@media (max-width: 30rem) { .specimen { padding: var(--s4); } .specimen-heads { align-items: end; } .specimen-tool { writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; font-size: 0.6875rem; white-space: nowrap; } .specimen-grid { gap: 0.3rem; } .tile { height: 1.6rem; } .tile .ic { width: 0.9rem; height: 0.9rem; } }
+.specimen-heads, .specimen-grid, .specimen-row { display: grid; gap: var(--s2); }
+/* One column per tool, taken from the markup: the heads and each row of tiles flow into equal columns. */
+.specimen-heads, .specimen-row { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.specimen-heads { font-size: 0.75rem; font-weight: 650; line-height: 1.25; color: var(--muted); }
+/* On a phone the tool names cannot fit above 30px tiles, so each head turns vertical and reads bottom to top above its column, and the tiles get shorter. */
+@media (max-width: 30rem) { .specimen { padding: var(--s4); } .specimen-heads { align-items: end; } .specimen-tool { writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; font-size: 0.6875rem; white-space: nowrap; } .specimen-grid, .specimen-row { gap: 0.3rem; } .tile { height: 1.6rem; } .tile .ic { width: 0.9rem; height: 0.9rem; } }
 .specimen-foot { font-size: 0.875rem; margin-top: var(--s1); }
 .tile { display: grid; place-items: center; height: 2.1rem; border-radius: 8px; animation: tile-in 0.5s var(--ease) backwards; }
 .tile .ic { width: 1.05rem; height: 1.05rem; stroke-width: 2.4; }
@@ -332,7 +331,7 @@ label { font-weight: 620; }
 .tile-not-read { background: var(--notread-bg); color: var(--notread-fg); }
 .tile-unverified { background: var(--unverified-bg); color: var(--unverified-fg); outline: 1px dashed currentColor; outline-offset: -1px; }
 .c1 { animation-delay: 0.07s; } .c2 { animation-delay: 0.14s; } .c3 { animation-delay: 0.21s; } .c4 { animation-delay: 0.28s; } .c5 { animation-delay: 0.35s; } .c6 { animation-delay: 0.42s; } .c7 { animation-delay: 0.49s; }
-/* The entry effect only moves the tiles. It never sets opacity, so a frozen or skipped animation leaves all 36 visible. */
+/* The entry effect only moves the tiles. It never sets opacity, so a frozen or skipped animation leaves every tile visible. */
 @keyframes tile-in { from { transform: translateY(6px) scale(0.9); } }
 
 .home-section { margin-top: var(--s7); }
@@ -441,8 +440,6 @@ label { font-weight: 620; }
 .btn-quiet:hover { background: var(--sunken); color: var(--accent-hover); }
 .btn-quiet:disabled { opacity: 0.5; }
 
-.scroll-hint { margin: 0 0 var(--s2); }
-@media (min-width: 62rem) { .scroll-hint { display: none; } }
 .table-wrap { max-height: 64rem; max-height: min(82vh, 64rem); max-height: min(82dvh, 64rem); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overscroll-behavior: contain; }
 .table-wrap:focus-visible { outline-offset: 2px; border-radius: var(--r-card); }
 table.matrix { border-collapse: separate; border-spacing: 0; width: 100%; }
@@ -473,54 +470,109 @@ table.matrix { border-collapse: separate; border-spacing: 0; width: 100%; }
 .file-links .seg { white-space: nowrap; }
 .matrix tbody tr:hover > * { background: var(--sunken); }
 .cell p { margin: 0; }
-.cell .cell-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s3); }
-.cell .note { font-size: 0.9375rem; line-height: 1.5; margin-bottom: var(--s3); }
+.cell .cell-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-bottom: var(--s2); }
+.cell .note { font-size: 0.9375rem; line-height: 1.5; margin-bottom: var(--s2); }
+.cell .quote { margin: 0 0 var(--s2); font-size: 0.9375rem; line-height: 1.5; }
 .cell-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); font-size: 0.875rem; }
 /* WCAG 2.5.8: the Source links are at least 24 by 24 CSS pixels, in the matrix and on the digest cards. */
 .cell-foot .src, .item-foot .src { min-width: 24px; min-height: 24px; }
 .stale { display: inline-flex; align-items: center; gap: var(--s1); color: var(--config-fg); background: var(--config-bg); border-radius: 999px; padding: 0 0.6rem; font-size: 0.8125rem; }
-td.is-off { background: var(--bg); text-align: center; vertical-align: middle; }
-td.is-off > * { display: none; }
-td.is-off::before { content: "–"; content: "–" / ""; color: var(--muted); font-weight: 700; }
 @media (max-width: 47.99rem) { .matrix th, .matrix td { padding: var(--s3); } .matrix tbody th code { font-size: 0.8125rem; } }
 @media (min-width: 62rem) { .matrix tbody th { min-width: 11rem; } }
 
 .legend { list-style: none; margin: var(--s4) 0 0; padding: 0; display: grid; gap: var(--s2) var(--s6); grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); }
 .legend li { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr); gap: var(--s3); align-items: start; padding: var(--s3) 0; border-top: 1px solid var(--line); font-size: 0.875rem; color: var(--muted); }
 .legend .badge { justify-self: start; }
-.legend-box { margin: 0 0 var(--s4); border: 1px solid var(--line); border-radius: var(--r-card); background: var(--surface); }
-.legend-box summary { cursor: pointer; padding: var(--s3) var(--s4); font-weight: 650; font-size: 0.9375rem; }
-.legend-box .legend { margin: 0; padding: 0 var(--s4) var(--s2); }
-
-/* Matrix controls: search, notes toggle */
+/* Matrix controls: search */
 .filter-search { grid-column: 1 / -1; display: grid; gap: var(--s1); }
 .filter-search label { font-size: 0.9375rem; font-weight: 700; }
-.filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+/* The comparison page names the tool of each quote only in its card view. */
 .cell-tool { display: none; }
-.notes-off .note { display: none; }
-.notes-off .cell .cell-status { margin-bottom: var(--s2); }
-
-/* Below 48rem the matrix is a list of cards, one per file, so nothing scrolls sideways.
-   The column headers stay readable by screen readers, and each cell shows its tool name. */
-@media (max-width: 47.99rem) {
-  .scroll-hint { display: none; }
-  .table-wrap.matrix-wrap { max-height: none; overflow: visible; background: none; border: 0; }
-  .matrix-wrap .matrix, .matrix-wrap tbody, .matrix-wrap tr, .matrix-wrap th, .matrix-wrap td { display: block; }
-  .matrix-wrap thead tr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .matrix-wrap tbody tr { display: grid; grid-template-columns: minmax(0, 1fr); margin-bottom: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); overflow: hidden; }
-  .matrix-wrap .notes-off tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .matrix-wrap tbody th { grid-column: 1 / -1; position: static; min-width: 0; max-width: none; background: var(--sunken); border-right: 0; }
-  .matrix-wrap td { min-width: 0; border-right: 0; }
-  .matrix-wrap .notes-off td:nth-child(odd) { border-left: 1px solid var(--line); }
-  .matrix-wrap tbody tr:last-child > * { border-bottom: 1px solid var(--line); }
-  .matrix-wrap tbody tr > :last-child { border-bottom: 0; }
-  .matrix-wrap td.is-off { display: none; }
-  .matrix-wrap tbody tr:hover > * { background: var(--surface); }
-  .matrix-wrap tbody tr:hover > th { background: var(--sunken); }
-  .cell-tool { display: block; margin: 0 0 var(--s2); font-weight: 700; font-size: 0.875rem; }
-  .matrix-wrap .badge { white-space: normal; }
-}
+@media (max-width: 47.99rem) { .cell-tool { display: block; margin: 0 0 var(--s2); font-weight: 700; font-size: 0.875rem; } }
 @media (max-width: 30rem) { .legend li { grid-template-columns: 1fr; gap: var(--s2); } }
+
+/* Matrix page: a compact grid of statuses, a detail panel beside it, and every note in a fold below.
+   Nothing scrolls inside a box: the page is the only scroll container, from 320 px up. */
+.help { margin: 0 0 var(--s2); font-weight: 650; }
+.fold > summary { cursor: pointer; display: flex; align-items: center; gap: var(--s2); min-height: 44px; font-weight: 650; list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+/* A chevron drawn with borders: it points right when the fold is closed and down when it is open. */
+.fold > summary::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform 0.2s var(--ease); }
+.fold[open] > summary::before { transform: rotate(45deg); }
+main > .lead.mx-lead { margin-bottom: var(--s2); }
+.intro-fold { margin: 0 0 var(--s2); }
+.intro-fold .intro { margin: 0 0 var(--s3); }
+.mx { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; }
+.mx-main, .mx-side { min-width: 0; }
+.mx-side { display: grid; gap: var(--s4); }
+.mx-side .filters { margin: 0; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 60rem) {
+  .mx { grid-template-columns: minmax(0, 1fr) 23rem; }
+  .mx-side { align-self: stretch; align-content: start; }
+  .panel { position: sticky; top: calc(var(--header-h) + var(--s4)); }
+}
+/* Each row: the file, then its tiles. .tiles makes one column per tile it holds, so the tool count lives in the data. */
+.mrow { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: var(--s3); align-items: center; padding: var(--s1) 0; border-top: 1px solid var(--line); }
+/* The tool row sticks under the header only from 48rem, where the header is one line of known height. */
+.mhead { align-items: end; padding: var(--s2) 0; background: var(--bg); border-top: 0; }
+.tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.25rem; }
+.mfile { min-width: 0; font-size: 0.875rem; }
+.mfile code { background: none; padding: 0; font-weight: 650; overflow-wrap: anywhere; }
+.mfile .muted { font-size: 0.8125rem; line-height: 1.35; }
+.mhead .mfile a { font-weight: 700; }
+@media (min-width: 48rem) { .mhead { position: sticky; top: var(--header-h); z-index: 2; } }
+.mtool { min-width: 0; font-size: 0.8125rem; font-weight: 700; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+.mt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; min-height: 3.4rem; padding: 0.25rem; border: 1px solid transparent; border-radius: 8px; font-size: 0.75rem; font-weight: 680; line-height: 1.2; text-align: center; text-decoration: none; transition: background-color 0.2s var(--ease), color 0.2s var(--ease); }
+.mt .ic { width: 1.05rem; height: 1.05rem; stroke-width: 2.4; flex: none; }
+.mt:hover { text-decoration: underline; text-underline-offset: 2px; }
+.mt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mt-reads { background: var(--reads-bg); color: var(--reads-fg); }
+.mt-reads-conditionally { background: var(--cond-bg); color: var(--cond-fg); }
+.mt-configurable { background: var(--config-bg); color: var(--config-fg); }
+.mt-migration-only { background: var(--migration-bg); color: var(--migration-fg); }
+.mt-not-read { background: var(--notread-bg); color: var(--notread-fg); }
+.mt-unverified { background: var(--unverified-bg); color: var(--unverified-fg); border: 1px dashed currentColor; }
+/* Selected: a thick ink ring, readable without colour. Filtered out: neutral and out of the tab order. */
+.mt[aria-current="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 5px var(--ink); }
+.mt.is-off { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.scopes { list-style: none; margin: var(--s3) 0 0; padding: 0; font-size: 0.875rem; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: var(--s3) var(--s4); }
+.panel .legend { margin: 0; grid-template-columns: minmax(0, 1fr); }
+.panel .legend li { grid-template-columns: minmax(0, 1fr); gap: var(--s1); }
+.panel .legend li:first-child { border-top: 0; }
+.panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s2); }
+.panel-title { margin: var(--s2) 0; font-size: 1.0625rem; overflow-wrap: anywhere; }
+.panel-title code { background: none; padding: 0; }
+.panel-close { flex: none; min-width: 44px; min-height: 44px; padding: 0; color: var(--ink); }
+.panel-close .ic { margin: 0 auto; }
+@media (max-width: 59.99rem) {
+  .panel.is-open { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; max-height: 85vh; max-height: 85dvh; overflow: auto; border-radius: var(--r-card) var(--r-card) 0 0; box-shadow: 0 -6px 24px rgba(20, 17, 14, 0.22); }
+  .scrim { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 19; background: rgba(20, 17, 14, 0.5); }
+}
+@media (min-width: 60rem) { .scrim { display: none; } }
+/* Phones: the file path sits on its own line above its tiles, tool names read bottom to top, tiles show the icon only. */
+@media (max-width: 47.99rem) {
+  .mrow { grid-template-columns: minmax(0, 1fr); gap: var(--s1); }
+  .mhead .mfile { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .mfile .muted, .mt-label { display: none; }
+  .mtool { writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; max-height: 6.5rem; font-size: 0.75rem; overflow-wrap: normal; }
+}
+.allnotes { margin-top: var(--s6); }
+.allnotes > summary { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
+.an-file { margin: var(--s5) 0 var(--s1); font-size: 1.0625rem; }
+.an-file code { background: none; padding: 0; overflow-wrap: anywhere; }
+.an-desc { margin: 0 0 var(--s2); font-size: 0.875rem; }
+.an-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 var(--s6); grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+.an-cell { padding: var(--s3) 0; border-top: 1px solid var(--line); min-width: 0; }
+.an-cell:target { outline: 3px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+.an-tool { font-weight: 700; }
+/* Status words fit inside a tile only on wide screens; below that the tile shows its icon and colour, and its name stays in aria-label. */
+.mt-label { max-width: 100%; }
+@media (max-width: 79.99rem) { .mt-label { display: none; } .mt { min-height: 3rem; } }
+@media (max-width: 47.99rem) { .mt { min-height: 2.75rem; } .status-counts { margin: var(--s2) 0 var(--s3); } }
+/* Wide screens: the grid and its panel take up to 86rem, wider than the 72rem text column, so status words fit in the tiles. */
+@media (min-width: 80rem) { .mx { margin-left: calc((min(100vw, 86rem) - 72rem) / -2); margin-right: calc((min(100vw, 86rem) - 72rem) / -2); } .mrow { grid-template-columns: 15rem minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .mt, .fold > summary::before { transition: none; } }
 
 /* Generator */
 .gen { display: grid; gap: var(--s6); margin-top: var(--s5); align-items: start; }

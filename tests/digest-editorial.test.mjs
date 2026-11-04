@@ -247,13 +247,13 @@ test('editorial: "Instruction files this week" appears only with item matrix, on
   assert.match(lines[1], /#cell-cursor-agents-md">Matrix cell Cursor <span aria-hidden="true">×<\/span><span class="sr">,<\/span> <code>AGENTS\.md<\/code>/);
   // Every linked anchor exists on /matrix/.
   const matrixHtml = read('with', 'matrix/index.html');
-  for (const [, a] of s.matchAll(/href="\/matrix\/#([^"]+)"/g)) assert.match(matrixHtml, new RegExp(`<td id="${a}" `), a);
+  for (const [, a] of s.matchAll(/href="\/matrix\/#([^"]+)"/g)) assert.match(matrixHtml, new RegExp(`<li id="${a}" `), a);
   assert.doesNotMatch(read('without', 'digest/2026-W43/index.html'), /instruction-files|Instruction files this week/);
 });
 
 test('editorial: /matrix/ gives each cell the anchor #cell-<tool>-<file>', () => {
   const html = read('with', 'matrix/index.html');
-  const tds = [...html.matchAll(/<td id="([^"]+)" class="st-[a-z-]+" data-tool="([^"]+)" data-file="([^"]+)"/g)];
+  const tds = [...html.matchAll(/<li id="([^"]+)" class="an-cell" data-tool="([^"]+)" data-file="([^"]+)"/g)];
   assert.equal(tds.length, data.matrix.cells.length);
   for (const [, id, tool, file] of tds) assert.equal(id, `cell-${tool}-${file}`);
 });

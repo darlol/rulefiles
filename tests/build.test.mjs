@@ -183,15 +183,15 @@ test('Atom feed is well formed and has one entry per issue', () => {
 test('matrix page shows every cell with its source link and date', () => {
   const html = read('matrix/index.html');
   const data = loadData();
-  assert.equal((html.match(/<td id="cell-[a-z0-9-]+" class="st-/g) || []).length, data.matrix.cells.length);
+  assert.equal((html.match(/<li id="cell-[a-z0-9-]+" class="an-cell"/g) || []).length, data.matrix.cells.length);
   assert.equal((html.match(/checked <time datetime="\d{4}-\d\d-\d\d">/g) || []).length, data.matrix.cells.length);
   for (const date of new Set(data.matrix.cells.map((c) => c.verifiedOn))) {
     const n = data.matrix.cells.filter((c) => c.verifiedOn === date).length;
     assert.equal((html.match(new RegExp(`checked <time datetime="${date}">`, 'g')) || []).length, n, date);
   }
   assert.match(html, /Unverified/);
-  assert.match(html, /<th scope="col">/);
-  assert.match(html, /<th scope="row">/);
+  assert.match(html, /role="columnheader"/);
+  assert.match(html, /role="rowheader"/);
 });
 
 test('digest pages show sourced items', () => {
