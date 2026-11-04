@@ -559,6 +559,9 @@ main > .lead.mx-lead { margin-bottom: var(--s2); }
   .mhead .mfile { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
   .mfile .muted, .mt-label { display: none; }
   .mtool { writing-mode: vertical-rl; transform: rotate(180deg); justify-self: center; max-height: 6.5rem; font-size: 0.75rem; overflow-wrap: normal; }
+  /* In vertical text an underline is a vertical bar beside the name; the link keeps its colour, and the line comes back on hover. */
+  .mtool a { text-decoration: none; }
+  .mtool a:hover { text-decoration: underline; }
 }
 .allnotes { margin-top: var(--s6); }
 .allnotes > summary { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; }
