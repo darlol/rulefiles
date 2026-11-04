@@ -341,7 +341,7 @@ label { font-weight: 620; }
 .items-grid .item { display: flex; flex-direction: column; }
 .items-grid .item .item-foot { margin-top: auto; padding-top: var(--s4); }
 .section-link { font-weight: 640; }
-.status-counts { list-style: none; margin: var(--s4) 0 var(--s5); padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); }
+.status-counts { list-style: none; margin: var(--s4) 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); }
 .status-counts li { display: inline-flex; align-items: center; gap: var(--s2); }
 .status-count { font-weight: 700; }
 .home-section p { max-width: var(--measure); }
@@ -420,13 +420,23 @@ label { font-weight: 620; }
 /* Matrix page */
 [hidden] { display: none !important; }
 .intro { max-width: var(--measure); color: var(--muted); }
-.filters { display: none; gap: var(--s4) var(--s6); padding: var(--s4); margin: var(--s5) 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
+.filters { display: none; gap: var(--s1) 0; padding: var(--s2) var(--s3) var(--s3); margin: 0 0 var(--s2); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); }
 .js .filters { display: grid; }
+/* The label and the count share the top line; under them the search grows and the toggles and Reset keep their size.
+   The buttons drop under the search only when the column is too narrow for both. */
+.filter-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s3); }
+.filter-top label { font-size: 0.875rem; font-weight: 700; }
+.filter-line { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.filter-line input { flex: 1 1 12rem; min-width: 0; min-height: 2.75rem; }
+.filter-buttons { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.filter-toggle { display: inline-flex; align-items: center; gap: var(--s2); min-height: 2.75rem; font-weight: 650; }
+.filter-toggle::after { content: ""; width: 0.45rem; height: 0.45rem; margin-top: -0.2rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.2s var(--ease); }
+.filter-toggle[aria-expanded="true"]::after { margin-top: 0.2rem; transform: rotate(-135deg); }
+/* A dot on the toggle while one of its chips is on, so a closed group still shows that it filters. */
+.filter-toggle.is-active::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
+.filter-group { border: 0; padding: var(--s2) 0 0; margin: 0; min-width: 0; }
 /* The count is written by matrix.js; its line is reserved so filling it moves nothing. */
-#matrix-count { min-height: 1.5em; }
-@media (min-width: 48rem) { .filters { grid-template-columns: auto 1fr; } .filter-foot { grid-column: 1 / -1; } }
-.filter-group { border: 0; padding: 0; margin: 0; min-width: 0; }
-.filter-group legend { padding: 0; margin-left: 0; margin-bottom: var(--s2); font-size: 0.9375rem; font-weight: 700; }
+#matrix-count { min-height: 1.5em; margin: 0; font-size: 0.875rem; text-align: right; }
 .chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .chip { white-space: nowrap; min-height: 2.25rem; padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.875rem; font-weight: 620; background: var(--surface); }
 .chip .ic { width: 1em; height: 1em; stroke-width: 2.4; }
@@ -434,8 +444,10 @@ label { font-weight: 620; }
 .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .chip[aria-pressed="true"]:hover { background: var(--ink); color: var(--bg); }
 .chip[aria-pressed="true"] .chip-count { color: inherit; }
-.filter-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); border-top: 1px solid var(--line); padding-top: var(--s3); }
-.filter-foot p { margin: 0; }
+/* Focus or a jump to the search box or a chip stops below the sticky header: 3.75rem on one line, up to 138 px at
+   320 px wide, where it wraps. */
+#matrix-filters input, #matrix-filters button { scroll-margin-top: 10rem; }
+@media (min-width: 48rem) { #matrix-filters input, #matrix-filters button { scroll-margin-top: calc(var(--header-h) + var(--s3) + 1.5rem); } }
 .btn-quiet { border-color: transparent; background: none; color: var(--accent); min-height: 2.5rem; }
 .btn-quiet:hover { background: var(--sunken); color: var(--accent-hover); }
 .btn-quiet:disabled { opacity: 0.5; }
@@ -505,9 +517,8 @@ main > .lead.mx-lead { margin-bottom: var(--s2); }
 .mx { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; }
 .mx-main, .mx-side { min-width: 0; }
 .mx-side { display: grid; gap: var(--s4); }
-/* The filters sit under the grid, and the side column holds the panel alone. A sticky panel slides over anything
-   after it in its column, so with the filters there it covered the search box once the page scrolled. */
-.mx-main .filters { margin: var(--s4) 0 0; grid-template-columns: minmax(0, 1fr); }
+/* The filters sit above the grid in the main column, and the side column holds the panel alone. A sticky panel
+   slides over anything after it in its column, so with the filters there it covered the search box once the page scrolled. */
 @media (min-width: 60rem) {
   .mx { grid-template-columns: minmax(0, 1fr) 23rem; }
   .mx-side { align-self: stretch; align-content: start; }

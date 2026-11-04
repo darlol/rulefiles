@@ -28,7 +28,7 @@ async function open(width, height, { scheme = 'light', hash = '', js = true } = 
   return { page, context, errors };
 }
 
-for (const width of [320, 390, 768, 1280, 1440]) {
+for (const width of [320, 390, 768, 1024, 1280, 1440, 1920]) {
   test(`no horizontal scroll and no inner scroll box at ${width}px`, async () => {
     const { page, context, errors } = await open(width, 900);
     const r = await page.evaluate(() => {
@@ -51,14 +51,38 @@ const firstScreen = (page) => page.evaluate(() => [...document.querySelectorAll(
   return b.height > 0 && b.top >= 0 && b.bottom <= innerHeight;
 }).length);
 
-test('the first screen shows at least 16 statuses on a phone and 40 on a desktop', async () => {
-  for (const [w, h, min] of [[390, 844, 16], [1440, 900, 40]]) {
+// Measured with the filter bar above the grid: it costs one row of tiles at 1440 and 1920, two at 1024 and 1280.
+test('the first screen shows at least 8 statuses on a phone and 32 at 1440 × 900', async () => {
+  for (const [w, h, min] of [[390, 844, 8], [1024, 768, 8], [1280, 800, 16], [1440, 900, 32], [1920, 1080, 56]]) {
     const { page, context } = await open(w, h);
     const n = await firstScreen(page);
     assert.ok(n >= min, `${n} statuses fully visible at ${w}×${h}, want ≥ ${min}`);
     await context.close();
   }
 });
+
+test('on a desktop the search box, Tools and Status are on the first screen, above the grid', async () => {
+  for (const [w, h] of [[1024, 768], [1280, 800], [1440, 900], [1920, 1080]]) {
+    const { page, context } = await open(w, h);
+    const r = await page.evaluate(() => {
+      const top = (s) => { const el = document.querySelector(s); return el ? el.getBoundingClientRect() : { top: Infinity, bottom: Infinity }; };
+      return { y: scrollY, vh: innerHeight, q: top('#matrix-q'), tools: top('[aria-controls="matrix-f-tools"]'), status: top('[aria-controls="matrix-f-status"]'), grid: top('#matrix-grid').top };
+    });
+    assert.equal(r.y, 0);
+    for (const k of ['q', 'tools', 'status']) {
+      assert.ok(r[k].top < r.vh && r[k].bottom <= r.vh, `${w}×${h}: ${k} at ${Math.round(r[k].top)}-${Math.round(r[k].bottom)}, window ${r.vh}`);
+      assert.ok(r[k].bottom <= r.grid, `${w}×${h}: ${k} is above the grid`);
+    }
+    await context.close();
+  }
+});
+
+// The chips of a group sit under its toggle; a test that needs one opens the group first.
+async function chip(page, sel) {
+  const group = await page.evaluate((s) => document.querySelector(s).closest('fieldset').id, sel);
+  if (await page.isHidden(`#${group}`)) await page.click(`[aria-controls="${group}"]`);
+  await page.click(sel);
+}
 
 test('phone tiles are at least 44px tall; unverified keeps its dashed border', async () => {
   const { page, context } = await open(390, 844);
@@ -115,7 +139,7 @@ test('keyboard: one tab stop, arrows move, Enter opens the panel, Escape closes 
 
 test('arrows skip tiles the filters leave out, and the notes list stays complete', async () => {
   const { page, context } = await open(1440, 900);
-  await page.click('[data-filter-status="unverified"]');
+  await chip(page, '[data-filter-status="unverified"]');
   const off = await page.locator('a.mt.is-off').count();
   assert.equal(off, matrix.cells.filter((c) => c.status !== 'unverified').length);
   assert.equal(await page.locator('#matrix-notes li.an-cell').count(), matrix.cells.length);
@@ -197,7 +221,7 @@ test('on a phone the open panel is a modal dialog: focus moves in, Tab stays in,
 test('on a desktop a click on a tile of the first screen opens the panel without scrolling the page', async () => {
   const { page, context, errors } = await open(1440, 900);
   const tile = 'a.mt[href="#d-claude-code--agents-md"]';
-  // The panel now sits above the filters, so its title is already on screen here and Chromium would not scroll
+  // The panel is alone in the side column, so its title is already on screen here and Chromium would not scroll
   // anyway. The focus call is checked too, so a browser that scrolls a focused element into a different place
   // (or a later layout that pushes the panel down) cannot bring the jump back.
   await page.evaluate(() => {
@@ -247,7 +271,7 @@ for (const scheme of ['light', 'dark']) {
     const read = () => page.evaluate(() => [...document.querySelectorAll('a.mt')].map((t) => { const s = getComputedStyle(t); return { k: t.dataset.status + (t.classList.contains('is-off') ? ' off' : ''), fg: s.color, bg: s.backgroundColor }; }));
     const pairs = new Map();
     for (const p of await read()) pairs.set(p.k, p);
-    await page.click('[data-filter-status="reads"]');
+    await chip(page, '[data-filter-status="reads"]');
     for (const p of await read()) pairs.set(p.k, p);
     for (const p of pairs.values()) {
       const r = ratio(p.fg, p.bg);
@@ -267,46 +291,81 @@ for (const scheme of ['light', 'dark']) {
   });
 }
 
-// The search box must take clicks at every width, with the panel empty or open, at the top and after a scroll.
-// A sticky panel covers whatever follows it in its column, which is how the box went out of reach once.
-async function searchReach(page, { panelOpen, scrolled }) {
-  if (panelOpen) {
-    await page.locator('a.mt[href="#d-claude-code--agents-md"]').click();
-    // On a phone the open panel is a modal sheet over the page, so the box is used once it is closed again.
-    if (await page.evaluate(() => document.getElementById('matrix-panel').getAttribute('aria-modal') === 'true')) await page.keyboard.press('Escape');
-  }
-  await page.evaluate((y) => window.scrollTo(0, y), scrolled ? 600 : 0);
-  await page.evaluate(() => {
-    const b = document.getElementById('matrix-q').getBoundingClientRect();
-    if (b.top < 70 || b.bottom > innerHeight) document.getElementById('matrix-q').scrollIntoView({ block: 'center' });
-  });
-  const at = await page.evaluate(() => {
-    const q = document.getElementById('matrix-q');
-    const b = q.getBoundingClientRect();
+// The search box, Tools and Status must take clicks at every width, in both themes, with the panel empty or open,
+// at the top and after a scroll. A sticky panel covers whatever follows it in its column, which is how the box went
+// out of reach once; the bar now sits above the grid, out of that column.
+const shown = (page) => page.evaluate(() => [...document.querySelectorAll('#matrix-grid a.mt')].filter((t) => t.offsetParent && !t.classList.contains('is-off')).length);
+
+// Scrolls the control to the top of the window as a jump or a focus would (scroll-margin keeps it under the
+// header), checks that the middle of it is the control itself, and clicks there.
+async function hit(page, sel) {
+  const at = await page.evaluate((s) => {
+    const c = document.querySelector(s);
+    const b0 = c.getBoundingClientRect();
+    const header = document.querySelector('.site-header').getBoundingClientRect().bottom;
+    if (b0.top < header || b0.bottom > innerHeight) c.scrollIntoView({ block: 'start' });
+    const b = c.getBoundingClientRect();
     const x = b.left + b.width / 2, y = b.top + b.height / 2;
     const el = document.elementFromPoint(x, y);
     const name = !el ? 'nothing' : el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}${el.classList.length ? '.' + el.classList[0] : ''}`;
-    return { x, y, scrollY: Math.round(scrollY), onField: !!el && (el === q || q.contains(el)), name };
-  });
+    return { x, y, scrollY: Math.round(scrollY), on: !!el && (el === c || c.contains(el)), name };
+  }, sel);
+  assert.ok(at.on, `${sel}: the middle is the control itself, not ${at.name} (y ${Math.round(at.y)}, scrollY ${at.scrollY})`);
   await page.mouse.click(at.x, at.y);
-  const focused = await page.evaluate(() => document.activeElement && document.activeElement.id === 'matrix-q');
-  const shown = () => page.evaluate(() => [...document.querySelectorAll('#matrix-grid a.mt')].filter((t) => t.offsetParent && !t.classList.contains('is-off')).length);
-  const before = await shown();
+}
+
+async function reachAll(page, { panelOpen, scrolled }, label) {
+  if (panelOpen) {
+    await page.locator('a.mt[href="#d-claude-code--agents-md"]').click();
+    // On a phone the open panel is a modal sheet over the page, so the bar is used once it is closed again.
+    if (await page.evaluate(() => document.getElementById('matrix-panel').getAttribute('aria-modal') === 'true')) await page.keyboard.press('Escape');
+  }
+  await page.evaluate((y) => window.scrollTo(0, y), scrolled ? 600 : 0);
+  const all = await shown(page);
+
+  await hit(page, '#matrix-q');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'matrix-q', `${label}: a click focuses the search box`);
   await page.keyboard.type('GEMINI');
-  const after = await shown();
-  return { ...at, focused, before, after };
+  const typed = await shown(page);
+  assert.ok(typed > 0 && typed < all, `${label}: typing filters the tiles (${all} → ${typed})`);
+  await page.fill('#matrix-q', '');
+
+  const tools = '[aria-controls="matrix-f-tools"]', tool = `[data-filter-tool="${matrix.cells[0].tool}"]`;
+  await hit(page, tools);
+  assert.equal(await page.getAttribute(tools, 'aria-expanded'), 'true', `${label}: Tools opens`);
+  await hit(page, tool);
+  assert.equal(await page.getAttribute(tool, 'aria-pressed'), 'true', `${label}: the tool chip turns on`);
+  const byTool = await shown(page);
+  assert.ok(byTool > 0 && byTool < all, `${label}: a tool chip filters the tiles (${all} → ${byTool})`);
+
+  const status = '[aria-controls="matrix-f-status"]', st = '[data-filter-status="unverified"]';
+  await hit(page, status);
+  assert.equal(await page.getAttribute(status, 'aria-expanded'), 'true', `${label}: Status opens`);
+  await hit(page, st);
+  assert.equal(await page.getAttribute(st, 'aria-pressed'), 'true', `${label}: the status chip turns on`);
+  const byStatus = await shown(page);
+  assert.ok(byStatus < byTool, `${label}: a status chip filters the tiles (${byTool} → ${byStatus})`);
 }
 
 for (const width of [1920, 1440, 1280, 1024, 768, 390, 320]) {
-  test(`at ${width} px the search box takes the click and filters, with the panel empty or open, at the top or scrolled`, async () => {
-    for (const panelOpen of [false, true]) for (const scrolled of [false, true]) {
-      const { page, context } = await open(width, width <= 390 ? 844 : 900);
-      const r = await searchReach(page, { panelOpen, scrolled });
-      const label = `panel ${panelOpen ? 'open' : 'empty'}, ${scrolled ? 'scrolled' : 'top'}`;
-      assert.ok(r.onField, `${label}: the middle of the box is the box itself, not ${r.name} (y ${Math.round(r.y)}, scrollY ${r.scrollY})`);
-      assert.ok(r.focused, `${label}: a click focuses the box`);
-      assert.ok(r.after > 0 && r.after < r.before, `${label}: typing filters the tiles (${r.before} → ${r.after})`);
+  test(`at ${width} px the search box, Tools and Status take the click and filter, in both themes, panel empty or open, at the top or scrolled`, async () => {
+    for (const scheme of ['light', 'dark']) for (const panelOpen of [false, true]) for (const scrolled of [false, true]) {
+      const { page, context, errors } = await open(width, width <= 390 ? 844 : 900, { scheme });
+      await reachAll(page, { panelOpen, scrolled }, `${scheme}, panel ${panelOpen ? 'open' : 'empty'}, ${scrolled ? 'scrolled' : 'top'}`);
+      assert.deepEqual(errors, []);
       await context.close();
     }
+  });
+}
+
+// N1: the header wraps to 138 px at 320 px wide; focusing the search box from far down the page leaves it below.
+for (const width of [320, 390, 1440]) {
+  test(`at ${width} px focusing the search box from far down the page stops it below the sticky header`, async () => {
+    const { page, context } = await open(width, 800);
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await page.evaluate(() => document.getElementById('matrix-q').scrollIntoView());
+    const r = await page.evaluate(() => ({ q: document.getElementById('matrix-q').getBoundingClientRect().top, header: document.querySelector('.site-header').getBoundingClientRect().bottom }));
+    assert.ok(r.q >= r.header, `box top ${Math.round(r.q)} is under the header bottom ${Math.round(r.header)}`);
+    await context.close();
   });
 }

@@ -149,6 +149,8 @@ if (grid && panel && notes) {
     const statusButtons = [...bar.querySelectorAll('[data-filter-status]')];
     const pressed = (list, attr) => list.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset[attr]);
     const message = document.getElementById('matrix-count');
+    // Tools and Status open under the line of the bar; each toggle shows or hides its own group of chips.
+    const toggles = [...bar.querySelectorAll('.filter-toggle')];
     const update = () => {
       const result = applyFilters(model, { tools: pressed(toolButtons, 'filterTool'), statuses: pressed(statusButtons, 'filterStatus'), query: search ? search.value : '' });
       for (const el of grid.querySelectorAll('[data-tool]:not(a)')) el.hidden = !result.visibleTools.has(el.dataset.tool);
@@ -157,10 +159,17 @@ if (grid && panel && notes) {
       if (!live(current)) { const first = tiles.find(live); if (first) roving(first); }
       message.textContent = countMessage(result);
       bar.querySelector('[data-filter-reset]').disabled = !result.active;
+      for (const t of toggles) t.classList.toggle('is-active', Boolean(document.getElementById(t.getAttribute('aria-controls')).querySelector('[aria-pressed="true"]')));
     };
     bar.addEventListener('click', (e) => {
       const button = e.target.closest('button');
       if (!button || !bar.contains(button)) return;
+      if (button.classList.contains('filter-toggle')) {
+        const open = button.getAttribute('aria-expanded') !== 'true';
+        button.setAttribute('aria-expanded', String(open));
+        document.getElementById(button.getAttribute('aria-controls')).hidden = !open;
+        return;
+      }
       if (button.hasAttribute('data-filter-reset')) {
         for (const b of [...toolButtons, ...statusButtons]) b.setAttribute('aria-pressed', 'false');
         if (search) search.value = '';

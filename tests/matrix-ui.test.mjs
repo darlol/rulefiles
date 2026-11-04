@@ -50,7 +50,15 @@ test('matrix page: the copy of the compact grid, pasted as reviewed, with N take
   assert.ok(html.includes(`<h1>Which coding agent reads which instruction file</h1>\n<p class="help">${MATRIX_GRID_COPY.help}</p>`));
   assert.ok(html.includes(`<summary>${MATRIX_GRID_COPY.introFold}</summary>`));
   assert.ok(html.includes(`<summary>${MATRIX_GRID_COPY.allNotes(matrix.cells.length)}</summary>`));
-  assert.ok(html.includes(`<label for="matrix-q">${MATRIX_COPY.searchLabel}</label><input id="matrix-q" type="search"`));
+  assert.ok(html.includes(`<label for="matrix-q">${MATRIX_COPY.searchLabel}</label>`));
+  assert.ok(html.includes('<input id="matrix-q" type="search"'));
+  // The bar sits above the grid in the main column, out of the panel's column; its toggles reuse the group names.
+  assert.ok(html.indexOf('<div class="mx-main">\n<div class="filters" id="matrix-filters">') > 0, 'the filter bar opens the main column');
+  assert.ok(html.indexOf('id="matrix-filters"') < html.indexOf('id="matrix-grid"'));
+  for (const [id, name] of [['matrix-f-tools', 'Tools'], ['matrix-f-status', 'Status']]) {
+    assert.ok(html.includes(`<button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="${id}">${name}</button>`));
+    assert.ok(html.includes(`<fieldset class="filter-group" id="${id}" hidden><legend class="sr">${name}</legend>`));
+  };
   assert.ok(html.includes(`placeholder="${MATRIX_COPY.searchPlaceholder}"`));
   assert.match(html, /<ul class="status-counts" aria-label="Cells by status">/);
 });
