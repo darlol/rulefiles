@@ -487,21 +487,36 @@ for (const scheme of ['light', 'dark']) {
 
 // The dot on Tools and Status has a screen-reader hook: an empty .filter-state span in each toggle. matrix.js fills
 // it from data-active-text while a chip of the group is on, and empties it otherwise. The text itself is not written yet.
-test('the active-filter hook: each toggle has an empty .filter-state span that matrix.js fills from data-active-text', async () => {
+test('the active-filter dot is named on its toggle: Tools or Status, then ", filter active" while a chip of that group is on', async () => {
   const { page, context, errors } = await open(1440, 900);
-  const read = () => page.evaluate(() => [...document.querySelectorAll('.filter-toggle')].map((t) => ({ id: t.getAttribute('aria-controls'), text: t.querySelector('.filter-state').textContent, attr: t.querySelector('.filter-state').getAttribute('data-active-text'), name: t.textContent })));
-  for (const t of await read()) {
-    assert.equal(t.text, '', `${t.id}: no text yet`);
-    assert.equal(t.attr, '', `${t.id}: no copy yet`);
+  const named = async (name) => page.getByRole('button', { name, exact: true }).count();
+  const names = async (tools, status) => {
+    assert.equal(await named(tools), 1, `Tools toggle named "${tools}"`);
+    assert.equal(await named(status), 1, `Status toggle named "${status}"`);
+  };
+  const toggles = page.locator('.filter-toggle');
+  for (let i = 0; i < 2; i++) {
+    assert.equal(await toggles.nth(i).getAttribute('aria-pressed'), null, 'a toggle opens a group; it is not a pressed button');
+    assert.equal(await toggles.nth(i).locator('.filter-dot').getAttribute('aria-hidden'), 'true', 'the dot itself says nothing');
   }
+  await names('Tools', 'Status');
+  assert.equal(await page.locator('.filter-dot:visible').count(), 0, 'no dot without a filter');
   await chip(page, '[data-filter-status="reads"]');
-  assert.deepEqual((await read()).map((t) => t.text), ['', ''], 'with the copy still empty, an active group adds nothing');
+  await names('Tools', 'Status, filter active');
+  await page.click('[data-filter-status="not-read"]');
+  await names('Tools', 'Status, filter active'); // two chips on: still no count
+  await chip(page, '[data-filter-tool="cursor"]');
+  await names('Tools, filter active', 'Status, filter active');
+  assert.equal(await page.locator('.filter-dot:visible').count(), 2, 'one dot per active group');
+  await page.click('[data-filter-tool="cursor"]');
+  await names('Tools', 'Status, filter active');
   await page.click('[data-filter-reset]');
-  await page.evaluate(() => { for (const s of document.querySelectorAll('.filter-state')) s.setAttribute('data-active-text', 'HOOK'); });
-  await chip(page, '[data-filter-status="reads"]');
-  assert.deepEqual((await read()).map((t) => [t.id, t.text]), [['matrix-f-tools', ''], ['matrix-f-status', 'HOOK']], 'only the active group gets the text');
-  await page.click('[data-filter-status="reads"]');
-  assert.deepEqual((await read()).map((t) => t.text), ['', ''], 'and loses it when its last chip turns off');
+  await names('Tools', 'Status');
+  await chip(page, '[data-filter-tool="codex"]');
+  await names('Tools, filter active', 'Status');
+  await page.click('[data-filter-reset]');
+  await names('Tools', 'Status');
+  assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('.filter-toggle')].map((t) => t.innerText.trim())), ['Tools', 'Status'], 'no new visible text');
   assert.deepEqual(errors, []);
   await context.close();
 });

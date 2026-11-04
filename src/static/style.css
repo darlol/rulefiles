@@ -436,7 +436,8 @@ label { font-weight: 620; }
 .filter-toggle::after { content: ""; width: 0.45rem; height: 0.45rem; margin-top: -0.2rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.2s var(--ease); }
 .filter-toggle[aria-expanded="true"]::after { margin-top: 0.2rem; transform: rotate(-135deg); }
 /* A dot on the toggle while one of its chips is on, so a closed group still shows that it filters. */
-.filter-toggle.is-active::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
+.filter-dot { display: none; }
+.filter-toggle.is-active .filter-dot { display: block; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
 .filter-group { border: 0; padding: var(--s2) 0 0; margin: 0; min-width: 0; }
 /* The count is written by matrix.js; its line is reserved so filling it moves nothing. */
 #matrix-count { min-height: 1.5em; margin: 0; font-size: 0.875rem; text-align: right; }

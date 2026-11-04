@@ -177,9 +177,10 @@ if (grid && panel && notes) {
       for (const t of toggles) {
         const on = Boolean(document.getElementById(t.getAttribute('aria-controls')).querySelector('[aria-pressed="true"]'));
         t.classList.toggle('is-active', on);
-        // Hook for the screen-reader text of the dot; the words live in MATRIX_COPY.filterActive (render.mjs).
-        const state = t.querySelector('.filter-state');
-        if (state) state.textContent = on ? state.getAttribute('data-active-text') : '';
+        // The dot is aria-hidden; its words (MATRIX_COPY.filterActive in render.mjs) join the button's name instead.
+        // aria-label, not a hidden span: Chromium puts a space before a positioned span ("Status , filter active").
+        if (on) t.setAttribute('aria-label', t.textContent.trim() + t.dataset.activeText);
+        else t.removeAttribute('aria-label');
       }
     };
     bar.addEventListener('click', (e) => {
