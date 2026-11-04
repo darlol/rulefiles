@@ -40,15 +40,21 @@ function copyRoot() {
 const spans = (src, mark) => src.split(mark).filter((_, i) => i % 2 === 1);
 const inner = (html, tag) => html.split(`<${tag}>`).slice(1).map((p) => p.split(`</${tag}>`)[0]);
 function quoteMarkup(html, quote, where) {
-  assert.equal(decode(html.split('<code>').join('').split('</code>').join('').split('<strong>').join('').split('</strong>').join('')), quote.split('`').join('').split('**').join(''), `${where}: quote text`);
+  // Code spans come first and keep any ** they hold; bold is read only in the text between them.
+  const parts = quote.split('`');
+  const prose = parts.filter((_, i) => i % 2 === 0);
+  const strong = prose.flatMap((p) => spans(p, '**'));
+  const plain = parts.map((p, i) => (i % 2 ? p : p.split('**').join(''))).join('');
+  const tags = /<\/?(code|strong)>/g;
+  assert.equal(decode(html.replace(tags, '')), plain, `${where}: quote text`);
   assert.deepEqual(inner(html, 'code').map(decode), spans(quote, '`'), `${where}: code spans`);
-  assert.deepEqual(inner(html, 'strong').map(decode), spans(quote.split('`').join(''), '**'), `${where}: strong spans`);
-  assert.equal(html.split('<').length - 1, 2 * (spans(quote, '`').length + spans(quote, '**').length), `${where}: no other tags`);
+  assert.deepEqual(inner(html, 'strong').map(decode), strong, `${where}: strong spans`);
+  assert.equal(html.split('<').length - 1, 2 * (spans(quote, '`').length + strong.length), `${where}: no other tags`);
 }
 test('the quote check catches markup the renderer gets wrong', () => {
-  const q = 'Reads `AGENTS.md` and **always** <b>.';
-  quoteMarkup('Reads <code>AGENTS.md</code> and <strong>always</strong> &lt;b&gt;.', q, 'sample');
-  for (const bad of ['Reads `AGENTS.md` and **always** &lt;b&gt;.', 'Reads <code>AGENTS.md</code> and **always** &lt;b&gt;.', 'Reads <strong>AGENTS.md</strong> and <code>always</code> &lt;b&gt;.', 'Reads <code>AGENTS.md</code> and <strong>always</strong> <b>.']) {
+  const q = 'Reads `AGENTS.md` and **always** <b>, not `src/**`.';
+  quoteMarkup('Reads <code>AGENTS.md</code> and <strong>always</strong> &lt;b&gt;, not <code>src/**</code>.', q, 'sample');
+  for (const bad of ['Reads `AGENTS.md` and **always** &lt;b&gt;, not `src/**`.', 'Reads <code>AGENTS.md</code> and **always** &lt;b&gt;, not <code>src/**</code>.', 'Reads <strong>AGENTS.md</strong> and <code>always</code> &lt;b&gt;, not <code>src/**</code>.', 'Reads <code>AGENTS.md</code> and <strong>always</strong> <b>, not <code>src/**</code>.', 'Reads <code>AGENTS.md</code> and <strong>always</strong> &lt;b&gt;, not <code>src/</code>**.']) {
     assert.throws(() => quoteMarkup(bad, q, 'sample'), assert.AssertionError, bad);
   }
 });
@@ -71,6 +77,7 @@ test('1. one page per shipped cell, none for unverified or configurable cells, 3
 });
 
 test('2-4. title, H1, answer first, quote and source', () => {
+  assert.ok(QUESTION_CELLS.some((c) => c.quote.includes('`')), 'at least one shipped quote holds a code span');
   for (const c of QUESTION_CELLS) {
     const t = tool(c.tool); const f = file(c.file); const html = read(qrel(c));
     const title = `Does ${t.name} read ${f.path}?`;
