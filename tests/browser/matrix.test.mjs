@@ -266,3 +266,47 @@ for (const scheme of ['light', 'dark']) {
     await context.close();
   });
 }
+
+// The search box must take clicks at every width, with the panel empty or open, at the top and after a scroll.
+// A sticky panel covers whatever follows it in its column, which is how the box went out of reach once.
+async function searchReach(page, { panelOpen, scrolled }) {
+  if (panelOpen) {
+    await page.locator('a.mt[href="#d-claude-code--agents-md"]').click();
+    // On a phone the open panel is a modal sheet over the page, so the box is used once it is closed again.
+    if (await page.evaluate(() => document.getElementById('matrix-panel').getAttribute('aria-modal') === 'true')) await page.keyboard.press('Escape');
+  }
+  await page.evaluate((y) => window.scrollTo(0, y), scrolled ? 600 : 0);
+  await page.evaluate(() => {
+    const b = document.getElementById('matrix-q').getBoundingClientRect();
+    if (b.top < 70 || b.bottom > innerHeight) document.getElementById('matrix-q').scrollIntoView({ block: 'center' });
+  });
+  const at = await page.evaluate(() => {
+    const q = document.getElementById('matrix-q');
+    const b = q.getBoundingClientRect();
+    const x = b.left + b.width / 2, y = b.top + b.height / 2;
+    const el = document.elementFromPoint(x, y);
+    const name = !el ? 'nothing' : el.id ? `#${el.id}` : `${el.tagName.toLowerCase()}${el.classList.length ? '.' + el.classList[0] : ''}`;
+    return { x, y, scrollY: Math.round(scrollY), onField: !!el && (el === q || q.contains(el)), name };
+  });
+  await page.mouse.click(at.x, at.y);
+  const focused = await page.evaluate(() => document.activeElement && document.activeElement.id === 'matrix-q');
+  const shown = () => page.evaluate(() => [...document.querySelectorAll('#matrix-grid a.mt')].filter((t) => t.offsetParent && !t.classList.contains('is-off')).length);
+  const before = await shown();
+  await page.keyboard.type('GEMINI');
+  const after = await shown();
+  return { ...at, focused, before, after };
+}
+
+for (const width of [1920, 1440, 1280, 1024, 768, 390, 320]) {
+  test(`at ${width} px the search box takes the click and filters, with the panel empty or open, at the top or scrolled`, async () => {
+    for (const panelOpen of [false, true]) for (const scrolled of [false, true]) {
+      const { page, context } = await open(width, width <= 390 ? 844 : 900);
+      const r = await searchReach(page, { panelOpen, scrolled });
+      const label = `panel ${panelOpen ? 'open' : 'empty'}, ${scrolled ? 'scrolled' : 'top'}`;
+      assert.ok(r.onField, `${label}: the middle of the box is the box itself, not ${r.name} (y ${Math.round(r.y)}, scrollY ${r.scrollY})`);
+      assert.ok(r.focused, `${label}: a click focuses the box`);
+      assert.ok(r.after > 0 && r.after < r.before, `${label}: typing filters the tiles (${r.before} → ${r.after})`);
+      await context.close();
+    }
+  });
+}

@@ -505,10 +505,9 @@ main > .lead.mx-lead { margin-bottom: var(--s2); }
 .mx { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; }
 .mx-main, .mx-side { min-width: 0; }
 .mx-side { display: grid; gap: var(--s4); }
-.mx-side .filters { margin: 0; grid-template-columns: minmax(0, 1fr); }
-/* The panel comes first in the side column, so on a desktop a tile of the first screen shows its note without scrolling.
-   On a phone the open panel is a fixed sheet and the closed one a legend, so the filters stay right under the grid. */
-@media (max-width: 59.99rem) { .mx-side .filters { order: -1; } }
+/* The filters sit under the grid, and the side column holds the panel alone. A sticky panel slides over anything
+   after it in its column, so with the filters there it covered the search box once the page scrolled. */
+.mx-main .filters { margin: var(--s4) 0 0; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 60rem) {
   .mx { grid-template-columns: minmax(0, 1fr) 23rem; }
   .mx-side { align-self: stretch; align-content: start; }
