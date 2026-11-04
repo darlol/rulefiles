@@ -19,6 +19,15 @@ if (grid && panel && notes) {
   const hashOf = () => decodeURIComponent(document.URL.split('#')[1] || '');
   let current = tiles[0];
   let open = null;
+  // Below 60rem the panel is a bottom sheet over the page, so while it is open it is a modal dialog: focus moves
+  // into it and Tab stays inside. From 60rem it is a side column next to the grid and stays a plain region.
+  const sheet = window.matchMedia('(max-width: 59.99rem)');
+  const modal = () => Boolean(open) && sheet.matches;
+  const setMode = () => {
+    panel.setAttribute('role', modal() ? 'dialog' : 'region');
+    if (modal()) panel.setAttribute('aria-modal', 'true'); else panel.removeAttribute('aria-modal');
+  };
+  if (sheet.addEventListener) sheet.addEventListener('change', setMode); else sheet.addListener(setMode);
 
   grid.setAttribute('role', 'grid');
   for (const el of grid.querySelectorAll('[role="cell"]')) el.setAttribute('role', 'gridcell');
@@ -43,7 +52,8 @@ if (grid && panel && notes) {
     view.hidden = false;
     panel.classList.add('is-open');
     scrim.hidden = false;
-    if (focus) title.focus();
+    setMode();
+    if (focus || modal()) title.focus();
   };
   const close = () => {
     if (!open) return;
@@ -54,6 +64,7 @@ if (grid && panel && notes) {
     empty.hidden = false;
     panel.classList.remove('is-open');
     scrim.hidden = true;
+    setMode();
     history.replaceState(null, '', document.URL.split('#')[0]);
     tile.focus();
   };
@@ -77,6 +88,20 @@ if (grid && panel && notes) {
   scrim.addEventListener('click', close);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) close(); });
   window.addEventListener('hashchange', fromHash);
+  // Focus trap of the sheet: Tab from the last control goes back to the first, Shift+Tab from the first (or the
+  // title) to the last, and focus that lands outside, by a click or a screen reader, comes back to the title.
+  const focusables = () => [...panel.querySelectorAll('a[href], button:not([disabled])')].filter((x) => x.offsetParent !== null);
+  panel.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab' || !modal()) return;
+    const list = focusables();
+    if (!list.length) return;
+    const first = list[0];
+    const last = list[list.length - 1];
+    const at = document.activeElement;
+    if (e.shiftKey && (at === first || at === title)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
+  });
+  document.addEventListener('focusin', (e) => { if (modal() && !panel.contains(e.target)) title.focus(); });
 
   // Arrow keys move between the tiles that are shown and match the filters; Home and End go to the ends of a
   // row, with Ctrl to the first or last cell of the grid.

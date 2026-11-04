@@ -158,6 +158,55 @@ test('on a phone the panel is a sheet no taller than 60% of the screen, even for
   await context.close();
 });
 
+test('on a phone the open panel is a modal dialog: focus moves in, Tab stays in, the scrim and Escape close it and focus returns', async () => {
+  const cell = matrix.cells.reduce((a, c) => ((c.note + (c.quote || '')).length > (a.note + (a.quote || '')).length ? c : a));
+  const tile = `a.mt[data-tool="${cell.tool}"][data-file="${cell.file}"]`;
+  const { page, context, errors } = await open(390, 844);
+  assert.equal(await page.getAttribute('#matrix-panel', 'role'), 'region', 'closed, it is not a dialog');
+  assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), null);
+  const where = () => page.evaluate(() => { const a = document.activeElement; return { inPanel: document.getElementById('matrix-panel').contains(a), tile: a.dataset.tool ? `${a.dataset.tool}/${a.dataset.file}` : '' }; });
+  for (const how of ['scrim', 'Escape']) {
+    await page.focus(tile);
+    await page.keyboard.press('Enter');
+    assert.equal(await page.getAttribute('#matrix-panel', 'role'), 'dialog');
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), 'true');
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-label'), 'Cell details');
+    assert.equal((await where()).inPanel, true, 'focus moves into the panel');
+    const stops = new Set();
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      const w = await where();
+      assert.equal(w.inPanel, true, `Tab ${i + 1} stays in the panel`);
+      stops.add(await page.evaluate(() => document.activeElement.outerHTML.slice(0, 60)));
+    }
+    assert.ok(stops.size >= 2, 'Tab cycles through the close button and the links');
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Shift+Tab');
+      assert.equal((await where()).inPanel, true, `Shift+Tab ${i + 1} stays in the panel`);
+    }
+    if (how === 'scrim') await page.mouse.click(195, 60); else await page.keyboard.press('Escape');
+    assert.equal(await page.isHidden('.panel-cell'), true, `${how} closes the panel`);
+    assert.equal(await page.isHidden('#matrix-scrim'), true);
+    assert.equal((await where()).tile, `${cell.tool}/${cell.file}`, `after ${how}, focus is back on the tile`);
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), null);
+  }
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('on a desktop and without scripts the panel stays a region, never modal', async () => {
+  for (const [w, js] of [[1440, true], [390, false]]) {
+    const { page, context } = await open(w, 900, { js, hash: `#d-${matrix.cells[0].tool}--${matrix.cells[0].file}` });
+    assert.equal(await page.getAttribute('#matrix-panel', 'role'), 'region', `${w}px, scripts ${js ? 'on' : 'off'}`);
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), null);
+    if (js) {
+      await page.focus('#matrix-q');
+      assert.equal(await page.evaluate(() => document.activeElement.id), 'matrix-q', 'focus is free next to the side panel');
+    }
+    await context.close();
+  }
+});
+
 // WCAG relative luminance of an "rgb(r, g, b)" colour.
 function lum(rgb) {
   const [r, g, b] = rgb.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
