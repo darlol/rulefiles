@@ -35,6 +35,24 @@ function copyRoot() {
   fs.cpSync(ROOT, root, { recursive: true, filter: (s) => !/^(node_modules|dist|\.git|\.cache)(\/|$)/.test(path.relative(ROOT, s)) });
   return root;
 }
+// The quote is checked by its parts, not by re-running the renderer's patterns: the text reads as the source with
+// the markers gone, each `x` span is one <code>, each **x** span one <strong>, and nothing else is markup.
+const spans = (src, mark) => src.split(mark).filter((_, i) => i % 2 === 1);
+const inner = (html, tag) => html.split(`<${tag}>`).slice(1).map((p) => p.split(`</${tag}>`)[0]);
+function quoteMarkup(html, quote, where) {
+  assert.equal(decode(html.split('<code>').join('').split('</code>').join('').split('<strong>').join('').split('</strong>').join('')), quote.split('`').join('').split('**').join(''), `${where}: quote text`);
+  assert.deepEqual(inner(html, 'code').map(decode), spans(quote, '`'), `${where}: code spans`);
+  assert.deepEqual(inner(html, 'strong').map(decode), spans(quote.split('`').join(''), '**'), `${where}: strong spans`);
+  assert.equal(html.split('<').length - 1, 2 * (spans(quote, '`').length + spans(quote, '**').length), `${where}: no other tags`);
+}
+test('the quote check catches markup the renderer gets wrong', () => {
+  const q = 'Reads `AGENTS.md` and **always** <b>.';
+  quoteMarkup('Reads <code>AGENTS.md</code> and <strong>always</strong> &lt;b&gt;.', q, 'sample');
+  for (const bad of ['Reads `AGENTS.md` and **always** &lt;b&gt;.', 'Reads <code>AGENTS.md</code> and **always** &lt;b&gt;.', 'Reads <strong>AGENTS.md</strong> and <code>always</code> &lt;b&gt;.', 'Reads <code>AGENTS.md</code> and <strong>always</strong> <b>.']) {
+    assert.throws(() => quoteMarkup(bad, q, 'sample'), assert.AssertionError, bad);
+  }
+});
+
 // The literal short answers of §9.2 point 3, copied here on purpose.
 const STARTS = { reads: 'Yes.', 'reads-conditionally': 'Yes, with conditions.', 'migration-only': 'Only for migration.', 'not-read': 'No.' };
 
@@ -67,7 +85,7 @@ test('2-4. title, H1, answer first, quote and source', () => {
     assert.ok(ans.includes(c.note.replace(/`|\*\*/g, '')), `${c.tool}/${c.file}: note`);
     const bq = html.match(new RegExp(`<blockquote cite="${esc(c.sourceUrl).replace(/[.?*+^$()[\]{}|\\]/g, '\\$&')}">([\\s\\S]*?)</blockquote>`));
     assert.ok(bq, `${c.tool}/${c.file}: blockquote`);
-    assert.equal(bq[1], esc(c.quote).replace(/`([^`]*)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'));
+    quoteMarkup(bq[1], c.quote, `${c.tool}/${c.file}`);
     assert.ok(html.includes(`href="${esc(c.sourceUrl)}" rel="noopener"`));
     assert.ok(html.includes(`<time datetime="${c.verifiedOn}">`));
   }
