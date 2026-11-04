@@ -609,6 +609,9 @@ noscript a { color: inherit; }
 /* Question and comparison pages: the answer comes first, then the quoted source. */
 .answer { font-size: 1.125rem; line-height: 1.55; max-width: 44rem; margin-bottom: var(--s4); text-wrap: pretty; }
 .answer .badge { margin-right: var(--s1); }
-blockquote { margin: 0 0 var(--s2); padding: var(--s3) var(--s4); border-left: 3px solid var(--control); background: var(--surface); border-radius: 0 var(--r-ctl) var(--r-ctl) 0; max-width: 44rem; overflow-wrap: anywhere; }
+/* A quote is a tinted block with no side bar, the same on the matrix panel, the answer pages and the comparisons.
+   Code inside it takes the surface colour so it still stands out from the tint. */
+blockquote { margin: 0 0 var(--s2); padding: var(--s3) var(--s4); background: var(--sunken); color: var(--ink); border-radius: var(--r-ctl); max-width: 44rem; overflow-wrap: anywhere; }
+blockquote code { background: var(--surface); }
 .q-list { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); list-style: none; padding: 0; }
 .embed { max-width: 44rem; }

@@ -255,4 +255,14 @@ for (const scheme of ['light', 'dark']) {
     }
     await context.close();
   });
+
+  test(`the quote in the panel is a tinted block with no side bar, text at 4.5:1 or more, in the ${scheme} theme`, async () => {
+    const { page, context } = await open(1440, 900, { scheme, hash: '#d-cline--clinerules' });
+    const q = await page.evaluate(() => { const b = document.querySelector('#matrix-panel blockquote'); const s = getComputedStyle(b); const strong = getComputedStyle(b.querySelector('strong')); return { cite: b.getAttribute('cite'), side: s.borderLeftWidth, fg: s.color, bg: s.backgroundColor, panel: getComputedStyle(document.getElementById('matrix-panel')).backgroundColor, strong: strong.color }; });
+    assert.match(q.cite, /^https:\/\//);
+    assert.equal(q.side, '0px');
+    assert.notEqual(q.bg, q.panel, 'the tint differs from the panel');
+    for (const fg of [q.fg, q.strong]) assert.ok(ratio(fg, q.bg) >= 4.5, `${scheme} quote: ${ratio(fg, q.bg).toFixed(2)}:1`);
+    await context.close();
+  });
 }
