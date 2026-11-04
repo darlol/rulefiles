@@ -205,3 +205,12 @@ test('no TODO-COPY placeholder is left anywhere in the build', () => {
     if (fs.statSync(p).isFile() && /\.(html|txt|xml|json|js|css)$/.test(p)) assert.doesNotMatch(fs.readFileSync(p, 'utf8'), /TODO-COPY/, f);
   }
 });
+
+test('12. CORS: /data/* is open to any origin, the /* rule keeps its CSP and has no Access-Control header', () => {
+  const rules = read('_headers').split(/\n(?=\S)/);
+  const data = rules.find((r) => r.startsWith('/data/*\n'));
+  assert.ok(data && /\n  Access-Control-Allow-Origin: \*$/m.test(data), read('_headers'));
+  const all = rules.find((r) => r.startsWith('/*\n'));
+  assert.match(all, /\n  Content-Security-Policy: /);
+  assert.doesNotMatch(all, /Access-Control-/);
+});
