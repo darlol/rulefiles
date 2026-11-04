@@ -56,10 +56,12 @@ test('matrix page: the copy of the compact grid, pasted as reviewed, with N take
   assert.ok(html.indexOf('<div class="mx-main">\n<div class="filters" id="matrix-filters">') > 0, 'the filter bar opens the main column');
   assert.ok(html.indexOf('id="matrix-filters"') < html.indexOf('id="matrix-grid"'));
   for (const [id, name] of [['matrix-f-tools', 'Tools'], ['matrix-f-status', 'Status']]) {
-    assert.ok(html.includes(`<button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="${id}">${name}</button>`));
+    assert.ok(html.includes(`<button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="${id}" data-active-text=", filter active"><span class="filter-dot" aria-hidden="true"></span>${name}</button>`));
     assert.ok(html.includes(`<fieldset class="filter-group" id="${id}" hidden><legend class="sr">${name}</legend>`));
   };
   assert.ok(html.includes(`placeholder="${MATRIX_COPY.searchPlaceholder}"`));
+  // The active-filter dot is aria-hidden; its words, as approved, wait in the toggle and carry no count.
+  assert.equal(MATRIX_COPY.filterActive, ', filter active');
   assert.match(html, /<ul class="status-counts" aria-label="Cells by status">/);
 });
 

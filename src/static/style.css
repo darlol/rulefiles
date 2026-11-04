@@ -69,6 +69,8 @@
   /* Interactive accent = BAR signal-deep for AA on paper; brand signal stays on the mark. */
   --accent: #9a4318;
   --accent-hover: #7a3512;
+  /* Tool names in the matrix header: no underline on phones, so they stay 3:1 from body text as well as 4.5:1 on the page. */
+  --head-link: #a94a1a;
   --on-accent: #ffffff;
   --mark: #ffe066;
   --on-mark: #14110e;
@@ -105,6 +107,7 @@
     --control: #a89f90;
     --accent: #e8956a;
     --accent-hover: #f0b090;
+    --head-link: #dd6222;
     --on-accent: #1a1612;
     --mark: #ffe066;
     --on-mark: #14110e;
@@ -433,7 +436,8 @@ label { font-weight: 620; }
 .filter-toggle::after { content: ""; width: 0.45rem; height: 0.45rem; margin-top: -0.2rem; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform 0.2s var(--ease); }
 .filter-toggle[aria-expanded="true"]::after { margin-top: 0.2rem; transform: rotate(-135deg); }
 /* A dot on the toggle while one of its chips is on, so a closed group still shows that it filters. */
-.filter-toggle.is-active::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
+.filter-dot { display: none; }
+.filter-toggle.is-active .filter-dot { display: block; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent); }
 .filter-group { border: 0; padding: var(--s2) 0 0; margin: 0; min-width: 0; }
 /* The count is written by matrix.js; its line is reserved so filling it moves nothing. */
 #matrix-count { min-height: 1.5em; margin: 0; font-size: 0.875rem; text-align: right; }
@@ -446,8 +450,8 @@ label { font-weight: 620; }
 .chip[aria-pressed="true"] .chip-count { color: inherit; }
 /* Focus or a jump to the search box or a chip stops below the sticky header: 3.75rem on one line, up to 138 px at
    320 px wide, where it wraps. */
-#matrix-filters input, #matrix-filters button { scroll-margin-top: 10rem; }
-@media (min-width: 48rem) { #matrix-filters input, #matrix-filters button { scroll-margin-top: calc(var(--header-h) + var(--s3) + 1.5rem); } }
+#matrix-filters, #matrix-filters input, #matrix-filters button { scroll-margin-top: 10rem; }
+@media (min-width: 48rem) { #matrix-filters, #matrix-filters input, #matrix-filters button { scroll-margin-top: calc(var(--header-h) + var(--s3) + 1.5rem); } }
 .btn-quiet { border-color: transparent; background: none; color: var(--accent); min-height: 2.5rem; }
 .btn-quiet:hover { background: var(--sunken); color: var(--accent-hover); }
 .btn-quiet:disabled { opacity: 0.5; }
@@ -535,6 +539,7 @@ main > .lead.mx-lead { margin-bottom: var(--s2); }
 .mhead .mfile a { font-weight: 700; }
 @media (min-width: 48rem) { .mhead { position: sticky; top: var(--header-h); z-index: 2; } }
 .mtool { min-width: 0; font-size: 0.8125rem; font-weight: 700; line-height: 1.25; text-align: center; overflow-wrap: anywhere; }
+.mtool a { color: var(--head-link); }
 .mt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem; min-height: 3.4rem; padding: 0.25rem; border: 1px solid transparent; border-radius: 8px; font-size: 0.75rem; font-weight: 680; line-height: 1.2; text-align: center; text-decoration: none; transition: background-color 0.2s var(--ease), color 0.2s var(--ease); }
 .mt .ic { width: 1.05rem; height: 1.05rem; stroke-width: 2.4; flex: none; }
 .mt:hover { text-decoration: underline; text-underline-offset: 2px; }
