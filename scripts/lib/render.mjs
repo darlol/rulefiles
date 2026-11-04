@@ -1051,7 +1051,13 @@ export function questionCells(ctx) {
   return out;
 }
 
-const hasQuestion = (ctx, toolId, fileId) => questionCells(ctx).some((c) => c.tool === toolId && c.file === fileId);
+// The question cells of a build, as a set of "tool/file" keys built once per ctx: a lookup per matrix cell stays O(1).
+const questionIndex = new WeakMap();
+function hasQuestion(ctx, toolId, fileId) {
+  let keys = questionIndex.get(ctx);
+  if (!keys) { keys = new Set(questionCells(ctx).map((c) => `${c.tool}/${c.file}`)); questionIndex.set(ctx, keys); }
+  return keys.has(`${toolId}/${fileId}`);
+}
 
 export const COMPARISONS = [
   { slug: 'claude-md-vs-agents-md', files: ['claude-md', 'agents-md'], title: 'CLAUDE.md vs AGENTS.md: which agents read which?' },
