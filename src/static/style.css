@@ -550,3 +550,10 @@ fieldset > .muted { margin: var(--s3) 0; }
 .gen-actions { display: flex; flex-wrap: wrap; gap: var(--s2); }
 noscript p { padding: var(--s3) var(--s4); border-radius: var(--r-ctl); background: var(--config-bg); color: var(--config-fg); }
 noscript a { color: inherit; }
+
+/* Question and comparison pages: the answer comes first, then the quoted source. */
+.answer { font-size: 1.125rem; line-height: 1.55; max-width: 44rem; margin-bottom: var(--s4); text-wrap: pretty; }
+.answer .badge { margin-right: var(--s1); }
+blockquote { margin: 0 0 var(--s2); padding: var(--s3) var(--s4); border-left: 3px solid var(--control); background: var(--surface); border-radius: 0 var(--r-ctl) var(--r-ctl) 0; max-width: 44rem; overflow-wrap: anywhere; }
+.q-list { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); list-style: none; padding: 0; }
+.embed { max-width: 44rem; }
