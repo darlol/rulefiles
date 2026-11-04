@@ -53,7 +53,9 @@ if (grid && panel && notes) {
     panel.classList.add('is-open');
     scrim.hidden = false;
     setMode();
-    if (focus || modal()) title.focus();
+    // On a desktop the panel sits at the top of the side column, so focusing its title must not scroll the page
+    // away from the tile that was clicked. The phone sheet is fixed, so there is nothing to scroll there.
+    if (focus || modal()) title.focus({ preventScroll: !modal() });
   };
   const close = () => {
     if (!open) return;

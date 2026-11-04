@@ -506,6 +506,9 @@ main > .lead.mx-lead { margin-bottom: var(--s2); }
 .mx-main, .mx-side { min-width: 0; }
 .mx-side { display: grid; gap: var(--s4); }
 .mx-side .filters { margin: 0; grid-template-columns: minmax(0, 1fr); }
+/* The panel comes first in the side column, so on a desktop a tile of the first screen shows its note without scrolling.
+   On a phone the open panel is a fixed sheet and the closed one a legend, so the filters stay right under the grid. */
+@media (max-width: 59.99rem) { .mx-side .filters { order: -1; } }
 @media (min-width: 60rem) {
   .mx { grid-template-columns: minmax(0, 1fr) 23rem; }
   .mx-side { align-self: stretch; align-content: start; }

@@ -194,6 +194,33 @@ test('on a phone the open panel is a modal dialog: focus moves in, Tab stays in,
   await context.close();
 });
 
+test('on a desktop a click on a tile of the first screen opens the panel without scrolling the page', async () => {
+  const { page, context, errors } = await open(1440, 900);
+  const tile = 'a.mt[href="#d-claude-code--agents-md"]';
+  // The panel now sits above the filters, so its title is already on screen here and Chromium would not scroll
+  // anyway. The focus call is checked too, so a browser that scrolls a focused element into a different place
+  // (or a later layout that pushes the panel down) cannot bring the jump back.
+  await page.evaluate(() => {
+    const focus = HTMLElement.prototype.focus;
+    window.focusCalls = [];
+    HTMLElement.prototype.focus = function (o) { window.focusCalls.push({ cls: this.className, preventScroll: Boolean(o && o.preventScroll) }); return focus.call(this, o); };
+  });
+  const box = (sel) => page.evaluate((s) => { const r = document.querySelector(s).getBoundingClientRect(); return { top: r.top, bottom: r.bottom, vh: innerHeight }; }, sel);
+  assert.equal(await page.evaluate(() => scrollY), 0);
+  await page.click(tile);
+  assert.equal(await page.isVisible('.panel-cell'), true);
+  assert.equal(await page.evaluate(() => scrollY), 0, 'the page does not scroll');
+  assert.ok(page.url().endsWith('#d-claude-code--agents-md'));
+  for (const sel of [tile, '.panel-cell']) {
+    const r = await box(sel);
+    assert.ok(r.top >= 0 && r.bottom <= r.vh, `${sel} is in the viewport (${Math.round(r.top)}-${Math.round(r.bottom)} of ${r.vh})`);
+  }
+  assert.equal(await page.evaluate(() => document.activeElement.className), 'panel-title', 'focus still moves to the panel');
+  assert.deepEqual(await page.evaluate(() => window.focusCalls), [{ cls: 'panel-title', preventScroll: true }], 'the title is focused without scrolling');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test('on a desktop and without scripts the panel stays a region, never modal', async () => {
   for (const [w, js] of [[1440, true], [390, false]]) {
     const { page, context } = await open(w, 900, { js, hash: `#d-${matrix.cells[0].tool}--${matrix.cells[0].file}` });
