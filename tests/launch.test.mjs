@@ -48,12 +48,11 @@ const plain = (s) => s
   .replace(/&([A-Za-z])(?:acute|grave|circ|uml|tilde|ring|cedil|caron);/g, '$1');
 const SURNAME = new RegExp(['Ram', 'baut'].join(''), 'i');
 const HANDLE = new RegExp(['dar', 'lol'].join(''), 'i');
-// The public repository address (repoUrl in site.config.json, linked from the About page) carries the handle, which the
-// owner accepts (docs/LAUNCH.md, "Before the repository becomes public"). That address and its subpaths are allowed, with
-// or without the https:// the link label leaves out; the handle anywhere else, the bare account and another repository of
-// the same account included, still counts.
-const REPO_URL = `https://github.com/${['dar', 'lol'].join('')}/rulefiles`;
-const REPO_URL_RE = new RegExp(`(?:https:\\/\\/|(?<![\\w./-]))${REPO_URL.slice('https://'.length).replace(/[./]/g, '\\$&')}(?![\\w-]|\\.[\\w-])`, 'gi');
+// The handle is refused everywhere, the repository address included: the repository is rulefiles/rulefiles since
+// 2026-11-04. The one exception is the history line of docs/HISTORY-REWRITE.md below, which records the old address.
+const HANDLE_HISTORY = { 'docs/HISTORY-REWRITE.md': [13] };
+/** A file body with the lines that may keep the handle blanked out. */
+const withoutHistory = (rel, body) => (HANDLE_HISTORY[rel] ? body.split('\n').map((l, i) => (HANDLE_HISTORY[rel].includes(i + 1) ? '' : l)).join('\n') : body);
 // The workflow bot's own noreply address is not personal. Any other numbered noreply address is.
 const NOREPLY = new RegExp('\\d+\\+(?!github-actions)[A-Za-z0-9-]+@' + ['users', 'noreply', 'github', 'com'].join('\\.'), 'i');
 /** What a file says about the owner's identity, apart from the full name on the two pages that may carry it. */
@@ -61,7 +60,7 @@ function identityHits(rel, body, allowedFiles) {
   const hits = [];
   const rest = plain(allowedFiles.includes(rel) ? body.split(FULL_NAME).join('') : body);
   const all = plain(body);
-  for (const [name, re, text] of [['handle', HANDLE, all.replace(REPO_URL_RE, '')], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, all]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
+  for (const [name, re, text] of [['handle', HANDLE, all], ['surname', SURNAME, rest], ['first name', FIRST, rest], ['noreply address', NOREPLY, all]]) if (re.test(text)) hits.push(`${rel}: ${name}`);
   return hits;
 }
 // Every text file is scanned, whatever its name or extension: a file with no extension (LICENSE), a dotfile and
@@ -249,12 +248,10 @@ test('no personal data in the repository: only the three role aliases, test addr
   assert.deepEqual(bad, []);
 });
 
-test('the repository holds no personal noreply address, no surname and no first name, except the full name on the privacy page and the legal notice', () => {
+test('the repository holds no GitHub handle, no personal noreply address, no surname and no first name, except the history line of docs/HISTORY-REWRITE.md and the full name on the privacy page and the legal notice', () => {
   const hits = [];
   for (const [rel, body] of files()) {
-    // The handle is not checked here: docs/OPERATIONS.md shows it in the repository path, and the next test
-    // checks it on the built site and the public sources.
-    hits.push(...identityHits(rel, body, NAME_PAGES).filter((h) => !h.endsWith(': handle')));
+    hits.push(...identityHits(rel, withoutHistory(rel, body), NAME_PAGES));
   }
   assert.deepEqual(hits, []);
 });
@@ -370,7 +367,7 @@ test('the history rewrite plan is written, holds no address, and names both opti
   assert.ok(ops.includes('which was not installed on the machine used for the checks, so it was not run'));
   assert.ok(ops.includes('The GitHub repository is `rulefiles/rulefiles`, and it is public.'));
   assert.doesNotMatch(ops, /and it is private\./, 'docs/OPERATIONS.md no longer calls the repository private');
-  assert.doesNotMatch(ops, /darlol\/agent-diffs|darlol\/rulefiles|still called/, 'the repository is called rulefiles');
+  assert.doesNotMatch(ops, new RegExp(`${['dar', 'lol'].join('')}/(agent-diffs|rulefiles)|still called`), 'the repository is called rulefiles');
   assert.ok(ops.includes('"Upgrade to GitHub Pro or make this repository public"') && ops.includes('gh api --method POST repos/rulefiles/rulefiles/rulesets --input docs/ruleset-main.json'));
   assert.ok(ops.includes('It has been active on `main` since 2026-10-18.') && ops.includes('Before 2026-10-18 nothing blocked a direct push, a force push or the deletion of `main`'));
   assert.doesNotMatch(ops, /It has not been applied|Until then nothing blocks/, 'docs/OPERATIONS.md no longer says the ruleset is not applied');
@@ -395,13 +392,17 @@ test('docs/LAUNCH.md covers the publisher who gives only the host\'s details, th
   assert.match(doc, /bought on 2026-10-16/);
 });
 
-test('the handle is allowed only inside the public repository address', () => {
+test('the handle is refused everywhere, the old repository address included', () => {
   const handle = ['dar', 'lol'].join('');
   const hit = (body) => identityHits('dist/index.html', body, []);
-  assert.deepEqual(hit(`<a href="${REPO_URL}">github.com/${handle}/rulefiles</a>`), []);
-  assert.deepEqual(hit(`${REPO_URL}/blob/main/LICENSE`), []);
-  assert.deepEqual(hit(`The source code is public on GitHub: github.com/${handle}/rulefiles.`), []);
-  for (const body of [`https://github.com/${handle}`, `https://github.com/${handle}/other`, `${REPO_URL}-fork`, `${REPO_URL}.fork`, `@${handle}`, `${REPO_URL} by ${handle}`, `evilgithub.com/${handle}/rulefiles`, `http://github.com/${handle}/rulefiles`]) {
+  assert.deepEqual(hit('<a href="https://github.com/rulefiles/rulefiles">github.com/rulefiles/rulefiles</a>'), []);
+  for (const body of [`https://github.com/${handle}/rulefiles`, `github.com/${handle}/rulefiles`, `https://github.com/${handle}`, `@${handle}`, `${handle.toUpperCase()}/rulefiles`]) {
     assert.deepEqual(hit(body), ['dist/index.html: handle'], body);
   }
+  // Only the listed history line is blanked out, not the rest of that file and not the same line number elsewhere.
+  const lines = Array.from({ length: 14 }, (_, i) => (i === 12 ? `\`${handle}/rulefiles\`` : 'x'));
+  assert.deepEqual(identityHits('docs/HISTORY-REWRITE.md', withoutHistory('docs/HISTORY-REWRITE.md', lines.join('\n')), []), []);
+  assert.deepEqual(identityHits('README.md', withoutHistory('README.md', lines.join('\n')), []), ['README.md: handle']);
+  lines[3] = handle;
+  assert.deepEqual(identityHits('docs/HISTORY-REWRITE.md', withoutHistory('docs/HISTORY-REWRITE.md', lines.join('\n')), []), ['docs/HISTORY-REWRITE.md: handle']);
 });
