@@ -8,6 +8,7 @@ import { build } from '../scripts/build.mjs';
 import { listFiles } from '../scripts/lib/util.mjs';
 import { itemHtml, versionRows, VERSIONS_TABLE_FROM } from '../scripts/lib/render.mjs';
 import { TEST_DATE } from './helpers/test-date.mjs';
+import { loadData } from '../scripts/lib/data.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const css = fs.readFileSync(path.join(root, 'src', 'static', 'style.css'), 'utf8');
@@ -615,12 +616,15 @@ function hidesContent(props) {
 function specimenHidingProblems(cssText, html) {
   const problems = [];
   const tiles = [...html.matchAll(/<span class="tile tile-[a-z-]+ c(\d)">/g)].map((m) => Number(m[1]));
-  if (tiles.length !== 36) problems.push(`${tiles.length} tiles instead of 36`);
-  for (let col = 0; col < 4; col++) {
+  const { tools, files } = loadData(root).matrix;
+  if (tiles.length !== tools.length * files.length) problems.push(`${tiles.length} tiles instead of ${tools.length * files.length}`);
+  for (let col = 0; col < tools.length; col++) {
     const n = tiles.filter((c) => c === col).length;
-    if (n !== 9) problems.push(`column c${col} has ${n} tiles instead of 9`);
+    if (n !== files.length) problems.push(`column c${col} has ${n} tiles instead of ${files.length}`);
   }
-  if (tiles.some((c) => c > 3)) problems.push('a tile sits outside the four columns');
+  if (tiles.some((c) => c >= tools.length)) problems.push(`a tile sits outside the ${tools.length} columns`);
+  const cols = cssText.match(/\.specimen-grid \{ grid-template-columns: repeat\((\d+),/);
+  if (!cols || Number(cols[1]) !== tools.length) problems.push(`the grid has ${cols && cols[1]} columns for ${tools.length} tools`);
   const hides = hidesContent;
   const rules = parseRules(cssText).filter((r) => !r.reduce);
   for (const r of rules) {
@@ -649,7 +653,7 @@ function specimenHidingProblems(cssText, html) {
   return problems;
 }
 
-test('the home mini-matrix has 36 tiles in 4 columns of 9, and nothing in the stylesheet hides them', () => {
+test('the home mini-matrix has one tile per cell, one column per tool, and nothing in the stylesheet hides them', () => {
   const html = fs.readFileSync(path.join(out, 'index.html'), 'utf8');
   assert.deepEqual(specimenHidingProblems(css, html), []);
 });

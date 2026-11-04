@@ -109,7 +109,7 @@ test('the matrix and home load assets/js-flag.js synchronously in the head', () 
   assert.match(fs.readFileSync(path.join(out, '_headers'), 'utf8'), /script-src 'self'/);
 });
 
-test('without JavaScript the filter bar is hidden by CSS and all 36 notes show; html.js shows the bar', () => {
+test('without JavaScript the filter bar is hidden by CSS and every note shows; html.js shows the bar', () => {
   const css = fs.readFileSync(new URL('../src/static/style.css', import.meta.url), 'utf8');
   const base = rulesFor(css, '.filters');
   assert.ok(base.length > 0 && base.every((d) => !/display:\s*(grid|flex|block)/.test(d)), 'no rule on .filters alone shows the bar');
@@ -117,8 +117,8 @@ test('without JavaScript the filter bar is hidden by CSS and all 36 notes show; 
   assert.ok(rulesFor(css, '.js .filters').some((d) => /display:\s*grid/.test(d)), '.js .filters shows the bar');
   assert.ok(rulesFor(css, '#matrix-count').some((d) => /min-height/.test(d)), 'the count line is reserved, so filling it moves nothing');
   assert.doesNotMatch(html, /<html[^>]*class="[^"]*\bjs\b/, 'the js class is never in the markup');
-  assert.equal(matrix.cells.length, 36);
-  assert.equal((html.match(/<p class="note">/g) || []).length, 36, '36 notes in the markup');
+  assert.equal(matrix.cells.length, matrix.tools.length * matrix.files.length);
+  assert.equal((html.match(/<p class="note">/g) || []).length, matrix.cells.length, 'one note per cell in the markup');
   assert.doesNotMatch(html, /notes-off/, 'nothing folds the notes without the script');
   const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
   assert.doesNotMatch(js, /bar\.hidden/, 'the script does not reveal the bar after the first paint');

@@ -3,7 +3,7 @@
   "license": "CC-BY-4.0",
   "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
   "attribution": "Rulefiles contributors",
-  "lastReviewed": "2026-10-16",
+  "lastReviewed": "2026-11-04",
   "tools": [
     {
       "id": "cursor",
@@ -23,8 +23,29 @@
     {
       "id": "github-copilot",
       "name": "GitHub Copilot",
-      "docsUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
+      "docsUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
       "scope": "Repository custom instructions on GitHub.com (cloud agent, code review)"
+    },
+    {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "docsUrl": "https://geminicli.com/docs/cli/gemini-md/"
+    },
+    {
+      "id": "windsurf",
+      "name": "Windsurf (Devin Desktop)",
+      "docsUrl": "https://docs.devin.ai/desktop/devin-local/customizations",
+      "scope": "Devin Desktop is the new name for Windsurf (June 2026). Cells describe its Devin Local agent, which uses the Devin CLI rules format; the legacy Cascade agent is not covered."
+    },
+    {
+      "id": "cline",
+      "name": "Cline",
+      "docsUrl": "https://docs.cline.bot/customization/cline-rules"
+    },
+    {
+      "id": "aider",
+      "name": "Aider",
+      "docsUrl": "https://aider.chat/docs/usage/conventions.html"
     }
   ],
   "files": [
@@ -72,6 +93,26 @@
       "id": "copilot-path-instructions",
       "path": ".github/instructions/*.instructions.md",
       "description": "Path-specific GitHub Copilot instructions with an applyTo glob."
+    },
+    {
+      "id": "windsurfrules",
+      "path": ".windsurfrules",
+      "description": "Single-file workspace rules format used by early Windsurf versions."
+    },
+    {
+      "id": "windsurf-rules",
+      "path": ".windsurf/rules/*.md",
+      "description": "Windsurf rule files with trigger frontmatter (always_on, glob, model_decision, manual)."
+    },
+    {
+      "id": "clinerules",
+      "path": ".clinerules/",
+      "description": "Cline workspace rules directory of Markdown files (.cline/rules/ is also read)."
+    },
+    {
+      "id": "conventions-md",
+      "path": "CONVENTIONS.md",
+      "description": "Conventions file name used in Aider's documentation; Aider loads it only when told to."
     }
   ],
   "cells": [
@@ -81,7 +122,8 @@
       "status": "reads",
       "note": "The page documents AGENTS.md in the project root and in subdirectories; nested files are combined, with more specific instructions taking precedence.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "Cursor supports AGENTS.md in the project root and subdirectories."
     },
     {
       "tool": "cursor",
@@ -89,7 +131,7 @@
       "status": "unverified",
       "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "cursor",
@@ -97,7 +139,8 @@
       "status": "reads",
       "note": "The help page says: \"Cursor reads `CLAUDE.md` files the same way it reads `AGENTS.md`.\" It names the project root and says these files are always applied, whatever alwaysApply says.",
       "sourceUrl": "https://cursor.com/help/customization/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04",
+      "quote": "Cursor reads `CLAUDE.md` files the same way it reads `AGENTS.md`."
     },
     {
       "tool": "cursor",
@@ -105,7 +148,7 @@
       "status": "unverified",
       "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "cursor",
@@ -113,7 +156,8 @@
       "status": "migration-only",
       "note": "The help page mentions the file only in a migration section, where it calls it \"legacy and will be deprecated\". It does not say whether Cursor still loads it.",
       "sourceUrl": "https://cursor.com/help/customization/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04",
+      "quote": "The `.cursorrules` file in your project root is legacy and will be deprecated."
     },
     {
       "tool": "cursor",
@@ -121,7 +165,8 @@
       "status": "reads",
       "note": "Project rules live in .cursor/rules as .mdc files. A plain .md file in that folder is ignored.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "Project rules must use the `.mdc` extension. A plain `.md` file in `.cursor/rules` is ignored by the rules system"
     },
     {
       "tool": "cursor",
@@ -129,7 +174,7 @@
       "status": "unverified",
       "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "cursor",
@@ -137,7 +182,7 @@
       "status": "unverified",
       "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "cursor",
@@ -145,7 +190,39 @@
       "status": "unverified",
       "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
       "sourceUrl": "https://cursor.com/docs/rules",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cursor",
+      "file": "windsurfrules",
+      "status": "unverified",
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cursor",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cursor",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cursor",
+      "file": "conventions-md",
+      "status": "unverified",
+      "note": "Not mentioned on cursor.com/docs/rules or on cursor.com/help/customization/rules when checked.",
+      "sourceUrl": "https://cursor.com/docs/rules",
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "claude-code",
@@ -153,8 +230,9 @@
       "status": "reads-conditionally",
       "note": "Reads AGENTS.md only when there is no CLAUDE.md or CLAUDE.local.md in the working directory or above. Reading AGENTS.md directly needs v2.1.277 or later.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15",
-      "version": "2.1.277"
+      "verifiedOn": "2026-11-04",
+      "version": "2.1.277",
+      "quote": "By default, Claude reads `AGENTS.md` only when you have no `CLAUDE.md` in your working directory or above it."
     },
     {
       "tool": "claude-code",
@@ -162,7 +240,8 @@
       "status": "not-read",
       "note": "The page lists AGENTS.local.md, AGENTS.override.md and anything under a .agents/ directory as not read.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "**Not read**: `AGENTS.local.md`, `AGENTS.override.md`, or anything under a `.agents/` directory"
     },
     {
       "tool": "claude-code",
@@ -170,7 +249,8 @@
       "status": "reads",
       "note": "Reads ./CLAUDE.md or ./.claude/CLAUDE.md, plus user, managed and local (CLAUDE.local.md) scopes.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "A project CLAUDE.md can be stored in either `./CLAUDE.md` or `./.claude/CLAUDE.md`."
     },
     {
       "tool": "claude-code",
@@ -178,7 +258,7 @@
       "status": "unverified",
       "note": "Not mentioned on the cited page when checked, including its /init migration list.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "claude-code",
@@ -186,7 +266,8 @@
       "status": "migration-only",
       "note": "Mentioned only in the /init migration section. /init reads Cursor rules in .cursor/rules/ or .cursorrules and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads the file itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "Cursor rules in `.cursor/rules/` or `.cursorrules`"
     },
     {
       "tool": "claude-code",
@@ -194,7 +275,8 @@
       "status": "migration-only",
       "note": "Mentioned only in the /init migration section, as Cursor rules in .cursor/rules/. /init incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads these files itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "Cursor rules in `.cursor/rules/` or `.cursorrules`"
     },
     {
       "tool": "claude-code",
@@ -202,7 +284,8 @@
       "status": "reads",
       "note": "The page documents .claude/rules/ for topic-specific and path-scoped rules.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "you can organize instructions into multiple files using the `.claude/rules/` directory."
     },
     {
       "tool": "claude-code",
@@ -210,15 +293,51 @@
       "status": "migration-only",
       "note": "Mentioned only in the /init migration section. /init reads Copilot rules in .github/copilot-instructions.md and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads the file itself.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "Copilot rules in `.github/copilot-instructions.md`"
     },
     {
       "tool": "claude-code",
       "file": "copilot-path-instructions",
       "status": "unverified",
+      "note": "Not mentioned on the cited page when checked, including its /init migration list, which names only .github/copilot-instructions.md for Copilot.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "claude-code",
+      "file": "windsurfrules",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section, and only with CLAUDE_CODE_NEW_INIT=1 set: /init then also reads .windsurfrules and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads it itself.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-11-04",
+      "quote": "With `CLAUDE_CODE_NEW_INIT=1` set: `AGENTS.md`, `.devin/rules/`, `.windsurf/rules/` or `.windsurfrules`, and `.clinerules`"
+    },
+    {
+      "tool": "claude-code",
+      "file": "windsurf-rules",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section, and only with CLAUDE_CODE_NEW_INIT=1 set: /init then also reads .windsurf/rules/ and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads it itself.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-11-04",
+      "quote": "With `CLAUDE_CODE_NEW_INIT=1` set: `AGENTS.md`, `.devin/rules/`, `.windsurf/rules/` or `.windsurfrules`, and `.clinerules`"
+    },
+    {
+      "tool": "claude-code",
+      "file": "clinerules",
+      "status": "migration-only",
+      "note": "Mentioned only in the /init migration section, and only with CLAUDE_CODE_NEW_INIT=1 set: /init then also reads .clinerules and incorporates the relevant parts into the generated CLAUDE.md. The page does not say Claude Code loads it itself.",
+      "sourceUrl": "https://code.claude.com/docs/en/memory",
+      "verifiedOn": "2026-11-04",
+      "quote": "With `CLAUDE_CODE_NEW_INIT=1` set: `AGENTS.md`, `.devin/rules/`, `.windsurf/rules/` or `.windsurfrules`, and `.clinerules`"
+    },
+    {
+      "tool": "claude-code",
+      "file": "conventions-md",
+      "status": "unverified",
       "note": "Not mentioned on the cited page when checked, including its /init migration list.",
       "sourceUrl": "https://code.claude.com/docs/en/memory",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "codex",
@@ -226,7 +345,8 @@
       "status": "reads",
       "note": "Reads AGENTS.md from the global Codex home and from the project root down to the working directory, at most one file per directory, up to 32 KiB combined by default.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "In each directory along the path, it checks for `AGENTS.override.md`, then `AGENTS.md`, then any fallback names in `project_doc_fallback_filenames`."
     },
     {
       "tool": "codex",
@@ -234,7 +354,8 @@
       "status": "reads",
       "note": "Checked before AGENTS.md in each directory. In the Codex home, AGENTS.override.md replaces AGENTS.md when it exists.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "In each directory along the path, it checks for `AGENTS.override.md`, then `AGENTS.md`, then any fallback names in `project_doc_fallback_filenames`."
     },
     {
       "tool": "codex",
@@ -242,7 +363,8 @@
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "If your repository already uses a different filename (for example `TEAM_GUIDE.md`), add it to the fallback list so Codex treats it like an instructions file."
     },
     {
       "tool": "codex",
@@ -250,7 +372,8 @@
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "If your repository already uses a different filename (for example `TEAM_GUIDE.md`), add it to the fallback list so Codex treats it like an instructions file."
     },
     {
       "tool": "codex",
@@ -258,23 +381,24 @@
       "status": "configurable",
       "note": "Not part of default discovery. The page says Codex also reads names listed in project_doc_fallback_filenames and ignores names not on that list.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-15"
+      "verifiedOn": "2026-11-04",
+      "quote": "If your repository already uses a different filename (for example `TEAM_GUIDE.md`), add it to the fallback list so Codex treats it like an instructions file."
     },
     {
       "tool": "codex",
       "file": "cursor-rules-mdc",
       "status": "unverified",
-      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "note": "Not mentioned on the cited page when checked. The page only describes AGENTS.override.md, AGENTS.md and file names listed in project_doc_fallback_filenames.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "codex",
       "file": "claude-rules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "note": "Not mentioned on the cited page when checked. The page only describes AGENTS.override.md, AGENTS.md and file names listed in project_doc_fallback_filenames.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "codex",
@@ -282,87 +406,600 @@
       "status": "unverified",
       "note": "The page says Codex checks fallback names from project_doc_fallback_filenames in each directory from the project root to the working directory. It does not say whether a path such as .github/copilot-instructions.md can be listed.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "codex",
       "file": "copilot-path-instructions",
       "status": "unverified",
-      "note": "Not mentioned on the cited page, or in the configuration reference entry for project_doc_fallback_filenames, when checked.",
+      "note": "Not mentioned on the cited page when checked. The page only describes AGENTS.override.md, AGENTS.md and file names listed in project_doc_fallback_filenames.",
       "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
-      "verifiedOn": "2026-10-16"
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "codex",
+      "file": "windsurfrules",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads file names you add to project_doc_fallback_filenames, checked in each directory from the project root down.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-11-04",
+      "quote": "If your repository already uses a different filename (for example `TEAM_GUIDE.md`), add it to the fallback list so Codex treats it like an instructions file."
+    },
+    {
+      "tool": "codex",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked. The fallback list takes file names; the page does not say whether a directory or glob such as this one can be listed.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "codex",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page when checked. The fallback list takes file names; the page does not say whether a directory or glob such as this one can be listed.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "codex",
+      "file": "conventions-md",
+      "status": "configurable",
+      "note": "Not part of default discovery. The page says Codex also reads file names you add to project_doc_fallback_filenames, checked in each directory from the project root down.",
+      "sourceUrl": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+      "verifiedOn": "2026-11-04",
+      "quote": "If your repository already uses a different filename (for example `TEAM_GUIDE.md`), add it to the fallback list so Codex treats it like an instructions file."
     },
     {
       "tool": "github-copilot",
       "file": "agents-md",
       "status": "reads",
       "note": "Agent instructions: one or more AGENTS.md files anywhere in the repository; the nearest file in the directory tree takes precedence.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can create one or more AGENTS.md files, stored anywhere within the repository."
     },
     {
       "tool": "github-copilot",
       "file": "agents-override-md",
       "status": "unverified",
-      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-16"
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked. That reference names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "github-copilot",
       "file": "claude-md",
       "status": "reads",
       "note": "Alternative to AGENTS.md: a single CLAUDE.md in the repository root.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04",
+      "quote": "Alternatively, you can use a single CLAUDE.md or GEMINI.md file stored in the root of the repository."
     },
     {
       "tool": "github-copilot",
       "file": "gemini-md",
       "status": "reads",
       "note": "Alternative to AGENTS.md: a single GEMINI.md in the repository root.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04",
+      "quote": "Alternatively, you can use a single CLAUDE.md or GEMINI.md file stored in the root of the repository."
     },
     {
       "tool": "github-copilot",
       "file": "cursorrules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-16"
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked. That reference names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "github-copilot",
       "file": "cursor-rules-mdc",
       "status": "unverified",
-      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-16"
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked. That reference names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "github-copilot",
       "file": "claude-rules",
       "status": "unverified",
-      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" table when checked. That table names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-16"
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked. That reference names copilot-instructions.md, *.instructions.md, AGENTS.md, CLAUDE.md, GEMINI.md and, for code review, REVIEW.md.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
     },
     {
       "tool": "github-copilot",
       "file": "copilot-instructions-md",
       "status": "reads",
       "note": "Repository-wide instructions in .github/copilot-instructions.md.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04",
+      "quote": "These are specified in a copilot-instructions.md file in the .github directory of the repository."
     },
     {
       "tool": "github-copilot",
       "file": "copilot-path-instructions",
       "status": "reads",
       "note": "NAME.instructions.md files under .github/instructions with an applyTo glob. On GitHub.com, supported for the cloud agent and code review only.",
-      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions",
-      "verifiedOn": "2026-10-15"
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04",
+      "quote": "These are specified in one or more NAME.instructions.md files within or below the .github/instructions directory in the repository."
+    },
+    {
+      "tool": "github-copilot",
+      "file": "windsurfrules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "github-copilot",
+      "file": "conventions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in GitHub's \"Support for different types of custom instructions\" reference when checked.",
+      "sourceUrl": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "agents-md",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names; its example lists AGENTS.md, CONTEXT.md and GEMINI.md.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "\"fileName\": [\"AGENTS.md\", \"CONTEXT.md\", \"GEMINI.md\"]"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "agents-override-md",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "To specify a different name or a list of names, use the `context.fileName` property."
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "claude-md",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "To specify a different name or a list of names, use the `context.fileName` property."
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "gemini-md",
+      "status": "reads",
+      "note": "Default context file. Loaded from ~/.gemini/GEMINI.md, from workspace directories and their parents, and just in time from directories a tool accesses, up to a trusted root.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "Context files, which use the default name `GEMINI.md`, are a powerful feature for providing instructional context to the Gemini model."
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "cursorrules",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "To specify a different name or a list of names, use the `context.fileName` property."
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "copilot-instructions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "windsurfrules",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "To specify a different name or a list of names, use the `context.fileName` property."
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the configuration reference when checked. context.fileName takes file names; the configuration reference does not say whether a path, directory or glob such as this one can be used.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "gemini-cli",
+      "file": "conventions-md",
+      "status": "configurable",
+      "note": "Not read by default (the default context file name is GEMINI.md). The page says context.fileName in settings.json takes a different name or a list of names.",
+      "sourceUrl": "https://geminicli.com/docs/cli/gemini-md/",
+      "verifiedOn": "2026-11-04",
+      "quote": "To specify a different name or a list of names, use the `context.fileName` property."
+    },
+    {
+      "tool": "windsurf",
+      "file": "agents-md",
+      "status": "reads",
+      "note": "Read as always-on rules at the workspace root and in each directory between the root and the directory the agent works in.",
+      "sourceUrl": "https://docs.devin.ai/desktop/devin-local/customizations",
+      "verifiedOn": "2026-11-04",
+      "quote": "`AGENTS.md`, `AGENTS.local.md` (for personal rules you keep out of version control), and `AGENT.md` are all read as always-on rules."
+    },
+    {
+      "tool": "windsurf",
+      "file": "agents-override-md",
+      "status": "unverified",
+      "note": "Not mentioned on the Devin Local customizations page or on the Devin CLI rules and configuration import pages when checked.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "windsurf",
+      "file": "claude-md",
+      "status": "reads",
+      "note": "Devin Local uses the Devin CLI format and discovery. The Devin CLI rules page lists CLAUDE.md (\"Compatible with Claude Code\") among the files loaded as always-on rules.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "All of these are treated identically — their contents are loaded as always-on rules."
+    },
+    {
+      "tool": "windsurf",
+      "file": "gemini-md",
+      "status": "unverified",
+      "note": "Not mentioned on the Devin Local customizations page or on the Devin CLI rules and configuration import pages when checked.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "windsurf",
+      "file": "cursorrules",
+      "status": "unverified",
+      "note": "Not mentioned on the Devin Local customizations page or on the Devin CLI rules and configuration import pages when checked.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "windsurf",
+      "file": "cursor-rules-mdc",
+      "status": "reads",
+      "note": "Devin Local uses the Devin CLI format and discovery. The Devin CLI rules page says it reads .cursor/rules/*.md and *.mdc and honours alwaysApply, globs and description. The import can be turned off with read_config_from.cursor.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "Devin CLI reads from `.cursor/rules/*.md` and `.cursor/rules/*.mdc`."
+    },
+    {
+      "tool": "windsurf",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned by name. The Devin CLI rules page says only \"Devin CLI reads from the `.claude/` directory.\" The import page lists CLAUDE.md and ~/.claude/CLAUDE.md as the Claude Code rules it imports. Neither names .claude/rules/.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "windsurf",
+      "file": "copilot-instructions-md",
+      "status": "not-read",
+      "note": "The Devin CLI configuration import page, which Devin Local shares, says Copilot custom instructions are not imported. It imports only Copilot skills.",
+      "sourceUrl": "https://docs.devin.ai/cli/reference/configuration/read-config-from",
+      "verifiedOn": "2026-11-04",
+      "quote": "Copilot custom instructions (`.github/copilot-instructions.md` and `.github/instructions/*.instructions.md`) are **not** imported."
+    },
+    {
+      "tool": "windsurf",
+      "file": "copilot-path-instructions",
+      "status": "not-read",
+      "note": "The Devin CLI configuration import page, which Devin Local shares, says Copilot custom instructions are not imported. It imports only Copilot skills.",
+      "sourceUrl": "https://docs.devin.ai/cli/reference/configuration/read-config-from",
+      "verifiedOn": "2026-11-04",
+      "quote": "Copilot custom instructions (`.github/copilot-instructions.md` and `.github/instructions/*.instructions.md`) are **not** imported."
+    },
+    {
+      "tool": "windsurf",
+      "file": "windsurfrules",
+      "status": "reads",
+      "note": "The page calls .windsurfrules legacy and says it is imported by default. The Devin CLI rules page it links lists it as \"Legacy Windsurf workspace rules\", loaded as always-on rules.",
+      "sourceUrl": "https://docs.devin.ai/desktop/devin-local/customizations",
+      "verifiedOn": "2026-11-04",
+      "quote": "The legacy `.windsurf/rules/*.md`, `.windsurf/global_rules.md`, and `.windsurfrules` files are imported by default."
+    },
+    {
+      "tool": "windsurf",
+      "file": "windsurf-rules",
+      "status": "reads",
+      "note": "Imported by default as legacy rules. Rule files in both .devin/rules/ and .windsurf/rules/ load; .devin/ is the preferred location.",
+      "sourceUrl": "https://docs.devin.ai/desktop/devin-local/customizations",
+      "verifiedOn": "2026-11-04",
+      "quote": "Rule files in both `.devin/rules/` and `.windsurf/rules/` load"
+    },
+    {
+      "tool": "windsurf",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on the Devin Local customizations page or on the Devin CLI rules and configuration import pages when checked.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "windsurf",
+      "file": "conventions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the Devin Local customizations page or on the Devin CLI rules and configuration import pages when checked.",
+      "sourceUrl": "https://docs.devin.ai/cli/extensibility/rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "agents-md",
+      "status": "reads",
+      "note": "Listed among the supported rule types, at AGENTS.md and ~/.agents/AGENTS.md. Detected rules appear in the Rules panel, where each can be toggled.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "| AGENTS.md | `AGENTS.md`, `~/.agents/AGENTS.md` | Standard format for cross-tool compatibility |"
+    },
+    {
+      "tool": "cline",
+      "file": "agents-override-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "claude-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "gemini-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "cursorrules",
+      "status": "reads",
+      "note": "Listed among the supported rule types as \"Cursor Rules\", automatically detected. Detected rules appear in the Rules panel, where each can be toggled.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "| Cursor Rules | `.cursorrules` | Automatically detected |"
+    },
+    {
+      "tool": "cline",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "copilot-instructions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "windsurfrules",
+      "status": "reads",
+      "note": "Listed among the supported rule types as \"Windsurf Rules\", automatically detected. Detected rules appear in the Rules panel, where each can be toggled.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "| Windsurf Rules | `.windsurfrules` | Automatically detected |"
+    },
+    {
+      "tool": "cline",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "cline",
+      "file": "clinerules",
+      "status": "reads",
+      "note": "Workspace rules go in .clinerules/ or .cline/rules/ at the project root; Cline combines the files. Rules can carry a paths frontmatter to load only for matching files.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04",
+      "quote": "**Workspace rules** go in `.clinerules/` or `.cline/rules/` at your project root."
+    },
+    {
+      "tool": "cline",
+      "file": "conventions-md",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or anywhere in Cline's full documentation (docs.cline.bot/llms-full.txt) when checked.",
+      "sourceUrl": "https://docs.cline.bot/customization/cline-rules",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "agents-md",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "agents-override-md",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "claude-md",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "gemini-md",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "cursorrules",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "cursor-rules-mdc",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the options reference when checked. --read takes a file; the options reference does not say whether a directory or glob works, or whether frontmatter such as globs or applyTo is honoured.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "claude-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the options reference when checked. --read takes a file; the options reference does not say whether a directory or glob works, or whether frontmatter such as globs or applyTo is honoured.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "copilot-instructions-md",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "copilot-path-instructions",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the options reference when checked. --read takes a file; the options reference does not say whether a directory or glob works, or whether frontmatter such as globs or applyTo is honoured.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "windsurfrules",
+      "status": "configurable",
+      "note": "Not loaded on its own. The page says to add a conventions file with /read or --read, or to list it under read: in .aider.conf.yml so it always loads; --read takes any file path.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "You can also configure aider to always load your conventions file in the `.aider.conf.yml` config file"
+    },
+    {
+      "tool": "aider",
+      "file": "windsurf-rules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the options reference when checked. --read takes a file; the options reference does not say whether a directory or glob works, or whether frontmatter such as globs or applyTo is honoured.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "clinerules",
+      "status": "unverified",
+      "note": "Not mentioned on the cited page or in the options reference when checked. --read takes a file; the options reference does not say whether a directory or glob works, or whether frontmatter such as globs or applyTo is honoured.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04"
+    },
+    {
+      "tool": "aider",
+      "file": "conventions-md",
+      "status": "configurable",
+      "note": "The page's example name. It loads only when added with /read CONVENTIONS.md or aider --read CONVENTIONS.md, or when listed under read: in .aider.conf.yml.",
+      "sourceUrl": "https://aider.chat/docs/usage/conventions.html",
+      "verifiedOn": "2026-11-04",
+      "quote": "It’s best to load the conventions file with `/read CONVENTIONS.md` or `aider --read CONVENTIONS.md`."
     }
   ]
 }

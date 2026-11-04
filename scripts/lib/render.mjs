@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { escapeHtml as h, escapeXml as x, daysBetween, compareVersions } from './util.mjs';
 import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
-import { staleCells, matrixStats, cellAnchor } from './validate.mjs';
+import { staleCells, matrixStats, cellAnchor, ITEM_TOOLS } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
 import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
@@ -27,7 +27,8 @@ const STATUS_HELP = {
 export function statusBadge(status) {
   return `<span class="badge badge-${status}">${icon(status)}${h(STATUS_LABEL[status])}</span>`;
 }
-export const TOOL_NAME = { cursor: 'Cursor', 'claude-code': 'Claude Code', codex: 'Codex', 'github-copilot': 'GitHub Copilot' };
+/** Tool id to display name, in the order of matrix.tools. The matrix is the only list of tools. */
+export function toolNames(matrix) { return Object.fromEntries(matrix.tools.map((t) => [t.id, t.name])); }
 
 /** Escapes text for HTML, then turns `code` spans into <code>. The escaping runs first, so no markup can get through. */
 export function inlineHtml(text) {
@@ -197,11 +198,11 @@ export function sourceLinkName(it) {
   return `Source: ${it.sourceLabel} — ${String(it.title).replace(/`/g, '')}`;
 }
 
-export function itemHtml(it) {
+export function itemHtml(it, names = {}) {
   const version = it.version ? `<span class="tag tag-quiet">version ${h(it.version)}</span>` : '';
   const figure = it.figure ? `<span class="item-figure">${h(it.figure)}</span> ` : '';
   return `<li class="item" id="${h(it.id)}" data-tool="${h(it.tool)}">
-<p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span>${version}</p>
+<p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(names[it.tool] || it.tool)}</span>${version}</p>
 <h3 class="item-title">${inlineHtml(it.title)}</h3>
 <p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
 <p class="item-foot">${figure}<a class="src" href="${h(it.sourceUrl)}" rel="noopener" aria-label="${h(sourceLinkName(it))}">Source: ${h(it.sourceLabel)}${icon('external')}</a></p>
@@ -217,14 +218,17 @@ export function homePage(ctx) {
   const stats = matrixStats(matrix);
   const reviewed = shortDate(matrix.lastReviewed);
   const latestItemDate = latest ? latest.items.map((it) => it.date).sort().at(-1) : null;
-  const toolChips = Object.keys(TOOL_NAME).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(TOOL_NAME[id])}</button>`).join('');
+  // One chip per matrix tool that has items in the digest archive, in the order of matrix.tools: a chip that could only filter to nothing is left out.
+  const names = toolNames(matrix);
+  const digestTools = new Set(digests.flatMap((d) => d.items.map((it) => it.tool)));
+  const toolChips = Object.keys(names).filter((id) => digestTools.has(id)).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(names[id])}</button>`).join('');
   const digestBlock = latest
     ? `<section class="home-section" aria-labelledby="latest">
 <div class="section-head"><h2 id="latest">Latest digest</h2><a href="/digest/">Full archive</a></div>
 <div class="home-digest-filters" id="home-digest-filters">
 <div class="chips" role="group" aria-label="Filter by tool">${toolChips}<button type="button" class="btn btn-quiet" data-filter-reset disabled>All tools</button></div>
 </div>
-<ul class="items items-grid" id="home-digest-items">${latest.items.map(itemHtml).join('\n')}</ul>
+<ul class="items items-grid" id="home-digest-items">${latest.items.map((it) => itemHtml(it, names)).join('\n')}</ul>
 <p class="section-link"><a href="/digest/">All issues</a></p></section>` : '';
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
   const tiles = matrix.files.map((f) => matrix.tools.map((t, col) => {
@@ -621,8 +625,9 @@ ${field('pr', 'Commits and pull requests', h(GENERATOR_COPY.hints.pr), 2, 'Use C
 
 export function digestIndexPage(ctx) {
   const { config, digests } = ctx;
+  const names = toolNames(ctx.matrix);
   const list = digests.map((d, i) => {
-    const tools = [...new Set(d.items.map((it) => it.tool))].filter((t) => TOOL_NAME[t]).map((t) => `<span class="tag">${h(TOOL_NAME[t])}</span>`).join('');
+    const tools = [...new Set(d.items.map((it) => it.tool))].filter((t) => names[t]).map((t) => `<span class="tag">${h(names[t])}</span>`).join('');
     return `<li class="issue">
 <p class="issue-week"><time datetime="${h(d.start)}">${h(shortDate(d.start))}</time> to <time datetime="${h(d.end)}">${h(shortDate(d.end))}</time>${i === 0 ? '<span class="tag tag-mark">Latest</span>' : ''}</p>
 <h2 class="issue-title"><a class="stretch" href="/digest/${h(d.week)}/">${h(d.title)}</a></h2>
@@ -669,9 +674,9 @@ export const VERSIONS_TABLE_FROM = '2026-W44';
  * One row per tool that has at least one item with `version` in the issue: the highest version (compareVersions),
  * with the date and source of that item. Ties go to the later date, then to the first id. Tools without one get no row.
  */
-export function versionRows(digest) {
+export function versionRows(digest, names = null) {
   const rows = [];
-  for (const tool of Object.keys(TOOL_NAME)) {
+  for (const tool of names ? Object.keys(names) : ITEM_TOOLS) {
     const versioned = digest.items.filter((i) => i.tool === tool && typeof i.version === 'string' && i.version);
     if (!versioned.length) continue;
     const best = [...versioned].sort((a, b) => compareVersions(b.version, a.version) || (a.date < b.date ? 1 : a.date > b.date ? -1 : 0) || (a.id < b.id ? -1 : 1))[0];
@@ -680,11 +685,11 @@ export function versionRows(digest) {
   return rows;
 }
 
-export function versionsBlock(digest) {
+export function versionsBlock(digest, names = null) {
   if (digest.week < VERSIONS_TABLE_FROM) return '';
-  const rows = versionRows(digest);
+  const rows = versionRows(digest, names);
   if (!rows.length) return '';
-  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h(TOOL_NAME[tool])}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${labelWithIcon(item.sourceLabel, 'external')}</a></td></tr>`).join('\n');
+  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h((names && names[tool]) || tool)}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${labelWithIcon(item.sourceLabel, 'external')}</a></td></tr>`).join('\n');
   return `<section class="versions" aria-labelledby="versions"><h2 id="versions">Versions this week</h2>
 <div class="versions-wrap" tabindex="0" role="region" aria-label="Versions this week"><table class="versions-table">
 <thead><tr><th scope="col">Tool</th><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Source</th></tr></thead>
@@ -713,21 +718,22 @@ function instructionFilesBlock(matrix, sortedItems) {
 export function digestWeekPage(ctx, digest) {
   const { config } = ctx;
   const sorted = [...digest.items].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? -1 : 1));
-  const byTool = Object.keys(TOOL_NAME).map((t) => ({ t, items: sorted.filter((i) => i.tool === t) })).filter((g) => g.items.length);
+  const names = toolNames(ctx.matrix);
+  const byTool = Object.keys(names).map((t) => ({ t, items: sorted.filter((i) => i.tool === t) })).filter((g) => g.items.length);
   const hl = highlightItems(digest);
   // With highlights, "In short" takes the place of the summary paragraph. Without them, the page is as before.
   const intro = hl.length
     ? `<section class="in-short" aria-labelledby="in-short"><h2 id="in-short">In short</h2>${highlightsListHtml(hl)}</section>`
     : `<p class="summary">${inlineHtml(digest.summary)}</p>`;
-  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(TOOL_NAME[g.t])} <span class="count">${g.items.length}</span></h2><ul class="items items-rail">${g.items.map(itemHtml).join('\n')}</ul></section>`).join('\n');
+  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(names[g.t])} <span class="count">${g.items.length}</span></h2><ul class="items items-rail">${g.items.map((it) => itemHtml(it, names)).join('\n')}</ul></section>`).join('\n');
   const body = `<h1>${h(digest.title)}</h1>
 <p class="lead">${h(digest.week)}, <time class="nw" datetime="${h(digest.start)}">${h(shortDate(digest.start))}</time> to <time class="nw" datetime="${h(digest.end)}">${h(shortDate(digest.end))}</time>. Checked against the sources on <time class="nw" datetime="${h(digest.verifiedOn)}">${h(shortDate(digest.verifiedOn))}</time>.</p>
-${intro}${versionsBlock(digest)}${instructionFilesBlock(ctx.matrix, sorted)}
+${intro}${versionsBlock(digest, names)}${instructionFilesBlock(ctx.matrix, sorted)}
 ${sections}
 <p class="back"><a href="/digest/">Back to the archive</a></p>`;
   const cites = [...new Set(digest.items.map((i) => i.sourceUrl))];
   return layout(config, {
-    path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => TOOL_NAME[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
+    path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => names[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
     jsonLd: [
       { '@type': 'Article', headline: digest.title, datePublished: digest.verifiedOn, dateModified: digest.verifiedOn, inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, `/digest/${digest.week}/`), citation: cites },
       breadcrumb(config, [['Home', '/'], ['Digest', '/digest/'], [digest.week, `/digest/${digest.week}/`]])
@@ -841,10 +847,11 @@ export function notFoundPage(ctx) {
 
 export function renderFeed(ctx) {
   const { config, digests } = ctx;
+  const names = ctx.matrix ? toolNames(ctx.matrix) : {};
   const updated = digests.length ? digests[0].verifiedOn : '1970-01-01';
   const entries = digests.map((d) => {
     const hl = highlightItems(d);
-    const content = `${hl.length ? `<h2>In short</h2>${highlightsListHtml(hl)}` : ''}<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(TOOL_NAME[i.tool])}: ${inlineHtml(i.title)}. ${inlineHtml(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
+    const content = `${hl.length ? `<h2>In short</h2>${highlightsListHtml(hl)}` : ''}<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(names[i.tool] || i.tool)}: ${inlineHtml(i.title)}. ${inlineHtml(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
     return `  <entry>
     <title>${x(d.title)}</title>
     <id>tag:${new URL(config.baseUrl).hostname},2026:digest/${x(d.week)}</id>
@@ -949,7 +956,7 @@ export function renderLlmsFull(ctx) {
     const hl = highlightItems(d);
     if (hl.length) out.push('In short:', '', ...hl.map((i) => `- ${highlightText(i)}: ${i.sourceUrl}`), '');
     for (const i of [...d.items].sort((a, b) => (a.date < b.date ? -1 : 1))) {
-      out.push(`- ${i.date}, ${TOOL_NAME[i.tool]}, ${i.title}${i.version ? ` (version ${i.version})` : ''}: ${i.text} Source: ${i.sourceUrl}`);
+      out.push(`- ${i.date}, ${toolName[i.tool]}, ${i.title}${i.version ? ` (version ${i.version})` : ''}: ${i.text} Source: ${i.sourceUrl}`);
     }
     out.push('');
   }
