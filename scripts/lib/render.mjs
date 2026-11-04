@@ -386,13 +386,14 @@ ${c.quote ? `<blockquote class="quote" cite="${h(c.sourceUrl)}">${inlineHtml(c.q
   const toolChips = matrix.tools.map((t) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(t.id)}">${h(t.name)}</button>`).join('');
   const statusChips = Object.keys(STATUS_LABEL).map((k) => `<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">${icon(k)}${h(STATUS_LABEL[k])}<span class="chip-count">${matrix.cells.filter((c) => c.status === k).length}</span></button>`).join('');
   // Without JavaScript the bar is hidden by CSS; assets/js-flag.js sets html.js before the first paint, so the
-  // bar shows from the first render and never pushes the page down. It sits after the grid in the source and
-  // beside it on wide screens, so the first screen of a phone shows statuses, not controls.
+  // bar shows from the first render and never pushes the page down. It sits above the grid in the main column, out
+  // of the panel's column, so the sticky panel can never slide over it. Under the label and the count, one line holds the
+  // search, the two group toggles and Reset; the chips of a group open under that line, pushing the grid down, and start closed.
   const filters = `<div class="filters" id="matrix-filters">
-<div class="filter-search"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"></div>
-<fieldset class="filter-group"><legend>Tools</legend><div class="chips">${toolChips}</div></fieldset>
-<fieldset class="filter-group"><legend>Status</legend><div class="chips">${statusChips}</div></fieldset>
-<div class="filter-foot"><p id="matrix-count" class="muted" role="status" aria-live="polite"></p><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div>
+<div class="filter-top"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><p id="matrix-count" class="muted" role="status" aria-live="polite"></p></div>
+<div class="filter-line"><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"><div class="filter-buttons"><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-tools">Tools</button><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-status">Status</button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div></div>
+<fieldset class="filter-group" id="matrix-f-tools" hidden><legend class="sr">Tools</legend><div class="chips">${toolChips}</div></fieldset>
+<fieldset class="filter-group" id="matrix-f-status" hidden><legend class="sr">Status</legend><div class="chips">${statusChips}</div></fieldset>
 </div>`;
   // Both folds are open in the markup. matrix-fold.js closes the intro on phones before the first paint and
   // matrix.js closes the list once the panel works; without scripts everything stays open.
@@ -406,12 +407,12 @@ ${c.quote ? `<blockquote class="quote" cite="${h(c.sourceUrl)}">${inlineHtml(c.q
 <ul class="status-counts" aria-label="Cells by status">${statusCounts(matrix.cells)}</ul>
 <div class="mx">
 <div class="mx-main">
+${filters}
 <div class="mgrid" id="matrix-grid" role="table" aria-label="Instruction file matrix">
 ${head}
 ${rows}
 </div>
 ${scoped.length ? `<ul class="scopes muted">${scoped.map((t) => `<li><span aria-hidden="true">*</span> <strong>${h(t.name)}</strong>: ${h(t.scope)}</li>`).join('')}</ul>` : ''}
-${filters}
 </div>
 <div class="mx-side">
 <div class="panel" id="matrix-panel" role="region" aria-label="Cell details">
