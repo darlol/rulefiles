@@ -23,9 +23,14 @@ if (grid && panel && notes) {
   // into it and Tab stays inside. From 60rem it is a side column next to the grid and stays a plain region.
   const sheet = window.matchMedia('(max-width: 59.99rem)');
   const modal = () => Boolean(open) && sheet.matches;
+  // Open, the panel is named by its title; empty, it keeps its aria-label. When it turns modal (a cell opened from
+  // the address on a phone, or a window narrowed below 60rem with the panel open), focus moves in at once.
   const setMode = () => {
+    const was = panel.getAttribute('aria-modal') === 'true';
     panel.setAttribute('role', modal() ? 'dialog' : 'region');
     if (modal()) panel.setAttribute('aria-modal', 'true'); else panel.removeAttribute('aria-modal');
+    if (open) panel.setAttribute('aria-labelledby', title.id); else panel.removeAttribute('aria-labelledby');
+    if (modal() && !was && !panel.contains(document.activeElement)) title.focus();
   };
   if (sheet.addEventListener) sheet.addEventListener('change', setMode); else sheet.addListener(setMode);
 
@@ -104,6 +109,9 @@ if (grid && panel && notes) {
     else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus(); }
   });
   document.addEventListener('focusin', (e) => { if (modal() && !panel.contains(e.target)) title.focus(); });
+  // Focus that drops to the page while the sheet is modal comes back to the title too. Chromium does that when it
+  // scrolls to the #d- fragment of a page opened from its address, right after this script focused the title.
+  panel.addEventListener('focusout', () => setTimeout(() => { if (modal() && (!document.activeElement || document.activeElement === document.body)) title.focus(); }, 0));
 
   // Arrow keys move between the tiles that are shown and match the filters; Home and End go to the ends of a
   // row, with Ctrl to the first or last cell of the grid.
@@ -151,6 +159,13 @@ if (grid && panel && notes) {
     const message = document.getElementById('matrix-count');
     // Tools and Status open under the line of the bar; each toggle shows or hides its own group of chips.
     const toggles = [...bar.querySelectorAll('.filter-toggle')];
+    const header = document.querySelector('.site-header');
+    // A filter change can shorten the page under a scrolled window and leave the bar under the sticky header
+    // (138 px at 320 px wide). Only then is the bar brought back below it; its scroll-margin-top clears the header.
+    const keepBarInView = () => {
+      if (!header || !search) return;
+      if (search.getBoundingClientRect().top < header.getBoundingClientRect().bottom) bar.scrollIntoView({ block: 'start' });
+    };
     const update = () => {
       const result = applyFilters(model, { tools: pressed(toolButtons, 'filterTool'), statuses: pressed(statusButtons, 'filterStatus'), query: search ? search.value : '' });
       for (const el of grid.querySelectorAll('[data-tool]:not(a)')) el.hidden = !result.visibleTools.has(el.dataset.tool);
@@ -159,7 +174,13 @@ if (grid && panel && notes) {
       if (!live(current)) { const first = tiles.find(live); if (first) roving(first); }
       message.textContent = countMessage(result);
       bar.querySelector('[data-filter-reset]').disabled = !result.active;
-      for (const t of toggles) t.classList.toggle('is-active', Boolean(document.getElementById(t.getAttribute('aria-controls')).querySelector('[aria-pressed="true"]')));
+      for (const t of toggles) {
+        const on = Boolean(document.getElementById(t.getAttribute('aria-controls')).querySelector('[aria-pressed="true"]'));
+        t.classList.toggle('is-active', on);
+        // Hook for the screen-reader text of the dot; the words live in MATRIX_COPY.filterActive (render.mjs).
+        const state = t.querySelector('.filter-state');
+        if (state) state.textContent = on ? state.getAttribute('data-active-text') : '';
+      }
     };
     bar.addEventListener('click', (e) => {
       const button = e.target.closest('button');
@@ -177,8 +198,9 @@ if (grid && panel && notes) {
         button.setAttribute('aria-pressed', button.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
       }
       update();
+      keepBarInView();
     });
-    if (search) search.addEventListener('input', update);
+    if (search) search.addEventListener('input', () => { update(); keepBarInView(); });
     update();
   }
   fromHash();

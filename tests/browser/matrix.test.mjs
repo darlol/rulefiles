@@ -1,6 +1,7 @@
 // Browser checks of /matrix/ in Chromium: layout at real widths, the keyboard, the panel and contrast.
 // Run after a build with `npm run test:browser` (CI job "browser"). They are kept out of `npm test`,
-// which stays browser-free.
+// which stays browser-free. PORT picks the port of the local server (any free port by default), and
+// BROWSER_BASE_URL runs the same checks against a deployed copy instead, such as a branch preview.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
@@ -12,9 +13,12 @@ import { loadData } from '../../scripts/lib/data.mjs';
 const { matrix } = loadData();
 let server, browser, base;
 before(async () => {
-  server = createServer(path.join(ROOT, 'dist'));
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  base = `http://127.0.0.1:${server.address().port}`;
+  if (process.env.BROWSER_BASE_URL) base = process.env.BROWSER_BASE_URL.replace(/\/+$/, '');
+  else {
+    server = createServer(path.join(ROOT, 'dist'));
+    await new Promise((resolve) => server.listen(Number(process.env.PORT) || 0, '127.0.0.1', resolve));
+    base = `http://127.0.0.1:${server.address().port}`;
+  }
   browser = await chromium.launch();
 });
 after(async () => { if (browser) await browser.close(); if (server) server.close(); });
@@ -194,7 +198,9 @@ test('on a phone the open panel is a modal dialog: focus moves in, Tab stays in,
     await page.keyboard.press('Enter');
     assert.equal(await page.getAttribute('#matrix-panel', 'role'), 'dialog');
     assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), 'true');
-    assert.equal(await page.getAttribute('#matrix-panel', 'aria-label'), 'Cell details');
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-labelledby'), 'matrix-panel-title');
+    const name = await page.textContent('#matrix-panel-title');
+    assert.equal(await page.getByRole('dialog', { name, exact: true }).count(), 1, `the dialog is named by its title (${name})`);
     assert.equal((await where()).inPanel, true, 'focus moves into the panel');
     const stops = new Set();
     for (let i = 0; i < 12; i++) {
@@ -213,7 +219,58 @@ test('on a phone the open panel is a modal dialog: focus moves in, Tab stays in,
     assert.equal(await page.isHidden('#matrix-scrim'), true);
     assert.equal((await where()).tile, `${cell.tool}/${cell.file}`, `after ${how}, focus is back on the tile`);
     assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), null);
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-labelledby'), null, 'closed, it is named by its aria-label again');
+    assert.equal(await page.getByRole('region', { name: 'Cell details', exact: true }).count(), 1);
   }
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('on a phone Tab from the last control of the sheet goes to the first, and Shift+Tab from the first to the last', async () => {
+  const cell = matrix.cells.find((c) => c.quote);
+  const { page, context, errors } = await open(390, 844, { hash: `#d-${cell.tool}--${cell.file}` });
+  const ids = await page.evaluate(() => {
+    const list = [...document.querySelectorAll('#matrix-panel a[href], #matrix-panel button:not([disabled])')].filter((x) => x.offsetParent !== null);
+    list.forEach((x, i) => { x.dataset.stop = String(i); });
+    return list.length;
+  });
+  assert.ok(ids >= 2, `${ids} controls in the sheet`);
+  const at = () => page.evaluate(() => document.activeElement.dataset.stop || document.activeElement.className);
+  await page.focus(`#matrix-panel [data-stop="${ids - 1}"]`);
+  await page.keyboard.press('Tab');
+  assert.equal(await at(), '0', 'Tab from the last control lands on the first one');
+  for (let i = 1; i < ids; i++) { await page.keyboard.press('Tab'); assert.equal(await at(), String(i), `Tab ${i} goes to control ${i}`); }
+  await page.keyboard.press('Tab');
+  assert.equal(await at(), '0', 'and round again');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await at(), String(ids - 1), 'Shift+Tab from the first control lands on the last one');
+  await page.focus('#matrix-panel-title');
+  await page.keyboard.press('Shift+Tab');
+  assert.equal(await at(), String(ids - 1), 'Shift+Tab from the title lands on the last one');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('focus moves into the panel when it becomes modal: opened from the address on a phone, or a window narrowed with it open', async () => {
+  const cell = matrix.cells[0];
+  const hash = `#d-${cell.tool}--${cell.file}`;
+  const inPanel = (page) => page.evaluate(() => document.getElementById('matrix-panel').contains(document.activeElement));
+  {
+    const { page, context } = await open(390, 844, { hash });
+    assert.equal(await page.getAttribute('#matrix-panel', 'aria-modal'), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'matrix-panel-title', 'loaded from the address, focus is on the title');
+    await context.close();
+  }
+  const { page, context, errors } = await open(1280, 900, { hash });
+  assert.equal(await page.getAttribute('#matrix-panel', 'role'), 'region');
+  await page.focus(`a.mt[data-tool="${cell.tool}"][data-file="${cell.file}"]`);
+  assert.equal(await inPanel(page), false);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.getElementById('matrix-panel').getAttribute('aria-modal') === 'true');
+  assert.equal(await page.evaluate(() => document.activeElement.id), 'matrix-panel-title', 'narrowed, focus moves to the title without waiting for a Tab');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.waitForFunction(() => document.getElementById('matrix-panel').getAttribute('role') === 'region');
+  assert.equal(await page.getAttribute('#matrix-panel', 'aria-labelledby'), 'matrix-panel-title', 'open on a desktop, the region is named by its title');
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -369,3 +426,82 @@ for (const width of [320, 390, 1440]) {
     await context.close();
   });
 }
+
+// I1: at 320 px the header wraps to 138 px. Clicking a status chip scrolled to the top of the window filters the
+// grid; the search box above it must then be below the header, not under it. A click with the bar already in view
+// does not scroll the page.
+for (const width of [320, 390, 1440]) {
+  test(`at ${width} px a status chip clicked at the top of the window leaves the search box below the sticky header`, async () => {
+    for (const scheme of ['light', 'dark']) {
+      const { page, context, errors } = await open(width, width <= 390 ? 700 : 900, { scheme });
+      const status = '[aria-controls="matrix-f-status"]', st = '[data-filter-status="unverified"]';
+      await page.click(status);
+      await page.evaluate((s) => document.querySelector(s).scrollIntoView({ block: 'start' }), st);
+      const before = await page.evaluate(() => scrollY);
+      assert.ok(before > 0, `${scheme}: the chip was scrolled to the top`);
+      await hit(page, st);
+      assert.equal(await page.getAttribute(st, 'aria-pressed'), 'true');
+      const r = await page.evaluate(() => {
+        const q = document.getElementById('matrix-q').getBoundingClientRect();
+        return { top: q.top, bottom: q.bottom, header: document.querySelector('.site-header').getBoundingClientRect().bottom, vh: innerHeight };
+      });
+      assert.ok(r.top >= r.header && r.bottom <= r.vh, `${scheme}: search box at ${Math.round(r.top)}-${Math.round(r.bottom)}, header bottom ${Math.round(r.header)}, window ${r.vh}`);
+      assert.deepEqual(errors, []);
+      await context.close();
+    }
+  });
+}
+
+test('a chip clicked with the bar in view does not scroll the page (1440 × 900 and 390 × 844)', async () => {
+  for (const [w, h] of [[1440, 900], [390, 844]]) {
+    const { page, context } = await open(w, h);
+    await page.click('[aria-controls="matrix-f-status"]');
+    const y0 = await page.evaluate(() => scrollY);
+    await page.click('[data-filter-status="unverified"]');
+    assert.equal(await page.evaluate(() => scrollY), y0, `${w}×${h}: scrollY stays at ${y0}`);
+    await context.close();
+  }
+});
+
+// Tool names in the header row are links without an underline on phones, so their colour must stand 3:1 apart from
+// the body text, and 4.5:1 from the page behind them.
+for (const scheme of ['light', 'dark']) {
+  test(`header tool links keep 3:1 from body text and 4.5:1 on the page in the ${scheme} theme, at 390 and 1440 px`, async () => {
+    for (const w of [390, 1440]) {
+      const { page, context } = await open(w, 900, { scheme });
+      const r = await page.evaluate(() => {
+        const bgOf = (el) => { for (; el; el = el.parentElement) { const c = getComputedStyle(el).backgroundColor; if (!/rgba\(.*,\s*0\)$|transparent/.test(c)) return c; } return 'rgb(255, 255, 255)'; };
+        const links = [...document.querySelectorAll('#matrix-grid .mtool a')];
+        return { n: links.length, ink: getComputedStyle(document.body).color, list: links.map((a) => ({ fg: getComputedStyle(a).color, bg: bgOf(a), line: getComputedStyle(a).textDecorationLine })) };
+      });
+      assert.equal(r.n, matrix.tools.length);
+      for (const l of r.list) {
+        assert.ok(ratio(l.fg, r.ink) >= 3, `${scheme} ${w}px: link ${l.fg} vs body text ${r.ink}: ${ratio(l.fg, r.ink).toFixed(2)}:1`);
+        assert.ok(ratio(l.fg, l.bg) >= 4.5, `${scheme} ${w}px: link on ${l.bg}: ${ratio(l.fg, l.bg).toFixed(2)}:1`);
+      }
+      if (w === 390) assert.ok(r.list.every((l) => l.line === 'none'), 'no underline on a phone, which is why the 3:1 matters');
+      await context.close();
+    }
+  });
+}
+
+// The dot on Tools and Status has a screen-reader hook: an empty .filter-state span in each toggle. matrix.js fills
+// it from data-active-text while a chip of the group is on, and empties it otherwise. The text itself is not written yet.
+test('the active-filter hook: each toggle has an empty .filter-state span that matrix.js fills from data-active-text', async () => {
+  const { page, context, errors } = await open(1440, 900);
+  const read = () => page.evaluate(() => [...document.querySelectorAll('.filter-toggle')].map((t) => ({ id: t.getAttribute('aria-controls'), text: t.querySelector('.filter-state').textContent, attr: t.querySelector('.filter-state').getAttribute('data-active-text'), name: t.textContent })));
+  for (const t of await read()) {
+    assert.equal(t.text, '', `${t.id}: no text yet`);
+    assert.equal(t.attr, '', `${t.id}: no copy yet`);
+  }
+  await chip(page, '[data-filter-status="reads"]');
+  assert.deepEqual((await read()).map((t) => t.text), ['', ''], 'with the copy still empty, an active group adds nothing');
+  await page.click('[data-filter-reset]');
+  await page.evaluate(() => { for (const s of document.querySelectorAll('.filter-state')) s.setAttribute('data-active-text', 'HOOK'); });
+  await chip(page, '[data-filter-status="reads"]');
+  assert.deepEqual((await read()).map((t) => [t.id, t.text]), [['matrix-f-tools', ''], ['matrix-f-status', 'HOOK']], 'only the active group gets the text');
+  await page.click('[data-filter-status="reads"]');
+  assert.deepEqual((await read()).map((t) => t.text), ['', ''], 'and loses it when its last chip turns off');
+  assert.deepEqual(errors, []);
+  await context.close();
+});

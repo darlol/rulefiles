@@ -61,6 +61,7 @@ const PAIRS = [
   ['unverified-fg', 'surface', UI, 'unverified dashed border on cards'],
   ['control', 'bg', UI, 'input borders on the page'], ['control', 'surface', UI, 'input borders on cards'],
   ['ctl-line', 'bg', UI, 'button and chip borders on the page'], ['ctl-line', 'surface', UI, 'button and chip borders on cards'],
+  ['head-link', 'bg', TEXT, 'tool names in the matrix header'], ['head-link', 'ink', UI, 'tool names without underline next to body text'],
   ['accent', 'bg', UI, 'focus ring on the page'], ['accent', 'surface', UI, 'focus ring on cards'], ['accent', 'sunken', UI, 'focus ring on sunken areas']
 ];
 

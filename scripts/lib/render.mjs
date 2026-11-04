@@ -326,7 +326,10 @@ ${newsletterForm(config, { idPrefix: 'home-nl' })}
 
 export const MATRIX_COPY = {
   searchLabel: 'Search files and notes',
-  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob'
+  searchPlaceholder: 'e.g. CLAUDE.md, /init, glob',
+  // Screen-reader text for the dot on Tools and Status while one of their chips is on. Empty until the copy is
+  // approved; matrix.js copies it into the toggle's .filter-state span, so an empty value adds nothing.
+  filterActive: ''
 };
 
 /**
@@ -391,7 +394,7 @@ ${c.quote ? `<blockquote class="quote" cite="${h(c.sourceUrl)}">${inlineHtml(c.q
   // search, the two group toggles and Reset; the chips of a group open under that line, pushing the grid down, and start closed.
   const filters = `<div class="filters" id="matrix-filters">
 <div class="filter-top"><label for="matrix-q">${h(MATRIX_COPY.searchLabel)}</label><p id="matrix-count" class="muted" role="status" aria-live="polite"></p></div>
-<div class="filter-line"><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"><div class="filter-buttons"><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-tools">Tools</button><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-status">Status</button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div></div>
+<div class="filter-line"><input id="matrix-q" type="search" autocomplete="off" spellcheck="false" placeholder="${h(MATRIX_COPY.searchPlaceholder)}"><div class="filter-buttons"><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-tools">Tools<span class="sr filter-state" data-active-text="${h(MATRIX_COPY.filterActive)}"></span></button><button type="button" class="btn filter-toggle" aria-expanded="false" aria-controls="matrix-f-status">Status<span class="sr filter-state" data-active-text="${h(MATRIX_COPY.filterActive)}"></span></button><button type="button" class="btn btn-quiet" data-filter-reset disabled>Reset filters</button></div></div>
 <fieldset class="filter-group" id="matrix-f-tools" hidden><legend class="sr">Tools</legend><div class="chips">${toolChips}</div></fieldset>
 <fieldset class="filter-group" id="matrix-f-status" hidden><legend class="sr">Status</legend><div class="chips">${statusChips}</div></fieldset>
 </div>`;
@@ -417,7 +420,7 @@ ${scoped.length ? `<ul class="scopes muted">${scoped.map((t) => `<li><span aria-
 <div class="mx-side">
 <div class="panel" id="matrix-panel" role="region" aria-label="Cell details">
 <div class="panel-empty"><ul class="legend">${legend}</ul></div>
-<div class="panel-cell" hidden><div class="panel-head"><h2 class="panel-title" tabindex="-1"></h2><button type="button" class="btn btn-quiet panel-close">${icon('close')}<span class="sr">Close</span></button></div><div class="panel-body"></div></div>
+<div class="panel-cell" hidden><div class="panel-head"><h2 class="panel-title" id="matrix-panel-title" tabindex="-1"></h2><button type="button" class="btn btn-quiet panel-close">${icon('close')}<span class="sr">Close</span></button></div><div class="panel-body"></div></div>
 </div>
 </div>
 </div>
