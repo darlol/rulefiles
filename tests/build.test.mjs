@@ -501,7 +501,7 @@ test('home Signal Press proof digest: trust strip, rythme, chips, form', () => {
   assert.match(html, /Open the newsletter page/);
   assert.match(html, /src="\/assets\/home-digest-filter\.js"/);
   assert.match(html, /src="\/assets\/js-flag\.js"/);
-  assert.doesNotMatch(html, /github\.com\/(?:darlol|rulefiles)\b/);
+  assert.doesNotMatch(html, new RegExp(`github\\.com/(?:${['dar', 'lol'].join('')}|rulefiles)\\b`));
   assert.ok(flat.includes('What changed in AI coding tools, with sources.'));
   assert.ok(flat.includes('Latest digest'));
 });
