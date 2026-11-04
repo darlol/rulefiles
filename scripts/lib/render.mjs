@@ -976,6 +976,7 @@ export function renderLlmsFull(ctx) {
 /** HSTS lasts 180 days, with no includeSubDomains and no preload, and is sent only by the release host (see docs/OPERATIONS.md). */
 export const HSTS = 'max-age=15552000';
 
+/** The open data under /data/ can be fetched from any origin (CC BY 4.0); the /* rule stays as it was. */
 export function renderHeaders(config) {
   // An absolute https rule matches that host only (Cloudflare Pages `_headers`), so www.rulefiles.dev and any preview host never get the header.
   const hsts = config.baseUrl === RELEASE_URL ? `${config.baseUrl}/*\n  Strict-Transport-Security: ${HSTS}\n` : '';
@@ -986,6 +987,8 @@ export function renderHeaders(config) {
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
+/data/*
+  Access-Control-Allow-Origin: *
 ${hsts}`;
 }
 
