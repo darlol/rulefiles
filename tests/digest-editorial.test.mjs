@@ -138,6 +138,14 @@ before(() => {
     const r = path.join(dir, variant);
     for (const d of ['data', 'content', 'src', 'scripts']) fs.cpSync(path.join(root, d), path.join(r, d), { recursive: true });
     fs.copyFileSync(path.join(root, 'site.config.json'), path.join(r, 'site.config.json'));
+    // The W44 build runs at the fixture's own date, which is before the newest matrix checks: the matrix of that copy is
+    // clamped to the build date so its cells are not in the future, and the test still starts "Versions this week" at W44.
+    if (buildDate < data.matrix.lastReviewed) {
+      const m = JSON.parse(JSON.stringify(data.matrix));
+      for (const c of m.cells) if (c.verifiedOn > buildDate) c.verifiedOn = buildDate;
+      m.lastReviewed = buildDate;
+      fs.writeFileSync(path.join(r, 'data', 'matrix.json'), JSON.stringify(m, null, 2) + '\n');
+    }
     for (const digest of digests) fs.writeFileSync(path.join(r, 'data', 'digest', `${digest.week}.json`), JSON.stringify(digest, null, 2) + '\n');
     out[variant] = path.join(r, 'dist');
     process.env.BUILD_DATE = buildDate;

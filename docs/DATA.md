@@ -29,6 +29,8 @@ Rules:
 - Use `migration-only` when the page mentions the file only as input to a migration command, such as `/init` copying Cursor or Copilot rules into CLAUDE.md. The note says so and says that the page does not state that the tool loads the file.
 - Use `unverified` when the cited page does not confirm the cell. The note then reads "Not mentioned on the cited page when checked." and `verifiedOn` is the date of the check.
 - `verifiedOn` is the day a person or bot read `sourceUrl`. It cannot be in the future or later than `lastReviewed`.
+- `quote` (optional) is a short excerpt copied word for word from `sourceUrl`: a non-empty string of at most 300 characters. An `unverified` cell must not carry one, since the page did not confirm it.
+- The tools and files of the matrix are data: adding one means adding its full row or column of cells. `does` and `compare` are reserved and cannot be used as ids.
 - `version` is optional and names the first version that behaves as described, when the source says so.
 - Cells older than `staleAfterDays` in `site.config.json` (30) are flagged "check again" on the page and warned about by `npm run validate`.
 

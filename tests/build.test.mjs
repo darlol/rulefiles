@@ -560,7 +560,7 @@ test('the generator page names AGENTS.md as the main file and cites the matrix f
   assert.match(html, /AGENTS\.md is the main file and is always generated\./);
   assert.match(html, /Optional extra files/);
   const sentence = agentsMdSentence(loadData().matrix);
-  assert.match(sentence, /According to the <a href="\/matrix\/">matrix<\/a>, Cursor, Codex and GitHub Copilot read it, and Claude Code reads it under the conditions given in the matrix\./);
+  assert.match(sentence, /According to the <a href="\/matrix\/">matrix<\/a>, Cursor, Codex, GitHub Copilot, Windsurf \(Devin Desktop\) and Cline read it, and Claude Code reads it under the conditions given in the matrix\./);
   assert.ok(html.includes(sentence));
   assert.equal(agentsMdSentence({ tools: [], cells: [] }), '');
   assert.match(html, /<input type="radio" name="claudeMode" value="import" checked>/);

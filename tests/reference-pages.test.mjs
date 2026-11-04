@@ -29,7 +29,7 @@ after(() => fs.rmSync(out, { recursive: true, force: true }));
 const read = (rel, dir = out) => fs.readFileSync(path.join(dir, rel), 'utf8');
 const unescape = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const text = (html) => unescape(html.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
 const max = (dates) => [...dates].sort().at(-1);
 const cellsOf = (m, fileId) => m.cells.filter((c) => c.file === fileId);
 const ld = (html) => [...html.matchAll(/<script type="application\/ld\+json">(.*?)<\/script>/gs)].map((x) => JSON.parse(x[1]));
@@ -39,7 +39,7 @@ const filePage = (id, dir = out) => read(`files/${id}/index.html`, dir);
 test('one page per file id of matrix.json, and no other page under /files/', () => {
   const dirs = fs.readdirSync(path.join(out, 'files'), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name).sort();
   assert.deepEqual(dirs, MATRIX.files.map((f) => f.id).sort());
-  assert.equal(dirs.length, 9);
+  assert.equal(dirs.length, 13);
   for (const f of MATRIX.files) {
     const html = filePage(f.id);
     const title = `Which coding agents read ${f.path}?`;
@@ -105,7 +105,7 @@ test('file pages carry a TechArticle dated with the newest verifiedOn of the fil
 test('/unverified/ lists exactly the cells marked unverified, with tool, file page, cited page and date', () => {
   const html = read('unverified/index.html');
   const expected = MATRIX.cells.filter((c) => c.status === 'unverified');
-  assert.equal(expected.length, 15, 'the data holds 15 unverified cells on 2026-10-20; update this line with the data');
+  assert.equal(expected.length, 52, 'the data holds 52 unverified cells on 2026-11-04; update this line with the data');
   assert.equal(unescape(html.match(/<h1>([\s\S]*?)<\/h1>/)[1]), "What the cited official pages don't say");
   assert.ok(text(html).includes(NO_SOURCE));
   const rows = rowsOf(html);
@@ -122,7 +122,7 @@ test('/unverified/ lists exactly the cells marked unverified, with tool, file pa
   assert.doesNotMatch(html, /badge-(reads|configurable|migration-only|not-read)\b/, 'no other status on the page');
 });
 
-test('/files/ lists the 9 pages with the path, the description and the count of each status', () => {
+test('/files/ lists one page per file with the path, the description and the count of each status', () => {
   const html = read('files/index.html');
   const items = [...html.matchAll(/<li class="issue">([\s\S]*?)<\/li>\n?(?=<li class="issue">|<\/ul>)/g)].map((m) => m[1]);
   assert.equal(items.length, MATRIX.files.length);
@@ -198,6 +198,7 @@ test('the pages follow the data: a cell that becomes unverified, a new descripti
     const m = structuredClone(MATRIX);
     const cell = m.cells.find((c) => c.file === 'claude-md' && c.status === 'reads');
     cell.status = 'unverified';
+    delete cell.quote;
     cell.note = 'Not mentioned on the page we checked. MUTATIONMARKER';
     const newDate = addDays(max(m.cells.map((c) => c.verifiedOn)), 1);
     cell.verifiedOn = newDate;
