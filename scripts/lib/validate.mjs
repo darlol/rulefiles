@@ -35,6 +35,9 @@ export function validateConfig(config) {
   }
   if (config.homeTitle !== undefined && (typeof config.homeTitle !== 'string' || !config.homeTitle || config.homeTitle.length > 60)) errors.push('site.config.json: homeTitle must be a non-empty string of at most 60 characters');
   if (config.description && config.description.length > 200) errors.push('site.config.json: description should stay under 200 characters');
+  const qp = config.questionPages;
+  const shippable = ['reads', 'reads-conditionally', 'configurable', 'migration-only', 'not-read'];
+  if (qp !== undefined && (!qp || !Array.isArray(qp.statuses) || qp.statuses.some((s) => !shippable.includes(s)))) errors.push(`site.config.json: questionPages.statuses must be a list of ${shippable.join(', ')}`);
   for (const key of ['contactEmail', 'privacyEmail', 'sponsorContact']) {
     if (typeof config[key] !== 'string' || !EMAIL_RE.test(config[key])) errors.push(`site.config.json: "${key}" must be an email address`);
   }
@@ -62,7 +65,7 @@ export function validateConfig(config) {
 export const MATRIX_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
 // The first-level directories of dist/ (scripts/build.mjs). A file id may not take one of these names, so a page can
 // never be confused with, or later moved onto, a section of the site. tests/build.test.mjs checks the list against dist/.
-export const RESERVED_IDS = ['about', 'assets', 'data', 'digest', 'files', 'generator', 'legal', 'matrix', 'newsletter', 'privacy', 'sponsors', 'unverified'];
+export const RESERVED_IDS = ['about', 'assets', 'data', 'digest', 'files', 'generator', 'legal', 'matrix', 'newsletter', 'privacy', 'sponsors', 'unverified', 'does', 'compare'];
 
 export function validateMatrix(matrix, hosts, today) {
   const errors = [];
@@ -102,6 +105,12 @@ export function validateMatrix(matrix, hosts, today) {
     if (!isIsoDate(c.verifiedOn)) errors.push(`matrix.json: cell ${key} verifiedOn must be YYYY-MM-DD`);
     else if (today && c.verifiedOn > today) errors.push(`matrix.json: cell ${key} verifiedOn is in the future`);
     if (c.version !== undefined && typeof c.version !== 'string') errors.push(`matrix.json: cell ${key} version must be a string`);
+    // quote: the words of the cited page that support the status. An unverified cell has nothing to quote.
+    if (c.quote !== undefined) {
+      if (typeof c.quote !== 'string' || !c.quote.trim()) errors.push(`matrix.json: cell ${key} quote must be a non-empty string`);
+      else if (c.quote.length > 300) errors.push(`matrix.json: cell ${key} quote is longer than 300 characters`);
+      if (c.status === 'unverified') errors.push(`matrix.json: cell ${key} is unverified and must not have a quote`);
+    }
   }
   // Each cell has an anchor on /matrix/ (cellAnchor). Ids with dashes could in theory build the same anchor twice.
   const anchors = new Map();
@@ -134,6 +143,8 @@ export const HIGHLIGHTS_MAX = 5;
  * @param matrix data/matrix.json. It is needed only when an item has a `matrix` field, whose pairs must exist there.
  */
 export function validateDigest(digest, hosts, today, fileName = '', matrix = null) {
+  // The tools come from the matrix when it is passed. ITEM_TOOLS is the fallback for a digest checked on its own.
+  const itemTools = matrix && Array.isArray(matrix.tools) ? matrix.tools.map((t) => t.id) : ITEM_TOOLS;
   const errors = [];
   const label = `digest ${digest.week || fileName}`;
   if (digest.schemaVersion !== 1) errors.push(`${label}: schemaVersion must be 1`);
@@ -161,7 +172,7 @@ export function validateDigest(digest, hosts, today, fileName = '', matrix = nul
       if (digest.start && (item.date < digest.start || item.date > digest.end)) errors.push(`${l}: date ${item.date} is outside ${digest.start}..${digest.end}`);
       if (today && item.date > today) errors.push(`${l}: date is in the future`);
     }
-    if (!ITEM_TOOLS.includes(item.tool)) errors.push(`${l}: tool must be one of ${ITEM_TOOLS.join(', ')}`);
+    if (!itemTools.includes(item.tool)) errors.push(`${l}: tool must be one of ${itemTools.join(', ')}`);
     if (typeof item.title !== 'string' || !item.title.trim()) errors.push(`${l}: title is required`);
     if (typeof item.text !== 'string' || !item.text.trim()) errors.push(`${l}: text is required`);
     else if (item.text.length > 400) errors.push(`${l}: text is longer than 400 characters`);

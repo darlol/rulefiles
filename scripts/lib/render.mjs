@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { escapeHtml as h, escapeXml as x, daysBetween, compareVersions } from './util.mjs';
 import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
-import { staleCells, matrixStats, cellAnchor } from './validate.mjs';
+import { staleCells, matrixStats, cellAnchor, ITEM_TOOLS } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
+import { QUESTION_COPY, COMPARE_COPY, CITE_COPY, SPEC_LABELS } from './copy.mjs';
 import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
 
 export const STATUS_LABEL = {
@@ -27,7 +28,8 @@ const STATUS_HELP = {
 export function statusBadge(status) {
   return `<span class="badge badge-${status}">${icon(status)}${h(STATUS_LABEL[status])}</span>`;
 }
-export const TOOL_NAME = { cursor: 'Cursor', 'claude-code': 'Claude Code', codex: 'Codex', 'github-copilot': 'GitHub Copilot' };
+/** Tool id to display name, in the order of matrix.tools. The matrix is the only list of tools. */
+export function toolNames(matrix) { return Object.fromEntries(matrix.tools.map((t) => [t.id, t.name])); }
 
 /** Escapes text for HTML, then turns `code` spans into <code>. The escaping runs first, so no markup can get through. */
 export function inlineHtml(text) {
@@ -197,11 +199,11 @@ export function sourceLinkName(it) {
   return `Source: ${it.sourceLabel} — ${String(it.title).replace(/`/g, '')}`;
 }
 
-export function itemHtml(it) {
+export function itemHtml(it, names = {}) {
   const version = it.version ? `<span class="tag tag-quiet">version ${h(it.version)}</span>` : '';
   const figure = it.figure ? `<span class="item-figure">${h(it.figure)}</span> ` : '';
   return `<li class="item" id="${h(it.id)}" data-tool="${h(it.tool)}">
-<p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(TOOL_NAME[it.tool] || it.tool)}</span>${version}</p>
+<p class="item-top"><time datetime="${h(it.date)}">${h(shortDate(it.date))}</time><span class="tag">${h(names[it.tool] || it.tool)}</span>${version}</p>
 <h3 class="item-title">${inlineHtml(it.title)}</h3>
 <p class="item-text">${it.quote === false ? '' : '<span class="muted">Source wording:</span> '}${inlineHtml(it.text)}</p>
 <p class="item-foot">${figure}<a class="src" href="${h(it.sourceUrl)}" rel="noopener" aria-label="${h(sourceLinkName(it))}">Source: ${h(it.sourceLabel)}${icon('external')}</a></p>
@@ -217,14 +219,17 @@ export function homePage(ctx) {
   const stats = matrixStats(matrix);
   const reviewed = shortDate(matrix.lastReviewed);
   const latestItemDate = latest ? latest.items.map((it) => it.date).sort().at(-1) : null;
-  const toolChips = Object.keys(TOOL_NAME).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(TOOL_NAME[id])}</button>`).join('');
+  // One chip per matrix tool that has items in the digest archive, in the order of matrix.tools: a chip that could only filter to nothing is left out.
+  const names = toolNames(matrix);
+  const digestTools = new Set(digests.flatMap((d) => d.items.map((it) => it.tool)));
+  const toolChips = Object.keys(names).filter((id) => digestTools.has(id)).map((id) => `<button type="button" class="chip" aria-pressed="false" data-filter-tool="${h(id)}">${h(names[id])}</button>`).join('');
   const digestBlock = latest
     ? `<section class="home-section" aria-labelledby="latest">
 <div class="section-head"><h2 id="latest">Latest digest</h2><a href="/digest/">Full archive</a></div>
 <div class="home-digest-filters" id="home-digest-filters">
 <div class="chips" role="group" aria-label="Filter by tool">${toolChips}<button type="button" class="btn btn-quiet" data-filter-reset disabled>All tools</button></div>
 </div>
-<ul class="items items-grid" id="home-digest-items">${latest.items.map(itemHtml).join('\n')}</ul>
+<ul class="items items-grid" id="home-digest-items">${latest.items.map((it) => itemHtml(it, names)).join('\n')}</ul>
 <p class="section-link"><a href="/digest/">All issues</a></p></section>` : '';
   const cellMap = new Map(matrix.cells.map((c) => [`${c.tool}/${c.file}`, c]));
   const tiles = matrix.files.map((f) => matrix.tools.map((t, col) => {
@@ -358,7 +363,7 @@ export function matrixPage(ctx) {
 <p class="cell-tool">${h(t.name)}</p>
 <p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
-<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
+<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a>${hasQuestion(ctx, t.id, f.id) ? `<a href="${questionPath(t.id, f.id)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${h(SPEC_LABELS.answerPage)}</a>` : ''}<span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
     }).join('');
     return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
@@ -423,7 +428,7 @@ export function filePage(ctx, file) {
   const title = filePageTitle(file);
   const pagePath = `/files/${file.id}/`;
   const tr = rows.map(({ tool, cell }) => `<tr data-tool="${h(tool.id)}"><th scope="row">${h(tool.name)}${tool.scope ? `<span class="muted block">${h(tool.scope)}</span>` : ''}</th>
-<td class="cell st-${cell.status}"><p class="cell-status">${statusBadge(cell.status)}${cell.version ? ` <span class="muted">from v${h(cell.version)}</span>` : ''}</p></td>
+<td class="cell st-${cell.status}"><p class="cell-status">${hasQuestion(ctx, tool.id, file.id) ? `<a href="${questionPath(tool.id, file.id)}" aria-label="${h(QUESTION_COPY.title(tool.name, file.path))}">${statusBadge(cell.status)}</a>` : statusBadge(cell.status)}${cell.version ? ` <span class="muted">from v${h(cell.version)}</span>` : ''}</p></td>
 <td class="cell note-col"><p class="note">${inlineHtml(cell.note)}</p></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener" aria-label="Source — ${h(file.path)} × ${h(tool.name)}">Source${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
@@ -621,8 +626,9 @@ ${field('pr', 'Commits and pull requests', h(GENERATOR_COPY.hints.pr), 2, 'Use C
 
 export function digestIndexPage(ctx) {
   const { config, digests } = ctx;
+  const names = toolNames(ctx.matrix);
   const list = digests.map((d, i) => {
-    const tools = [...new Set(d.items.map((it) => it.tool))].filter((t) => TOOL_NAME[t]).map((t) => `<span class="tag">${h(TOOL_NAME[t])}</span>`).join('');
+    const tools = [...new Set(d.items.map((it) => it.tool))].filter((t) => names[t]).map((t) => `<span class="tag">${h(names[t])}</span>`).join('');
     return `<li class="issue">
 <p class="issue-week"><time datetime="${h(d.start)}">${h(shortDate(d.start))}</time> to <time datetime="${h(d.end)}">${h(shortDate(d.end))}</time>${i === 0 ? '<span class="tag tag-mark">Latest</span>' : ''}</p>
 <h2 class="issue-title"><a class="stretch" href="/digest/${h(d.week)}/">${h(d.title)}</a></h2>
@@ -669,9 +675,9 @@ export const VERSIONS_TABLE_FROM = '2026-W44';
  * One row per tool that has at least one item with `version` in the issue: the highest version (compareVersions),
  * with the date and source of that item. Ties go to the later date, then to the first id. Tools without one get no row.
  */
-export function versionRows(digest) {
+export function versionRows(digest, names = null) {
   const rows = [];
-  for (const tool of Object.keys(TOOL_NAME)) {
+  for (const tool of names ? Object.keys(names) : ITEM_TOOLS) {
     const versioned = digest.items.filter((i) => i.tool === tool && typeof i.version === 'string' && i.version);
     if (!versioned.length) continue;
     const best = [...versioned].sort((a, b) => compareVersions(b.version, a.version) || (a.date < b.date ? 1 : a.date > b.date ? -1 : 0) || (a.id < b.id ? -1 : 1))[0];
@@ -680,11 +686,11 @@ export function versionRows(digest) {
   return rows;
 }
 
-export function versionsBlock(digest) {
+export function versionsBlock(digest, names = null) {
   if (digest.week < VERSIONS_TABLE_FROM) return '';
-  const rows = versionRows(digest);
+  const rows = versionRows(digest, names);
   if (!rows.length) return '';
-  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h(TOOL_NAME[tool])}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${labelWithIcon(item.sourceLabel, 'external')}</a></td></tr>`).join('\n');
+  const tr = rows.map(({ tool, item }) => `<tr><th scope="row">${h((names && names[tool]) || tool)}</th><td>${h(item.version)}</td><td><time datetime="${h(item.date)}">${h(shortDate(item.date))}</time></td><td><a class="src" href="${h(item.sourceUrl)}" rel="noopener" aria-label="${h(`${item.sourceLabel} — ${String(item.title).replace(/`/g, '')}`)}">${labelWithIcon(item.sourceLabel, 'external')}</a></td></tr>`).join('\n');
   return `<section class="versions" aria-labelledby="versions"><h2 id="versions">Versions this week</h2>
 <div class="versions-wrap" tabindex="0" role="region" aria-label="Versions this week"><table class="versions-table">
 <thead><tr><th scope="col">Tool</th><th scope="col">Version</th><th scope="col">Date</th><th scope="col">Source</th></tr></thead>
@@ -713,21 +719,22 @@ function instructionFilesBlock(matrix, sortedItems) {
 export function digestWeekPage(ctx, digest) {
   const { config } = ctx;
   const sorted = [...digest.items].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? -1 : 1));
-  const byTool = Object.keys(TOOL_NAME).map((t) => ({ t, items: sorted.filter((i) => i.tool === t) })).filter((g) => g.items.length);
+  const names = toolNames(ctx.matrix);
+  const byTool = Object.keys(names).map((t) => ({ t, items: sorted.filter((i) => i.tool === t) })).filter((g) => g.items.length);
   const hl = highlightItems(digest);
   // With highlights, "In short" takes the place of the summary paragraph. Without them, the page is as before.
   const intro = hl.length
     ? `<section class="in-short" aria-labelledby="in-short"><h2 id="in-short">In short</h2>${highlightsListHtml(hl)}</section>`
     : `<p class="summary">${inlineHtml(digest.summary)}</p>`;
-  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(TOOL_NAME[g.t])} <span class="count">${g.items.length}</span></h2><ul class="items items-rail">${g.items.map(itemHtml).join('\n')}</ul></section>`).join('\n');
+  const sections = byTool.map((g) => `<section aria-labelledby="t-${g.t}"><h2 id="t-${g.t}">${h(names[g.t])} <span class="count">${g.items.length}</span></h2><ul class="items items-rail">${g.items.map((it) => itemHtml(it, names)).join('\n')}</ul></section>`).join('\n');
   const body = `<h1>${h(digest.title)}</h1>
 <p class="lead">${h(digest.week)}, <time class="nw" datetime="${h(digest.start)}">${h(shortDate(digest.start))}</time> to <time class="nw" datetime="${h(digest.end)}">${h(shortDate(digest.end))}</time>. Checked against the sources on <time class="nw" datetime="${h(digest.verifiedOn)}">${h(shortDate(digest.verifiedOn))}</time>.</p>
-${intro}${versionsBlock(digest)}${instructionFilesBlock(ctx.matrix, sorted)}
+${intro}${versionsBlock(digest, names)}${instructionFilesBlock(ctx.matrix, sorted)}
 ${sections}
 <p class="back"><a href="/digest/">Back to the archive</a></p>`;
   const cites = [...new Set(digest.items.map((i) => i.sourceUrl))];
   return layout(config, {
-    path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => TOOL_NAME[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
+    path: `/digest/${digest.week}/`, title: digest.title, description: `${digest.items.length} dated changes in ${byTool.map((g) => names[g.t]).join(', ')} for ${digest.week}, each linked to its official source.`, ogType: 'article', body,
     jsonLd: [
       { '@type': 'Article', headline: digest.title, datePublished: digest.verifiedOn, dateModified: digest.verifiedOn, inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, `/digest/${digest.week}/`), citation: cites },
       breadcrumb(config, [['Home', '/'], ['Digest', '/digest/'], [digest.week, `/digest/${digest.week}/`]])
@@ -841,10 +848,11 @@ export function notFoundPage(ctx) {
 
 export function renderFeed(ctx) {
   const { config, digests } = ctx;
+  const names = ctx.matrix ? toolNames(ctx.matrix) : {};
   const updated = digests.length ? digests[0].verifiedOn : '1970-01-01';
   const entries = digests.map((d) => {
     const hl = highlightItems(d);
-    const content = `${hl.length ? `<h2>In short</h2>${highlightsListHtml(hl)}` : ''}<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(TOOL_NAME[i.tool])}: ${inlineHtml(i.title)}. ${inlineHtml(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
+    const content = `${hl.length ? `<h2>In short</h2>${highlightsListHtml(hl)}` : ''}<ul>${d.items.map((i) => `<li>${h(i.date)} ${h(names[i.tool] || i.tool)}: ${inlineHtml(i.title)}. ${inlineHtml(i.text)} <a href="${h(i.sourceUrl)}">${h(i.sourceLabel)}</a></li>`).join('')}</ul>`;
     return `  <entry>
     <title>${x(d.title)}</title>
     <id>tag:${new URL(config.baseUrl).hostname},2026:digest/${x(d.week)}</id>
@@ -910,6 +918,13 @@ export function renderLlmsTxt(ctx) {
     ...matrix.files.map((f) => `- [${filePageTitle(f)}](${url(config, `/files/${f.id}/`)}): ${f.description}`),
     `- [What the cited official pages don't say](${url(config, '/unverified/')}): the ${matrix.cells.filter((c) => c.status === 'unverified').length} cells marked unverified, with the cited page and the check date`,
     '',
+    ...(() => {
+      const qs = questionCells(ctx).map((c) => {
+        const t = matrix.tools.find((x) => x.id === c.tool); const f = matrix.files.find((x) => x.id === c.file);
+        return QUESTION_COPY.llmsLine(QUESTION_COPY.title(t.name, f.path), url(config, questionPath(c.tool, c.file)), QUESTION_COPY.opening[c.status] || `${STATUS_LABEL[c.status]}.`, c.verifiedOn);
+      });
+      return qs.length ? ['## Questions', '', ...qs, '', '## Comparisons', '', ...COMPARISONS.map((c) => `- [${c.title}](${url(config, `/compare/${c.slug}/`)})`), ''] : [];
+    })(),
     '## Digest',
     '',
     ...digests.map((d) => `- [${d.title}](${url(config, `/digest/${d.week}/`)}): ${d.items.length} dated items, checked ${d.verifiedOn}`),
@@ -939,7 +954,8 @@ export function renderLlmsFull(ctx) {
     out.push(`### ${f.path}`, '', f.description, '', `Page: ${url(config, `/files/${f.id}/`)}`, '');
     for (const t of matrix.tools) {
       const c = matrix.cells.find((x) => x.tool === t.id && x.file === f.id);
-      out.push(`- ${toolName[t.id]}: ${STATUS_LABEL[c.status]}. ${c.note} Source: ${c.sourceUrl} (checked ${c.verifiedOn})`);
+      const page = hasQuestion(ctx, t.id, f.id) ? ` Page: ${url(config, questionPath(t.id, f.id))}` : '';
+      out.push(`- ${toolName[t.id]}: ${STATUS_LABEL[c.status]}. ${c.note} Source: ${c.sourceUrl} (checked ${c.verifiedOn})${page}${c.quote ? ` Quote: "${c.quote}"` : ''}`);
     }
     out.push('');
   }
@@ -949,7 +965,7 @@ export function renderLlmsFull(ctx) {
     const hl = highlightItems(d);
     if (hl.length) out.push('In short:', '', ...hl.map((i) => `- ${highlightText(i)}: ${i.sourceUrl}`), '');
     for (const i of [...d.items].sort((a, b) => (a.date < b.date ? -1 : 1))) {
-      out.push(`- ${i.date}, ${TOOL_NAME[i.tool]}, ${i.title}${i.version ? ` (version ${i.version})` : ''}: ${i.text} Source: ${i.sourceUrl}`);
+      out.push(`- ${i.date}, ${toolName[i.tool]}, ${i.title}${i.version ? ` (version ${i.version})` : ''}: ${i.text} Source: ${i.sourceUrl}`);
     }
     out.push('');
   }
@@ -960,6 +976,7 @@ export function renderLlmsFull(ctx) {
 /** HSTS lasts 180 days, with no includeSubDomains and no preload, and is sent only by the release host (see docs/OPERATIONS.md). */
 export const HSTS = 'max-age=15552000';
 
+/** The open data under /data/ can be fetched from any origin (CC BY 4.0); the /* rule stays as it was. */
 export function renderHeaders(config) {
   // An absolute https rule matches that host only (Cloudflare Pages `_headers`), so www.rulefiles.dev and any preview host never get the header.
   const hsts = config.baseUrl === RELEASE_URL ? `${config.baseUrl}/*\n  Strict-Transport-Security: ${HSTS}\n` : '';
@@ -970,6 +987,8 @@ export function renderHeaders(config) {
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
 /assets/*
   Cache-Control: public, max-age=0, must-revalidate
+/data/*
+  Access-Control-Allow-Origin: *
 ${hsts}`;
 }
 
@@ -977,3 +996,164 @@ export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 
 `;
 
 export { path, daysBetween };
+
+// ---------- Question pages (/does/<tool>/read/<file>/) and comparison pages (/compare/<slug>/) ----------
+
+/** The one place that builds a question page path. */
+export function questionPath(toolId, fileId) { return `/does/${toolId}/read/${fileId}/`; }
+
+/** Backticks out, for text that is not HTML (JSON-LD, meta description). */
+export function stripMd(s) { return String(s).replace(/`/g, ''); }
+
+const questionStatuses = (config) => (config.questionPages && config.questionPages.statuses) || [];
+
+/** Cells whose status is shipped but carry no quote: no page, and a build warning (an error with --strict). */
+export function questionGaps(ctx) {
+  const st = questionStatuses(ctx.config);
+  return ctx.matrix.cells.filter((c) => c.status !== 'unverified' && st.includes(c.status) && !c.quote);
+}
+
+/** The cells that get a question page, in the order of matrix.tools, then matrix.files. */
+export function questionCells(ctx) {
+  const st = questionStatuses(ctx.config);
+  const out = [];
+  for (const t of ctx.matrix.tools) for (const f of ctx.matrix.files) {
+    const c = ctx.matrix.cells.find((x) => x.tool === t.id && x.file === f.id);
+    if (c && c.status !== 'unverified' && c.quote && st.includes(c.status)) out.push(c);
+  }
+  return out;
+}
+
+const hasQuestion = (ctx, toolId, fileId) => questionCells(ctx).some((c) => c.tool === toolId && c.file === fileId);
+
+export const COMPARISONS = [
+  { slug: 'claude-md-vs-agents-md', files: ['claude-md', 'agents-md'], title: 'CLAUDE.md vs AGENTS.md: which agents read which?' },
+  { slug: 'agents-md-vs-cursor-rules', files: ['agents-md', 'cursor-rules-mdc'], title: 'AGENTS.md vs .cursor/rules: which agents read which?' },
+  { slug: 'cursorrules-still-read', files: ['cursorrules'], title: 'Is .cursorrules still read?', leadCell: ['cursor', 'cursorrules'] }
+];
+
+export function comparisonCells(matrix, cmp) { return matrix.cells.filter((c) => cmp.files.includes(c.file)); }
+
+const findCell = (matrix, toolId, fileId) => matrix.cells.find((c) => c.tool === toolId && c.file === fileId);
+const hostOf = (u) => new URL(u).hostname;
+
+function quoteBlock(cell) {
+  return `<blockquote cite="${h(cell.sourceUrl)}">${inlineHtml(cell.quote)}</blockquote>
+<p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener">${h(QUESTION_COPY.sourceLine(hostOf(cell.sourceUrl), '').replace(/ Checked on \.$/, ''))}${icon('external')}</a> <span class="muted">Checked on <time datetime="${h(cell.verifiedOn)}">${h(shortDate(cell.verifiedOn))}</time>.</span></p>`;
+}
+
+/** Cite or embed block of a question page: credit line, static HTML snippet, data pointer. */
+function citeEmbedBlock(config, tool, file, cell, answerText) {
+  const pageUrl = url(config, questionPath(tool.id, file.id));
+  const snippet = `<blockquote class="rulefiles-answer" cite="${h(pageUrl)}">
+  <p><strong>${h(QUESTION_COPY.title(tool.name, file.path))}</strong> ${h(answerText)}</p>
+  <p>Source: <a href="${h(cell.sourceUrl)}">${h(hostOf(cell.sourceUrl))}</a>, checked ${h(cell.verifiedOn)}. Via <a href="${h(pageUrl)}">${h(config.name)}</a> (CC BY 4.0).</p>
+</blockquote>`;
+  return `<h2 id="cite">${h(CITE_COPY.heading)}</h2>
+<p>${h(CITE_COPY.intro)}</p>
+<p>${h(CITE_COPY.creditLabel)} ${h(CITE_COPY.credit(tool.name, file.path, pageUrl, cell.verifiedOn))}</p>
+<p>${h(CITE_COPY.embedLabel)}</p>
+<pre class="embed"><code>${h(snippet)}</code></pre>
+<p>${h(CITE_COPY.dataLabel)} ${h(CITE_COPY.data(tool.id, file.id))}</p>
+<p class="muted">${h(CITE_COPY.footnote)}</p>`;
+}
+
+export function questionPage(ctx, tool, file, cell) {
+  const { config, matrix } = ctx;
+  const title = QUESTION_COPY.title(tool.name, file.path);
+  const p = questionPath(tool.id, file.id);
+  // The reviewed copy has no wording for `configurable` (COPY-wave1.v2.md Appendix A is not shipped): if that status is
+  // switched on, the page leads with the badge and the note only, and the description opens with the status label.
+  const short = QUESTION_COPY.answer[cell.status] ? QUESTION_COPY.answer[cell.status](tool.name) : '';
+  const opening = QUESTION_COPY.opening[cell.status] || `${STATUS_LABEL[cell.status]}.`;
+  const version = cell.version && !String(cell.note).includes(cell.version) ? ` from v${cell.version}` : '';
+  const answerText = `${short ? `${short} ` : ''}${stripMd(cell.note)}${version}`;
+  const R = QUESTION_COPY.related;
+  const sameFile = matrix.tools.filter((t) => t.id !== tool.id).map((t) => {
+    const c = findCell(matrix, t.id, file.id);
+    return hasQuestion(ctx, t.id, file.id) ? `<li><a href="${questionPath(t.id, file.id)}">${h(t.name)}</a> ${statusBadge(c.status)}</li>` : `<li>${h(t.name)} ${statusBadge(c.status)}</li>`;
+  }).join('');
+  const sameTool = questionCells(ctx).filter((c) => c.tool === tool.id && c.file !== file.id).slice(0, 12).map((c) => {
+    const f = matrix.files.find((x) => x.id === c.file);
+    return `<li><a href="${questionPath(tool.id, f.id)}"><code>${pathBreaks(f.path)}</code></a></li>`;
+  }).join('');
+  const cmps = COMPARISONS.filter((c) => c.files.includes(file.id)).map((c) => `<li><a href="/compare/${c.slug}/">${h(c.title)}</a></li>`).join('');
+  const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
+${tool.scope ? `<p class="muted">${h(tool.scope)}</p>\n` : ''}<p class="answer">${statusBadge(cell.status)} ${short ? `${h(short)} ` : ''}${inlineHtml(cell.note)}${h(version)}</p>
+${quoteBlock(cell)}
+<p class="muted">${h(STATUS_HELP[cell.status])}</p>
+<h2 id="related">${h(R.heading)}</h2>
+<ul>
+<li><a href="/files/${h(file.id)}/">${h(R.filePage(file.path))}</a></li>
+<li><a href="/matrix/#${h(cellAnchor(tool.id, file.id))}">${h(R.matrixCell)}</a></li>
+</ul>
+<h3>${h(R.sameFile(file.path))}</h3>
+<ul class="q-list">${sameFile}</ul>
+${sameTool ? `<h3>${h(R.sameTool(tool.name))}</h3>\n<ul class="file-links">${sameTool}</ul>\n` : ''}${cmps ? `<h3>${h(R.compare)}</h3>\n<ul>${cmps}</ul>\n` : ''}<p class="muted">${h(QUESTION_COPY.method)}</p>
+${citeEmbedBlock(config, tool, file, cell, answerText)}
+<h2 id="newsletter">Newsletter</h2>
+${newsletterForm(config)}`;
+  return layout(config, {
+    path: p, title, bareTitle: true, ogType: 'article',
+    description: QUESTION_COPY.description(opening, tool.name, file.path, cell.verifiedOn),
+    body,
+    jsonLd: [
+      { '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: title, acceptedAnswer: { '@type': 'Answer', text: `${answerText} Source: ${cell.sourceUrl} (checked ${cell.verifiedOn}).` } }], dateModified: cell.verifiedOn, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: url(config, '/data/matrix.json') },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], [file.path, `/files/${file.id}/`], [tool.name, p]])
+    ]
+  });
+}
+
+/** The computed answer sentence of a comparison, for one file. */
+export function compareSentence(matrix, file) {
+  const A = COMPARE_COPY.answer;
+  const cells = matrix.tools.map((t) => ({ t, c: findCell(matrix, t.id, file.id) }));
+  const of = (st) => cells.filter((x) => x.c.status === st).map((x) => x.t.name);
+  const parts = [A.reads(of('reads').length, matrix.tools.length, file.path, listNames(of('reads')))];
+  for (const st of ['reads-conditionally', 'configurable', 'migration-only', 'not-read']) { const n = of(st); if (n.length) parts.push(A[st](n.length, listNames(n))); }
+  const u = of('unverified').length;
+  if (u > 0) parts.push(A.unverified(u));
+  return parts.join(' ');
+}
+
+export function comparePage(ctx, cmp) {
+  const { config, matrix } = ctx;
+  const files = cmp.files.map((id) => matrix.files.find((f) => f.id === id));
+  const p = `/compare/${cmp.slug}/`;
+  const link = (t, f) => (hasQuestion(ctx, t.id, f.id) ? questionPath(t.id, f.id) : `/matrix/#${cellAnchor(t.id, f.id)}`);
+  const lead = cmp.leadCell ? findCell(matrix, cmp.leadCell[0], cmp.leadCell[1]) : null;
+  const rows = matrix.tools.map((t) => {
+    const cs = files.map((f) => findCell(matrix, t.id, f.id));
+    return `<tr data-tool="${h(t.id)}"><th scope="row">${h(t.name)}</th>${files.map((f, i) => `<td class="cell st-${cs[i].status}"><a href="${link(t, f)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${statusBadge(cs[i].status)}</a></td>`).join('')}<td class="cell"><time datetime="${h(latestCheck(cs))}">${h(latestCheck(cs))}</time></td></tr>`;
+  }).join('\n');
+  const docs = files.map((f) => {
+    const qs = matrix.tools.map((t) => findCell(matrix, t.id, f.id)).filter((c) => c.status !== 'unverified' && c.quote);
+    return `<h3><code>${pathBreaks(f.path)}</code></h3>\n${qs.map((c) => `<p class="cell-tool">${h(matrix.tools.find((t) => t.id === c.tool).name)} ${statusBadge(c.status)}</p>\n${quoteBlock(c)}`).join('\n')}`;
+  }).join('\n');
+  const others = COMPARISONS.filter((c) => c.slug !== cmp.slug).map((c) => `<li><a href="/compare/${c.slug}/">${h(c.title)}</a></li>`).join('');
+  const sentences = files.map((f) => compareSentence(matrix, f));
+  const cells = comparisonCells(matrix, cmp);
+  const body = `<h1>${h(cmp.title).replace(/\//g, '/<wbr>')}</h1>
+${sentences.map((s) => `<p class="answer">${h(s)}</p>`).join('\n')}
+<p class="lead">${h(COMPARE_COPY.context[cmp.slug])}</p>
+${lead && lead.quote ? quoteBlock(lead) + '\n' : ''}<div class="table-wrap" tabindex="0" role="region" aria-label="${h(cmp.title)}"><table class="matrix ref">
+<thead><tr><th scope="col">Tool</th>${files.map((f) => `<th scope="col"><code>${pathBreaks(f.path)}</code></th>`).join('')}<th scope="col">Checked</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table></div>
+<h2 id="docs">${h(SPEC_LABELS.whatDocsSay)}</h2>
+${docs}
+<h2 id="related">${h(QUESTION_COPY.related.heading)}</h2>
+<ul>${files.map((f) => `<li><a href="/files/${h(f.id)}/">${h(QUESTION_COPY.related.filePage(f.path))}</a></li>`).join('')}<li><a href="/matrix/">Matrix</a></li>${others}</ul>
+${citeBlock(config, matrix)}`;
+  return layout(config, {
+    path: p, title: cmp.title, bareTitle: true, ogType: 'article',
+    description: sentences[0].length <= 155 ? sentences[0] : `${sentences[0].slice(0, 152).replace(/\s+\S*$/, '')}...`,
+    body,
+    jsonLd: [
+      { '@type': 'FAQPage', mainEntity: files.map((f, i) => ({ '@type': 'Question', name: SPEC_LABELS.compareQuestion(f.path), acceptedAnswer: { '@type': 'Answer', text: sentences[i] } })), inLanguage: config.language },
+      { '@type': 'TechArticle', headline: cmp.title, dateModified: latestCheck(cells), inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, p), isBasedOn: url(config, '/data/matrix.json'), citation: [...new Set(cells.map((c) => c.sourceUrl))] },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], [cmp.title, p]])
+    ]
+  });
+}

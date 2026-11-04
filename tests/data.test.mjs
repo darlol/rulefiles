@@ -18,8 +18,8 @@ test('shipped data passes validation', () => {
 test('matrix has one cell per tool and file', () => {
   const m = data.matrix;
   assert.equal(m.cells.length, m.tools.length * m.files.length);
-  assert.equal(m.tools.length, 4);
-  assert.equal(m.files.length, 9);
+  assert.equal(m.tools.length, 8);
+  assert.equal(m.files.length, 13);
 });
 
 test('every unverified cell says so in its note and carries a date', () => {
@@ -117,4 +117,28 @@ test('no cell cites a page that has moved: the Cursor and Codex URLs are the one
   const urls = new Set([...data.matrix.cells.map((c) => c.sourceUrl), ...data.matrix.tools.map((t) => t.docsUrl)]);
   assert.ok(!urls.has('https://cursor.com/docs/context/rules'));
   assert.ok(![...urls].some((u) => u.startsWith('https://developers.openai.com/codex/')));
+});
+
+test('a matrix quote is a non-empty string of at most 300 characters, and an unverified cell has none', async () => {
+  const { validateMatrix } = await import('../scripts/lib/validate.mjs');
+  const { TEST_DATE } = await import('./helpers/test-date.mjs');
+  const errs = (mut) => { const m = structuredClone(data.matrix); mut(m); return validateMatrix(m, data.hosts, TEST_DATE).errors.join('\n'); };
+  assert.equal(errs(() => {}), '');
+  const ok = (m) => m.cells.find((c) => c.status !== 'unverified');
+  assert.match(errs((m) => { ok(m).quote = ''; }), /quote/);
+  assert.match(errs((m) => { ok(m).quote = 42; }), /quote/);
+  assert.match(errs((m) => { ok(m).quote = 'x'.repeat(301); }), /quote/);
+  assert.equal(errs((m) => { ok(m).quote = 'x'.repeat(300); }), '');
+  assert.match(errs((m) => { const c = m.cells.find((x) => x.status === 'unverified'); c.quote = 'Some text'; }), /unverified and must not have a quote/);
+});
+
+test('does and compare are reserved file ids', async () => {
+  const { validateMatrix } = await import('../scripts/lib/validate.mjs');
+  const { TEST_DATE } = await import('./helpers/test-date.mjs');
+  for (const id of ['does', 'compare']) {
+    const m = structuredClone(data.matrix);
+    const old = m.files[0].id; m.files[0].id = id;
+    for (const c of m.cells) if (c.file === old) c.file = id;
+    assert.match(validateMatrix(m, data.hosts, TEST_DATE).errors.join('\n'), new RegExp(id), id);
+  }
 });

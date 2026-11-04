@@ -44,6 +44,12 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   // The reference pages change only when a cell is checked again, so their lastmod is the newest verifiedOn of the cells they show.
   page('/files/', r.filesIndexPage(ctx), r.latestCheck(ctx.matrix.cells));
   for (const f of ctx.matrix.files) page(`/files/${f.id}/`, r.filePage(ctx, f), r.latestCheck(ctx.matrix.cells.filter((c) => c.file === f.id)));
+  for (const c of r.questionCells(ctx)) {
+    const tool = ctx.matrix.tools.find((t) => t.id === c.tool);
+    const file = ctx.matrix.files.find((f) => f.id === c.file);
+    page(r.questionPath(c.tool, c.file), r.questionPage(ctx, tool, file, c), c.verifiedOn);
+  }
+  for (const cmp of r.COMPARISONS) page(`/compare/${cmp.slug}/`, r.comparePage(ctx, cmp), r.latestCheck(r.comparisonCells(ctx.matrix, cmp)));
   const unverified = ctx.matrix.cells.filter((c) => c.status === 'unverified');
   page('/unverified/', r.unverifiedPage(ctx), unverified.length ? r.latestCheck(unverified) : ctx.matrix.lastReviewed);
   page('/generator/', r.generatorPage(ctx), pageUpdated['/generator/']);
@@ -77,7 +83,8 @@ export function build({ root = ROOT, outDir = path.join(root, 'dist'), quiet = f
   fs.cpSync(path.join(root, 'src', 'static'), path.join(outDir, 'assets'), { recursive: true });
   for (const f of ['generator-core.js', 'generator-presets.js', 'matrix-filter.js']) fs.copyFileSync(path.join(root, 'src', 'js', f), path.join(outDir, 'assets', f));
 
-  const warnings = launchWarnings(built, ctx.config);
+  // A shipped status without a quote gets no question page: a warning, an error with --strict.
+  const warnings = [...launchWarnings(built, ctx.config), ...r.questionGaps(ctx).map((c) => `matrix.json: cell ${c.tool}/${c.file} has no quote, so it gets no question page`)];
   const problems = strict ? [...warnings, ...releaseProblems(ctx.config)] : [];
   if (problems.length) {
     fs.rmSync(outDir, { recursive: true, force: true });
