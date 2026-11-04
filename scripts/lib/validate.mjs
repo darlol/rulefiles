@@ -35,6 +35,9 @@ export function validateConfig(config) {
   }
   if (config.homeTitle !== undefined && (typeof config.homeTitle !== 'string' || !config.homeTitle || config.homeTitle.length > 60)) errors.push('site.config.json: homeTitle must be a non-empty string of at most 60 characters');
   if (config.description && config.description.length > 200) errors.push('site.config.json: description should stay under 200 characters');
+  const qp = config.questionPages;
+  const shippable = ['reads', 'reads-conditionally', 'configurable', 'migration-only', 'not-read'];
+  if (qp !== undefined && (!qp || !Array.isArray(qp.statuses) || qp.statuses.some((s) => !shippable.includes(s)))) errors.push(`site.config.json: questionPages.statuses must be a list of ${shippable.join(', ')}`);
   for (const key of ['contactEmail', 'privacyEmail', 'sponsorContact']) {
     if (typeof config[key] !== 'string' || !EMAIL_RE.test(config[key])) errors.push(`site.config.json: "${key}" must be an email address`);
   }

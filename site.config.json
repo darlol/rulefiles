@@ -29,5 +29,6 @@
     "/generator/": "2026-10-16",
     "/newsletter/": "2026-10-16"
   },
-  "staleAfterDays": 30
+  "staleAfterDays": 30,
+  "questionPages": { "statuses": ["reads", "reads-conditionally", "migration-only", "not-read"] }
 }

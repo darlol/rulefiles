@@ -5,6 +5,7 @@ import { renderMarkdown, parseFrontmatter } from './markdown.mjs';
 import { staleCells, matrixStats, cellAnchor, ITEM_TOOLS } from './validate.mjs';
 import { DATA_LICENSE_URL, DATA_ATTRIBUTION } from './license.mjs';
 import { RELEASE_URL } from './placeholders.mjs';
+import { QUESTION_COPY, COMPARE_COPY, CITE_COPY, SPEC_LABELS } from './copy.mjs';
 import { GENERATOR_PRESETS } from '../../src/js/generator-presets.js';
 
 export const STATUS_LABEL = {
@@ -362,7 +363,7 @@ export function matrixPage(ctx) {
 <p class="cell-tool">${h(t.name)}</p>
 <p class="cell-status">${statusBadge(c.status)}${c.version ? ` <span class="muted">from v${h(c.version)}</span>` : ''}</p>
 <p class="note">${inlineHtml(c.note)}</p>
-<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a><span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
+<p class="cell-foot"><a class="src" href="${h(c.sourceUrl)}" rel="noopener" aria-label="Source — ${h(f.path)} × ${h(t.name)}">Source${icon('external')}</a>${hasQuestion(ctx, t.id, f.id) ? `<a href="${questionPath(t.id, f.id)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${h(SPEC_LABELS.answerPage)}</a>` : ''}<span class="muted">checked <time datetime="${h(c.verifiedOn)}">${h(c.verifiedOn)}</time></span>${isStale ? `<strong class="stale">${icon('warn')}check again</strong>` : ''}</p></div></td>`;
     }).join('');
     return `<tr data-file="${h(f.id)}"><th scope="row"><a href="/files/${h(f.id)}/"><code>${h(f.path)}</code></a><span class="muted block">${h(f.description)}</span></th>${cells}</tr>`;
   }).join('\n');
@@ -427,7 +428,7 @@ export function filePage(ctx, file) {
   const title = filePageTitle(file);
   const pagePath = `/files/${file.id}/`;
   const tr = rows.map(({ tool, cell }) => `<tr data-tool="${h(tool.id)}"><th scope="row">${h(tool.name)}${tool.scope ? `<span class="muted block">${h(tool.scope)}</span>` : ''}</th>
-<td class="cell st-${cell.status}"><p class="cell-status">${statusBadge(cell.status)}${cell.version ? ` <span class="muted">from v${h(cell.version)}</span>` : ''}</p></td>
+<td class="cell st-${cell.status}"><p class="cell-status">${hasQuestion(ctx, tool.id, file.id) ? `<a href="${questionPath(tool.id, file.id)}" aria-label="${h(QUESTION_COPY.title(tool.name, file.path))}">${statusBadge(cell.status)}</a>` : statusBadge(cell.status)}${cell.version ? ` <span class="muted">from v${h(cell.version)}</span>` : ''}</p></td>
 <td class="cell note-col"><p class="note">${inlineHtml(cell.note)}</p></td>
 <td class="cell"><p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener" aria-label="Source — ${h(file.path)} × ${h(tool.name)}">Source${icon('external')}</a></p></td>
 <td class="cell"><time datetime="${h(cell.verifiedOn)}">${h(cell.verifiedOn)}</time></td></tr>`).join('\n');
@@ -917,6 +918,13 @@ export function renderLlmsTxt(ctx) {
     ...matrix.files.map((f) => `- [${filePageTitle(f)}](${url(config, `/files/${f.id}/`)}): ${f.description}`),
     `- [What the cited official pages don't say](${url(config, '/unverified/')}): the ${matrix.cells.filter((c) => c.status === 'unverified').length} cells marked unverified, with the cited page and the check date`,
     '',
+    ...(() => {
+      const qs = questionCells(ctx).map((c) => {
+        const t = matrix.tools.find((x) => x.id === c.tool); const f = matrix.files.find((x) => x.id === c.file);
+        return QUESTION_COPY.llmsLine(QUESTION_COPY.title(t.name, f.path), url(config, questionPath(c.tool, c.file)), QUESTION_COPY.opening[c.status] || `${STATUS_LABEL[c.status]}.`, c.verifiedOn);
+      });
+      return qs.length ? ['## Questions', '', ...qs, '', '## Comparisons', '', ...COMPARISONS.map((c) => `- [${c.title}](${url(config, `/compare/${c.slug}/`)})`), ''] : [];
+    })(),
     '## Digest',
     '',
     ...digests.map((d) => `- [${d.title}](${url(config, `/digest/${d.week}/`)}): ${d.items.length} dated items, checked ${d.verifiedOn}`),
@@ -946,7 +954,8 @@ export function renderLlmsFull(ctx) {
     out.push(`### ${f.path}`, '', f.description, '', `Page: ${url(config, `/files/${f.id}/`)}`, '');
     for (const t of matrix.tools) {
       const c = matrix.cells.find((x) => x.tool === t.id && x.file === f.id);
-      out.push(`- ${toolName[t.id]}: ${STATUS_LABEL[c.status]}. ${c.note} Source: ${c.sourceUrl} (checked ${c.verifiedOn})`);
+      const page = hasQuestion(ctx, t.id, f.id) ? ` Page: ${url(config, questionPath(t.id, f.id))}` : '';
+      out.push(`- ${toolName[t.id]}: ${STATUS_LABEL[c.status]}. ${c.note} Source: ${c.sourceUrl} (checked ${c.verifiedOn})${page}${c.quote ? ` Quote: "${c.quote}"` : ''}`);
     }
     out.push('');
   }
@@ -984,3 +993,164 @@ export const FAVICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 
 `;
 
 export { path, daysBetween };
+
+// ---------- Question pages (/does/<tool>/read/<file>/) and comparison pages (/compare/<slug>/) ----------
+
+/** The one place that builds a question page path. */
+export function questionPath(toolId, fileId) { return `/does/${toolId}/read/${fileId}/`; }
+
+/** Backticks out, for text that is not HTML (JSON-LD, meta description). */
+export function stripMd(s) { return String(s).replace(/`/g, ''); }
+
+const questionStatuses = (config) => (config.questionPages && config.questionPages.statuses) || [];
+
+/** Cells whose status is shipped but carry no quote: no page, and a build warning (an error with --strict). */
+export function questionGaps(ctx) {
+  const st = questionStatuses(ctx.config);
+  return ctx.matrix.cells.filter((c) => c.status !== 'unverified' && st.includes(c.status) && !c.quote);
+}
+
+/** The cells that get a question page, in the order of matrix.tools, then matrix.files. */
+export function questionCells(ctx) {
+  const st = questionStatuses(ctx.config);
+  const out = [];
+  for (const t of ctx.matrix.tools) for (const f of ctx.matrix.files) {
+    const c = ctx.matrix.cells.find((x) => x.tool === t.id && x.file === f.id);
+    if (c && c.status !== 'unverified' && c.quote && st.includes(c.status)) out.push(c);
+  }
+  return out;
+}
+
+const hasQuestion = (ctx, toolId, fileId) => questionCells(ctx).some((c) => c.tool === toolId && c.file === fileId);
+
+export const COMPARISONS = [
+  { slug: 'claude-md-vs-agents-md', files: ['claude-md', 'agents-md'], title: 'CLAUDE.md vs AGENTS.md: which agents read which?' },
+  { slug: 'agents-md-vs-cursor-rules', files: ['agents-md', 'cursor-rules-mdc'], title: 'AGENTS.md vs .cursor/rules: which agents read which?' },
+  { slug: 'cursorrules-still-read', files: ['cursorrules'], title: 'Is .cursorrules still read?', leadCell: ['cursor', 'cursorrules'] }
+];
+
+export function comparisonCells(matrix, cmp) { return matrix.cells.filter((c) => cmp.files.includes(c.file)); }
+
+const findCell = (matrix, toolId, fileId) => matrix.cells.find((c) => c.tool === toolId && c.file === fileId);
+const hostOf = (u) => new URL(u).hostname;
+
+function quoteBlock(cell) {
+  return `<blockquote cite="${h(cell.sourceUrl)}">${inlineHtml(cell.quote)}</blockquote>
+<p class="cell-foot"><a class="src" href="${h(cell.sourceUrl)}" rel="noopener">${h(QUESTION_COPY.sourceLine(hostOf(cell.sourceUrl), '').replace(/ Checked on \.$/, ''))}${icon('external')}</a> <span class="muted">Checked on <time datetime="${h(cell.verifiedOn)}">${h(shortDate(cell.verifiedOn))}</time>.</span></p>`;
+}
+
+/** Cite or embed block of a question page: credit line, static HTML snippet, data pointer. */
+function citeEmbedBlock(config, tool, file, cell, answerText) {
+  const pageUrl = url(config, questionPath(tool.id, file.id));
+  const snippet = `<blockquote class="rulefiles-answer" cite="${h(pageUrl)}">
+  <p><strong>${h(QUESTION_COPY.title(tool.name, file.path))}</strong> ${h(answerText)}</p>
+  <p>Source: <a href="${h(cell.sourceUrl)}">${h(hostOf(cell.sourceUrl))}</a>, checked ${h(cell.verifiedOn)}. Via <a href="${h(pageUrl)}">${h(config.name)}</a> (CC BY 4.0).</p>
+</blockquote>`;
+  return `<h2 id="cite">${h(CITE_COPY.heading)}</h2>
+<p>${h(CITE_COPY.intro)}</p>
+<p>${h(CITE_COPY.creditLabel)} ${h(CITE_COPY.credit(tool.name, file.path, pageUrl, cell.verifiedOn))}</p>
+<p>${h(CITE_COPY.embedLabel)}</p>
+<pre class="embed"><code>${h(snippet)}</code></pre>
+<p>${h(CITE_COPY.dataLabel)} ${h(CITE_COPY.data(tool.id, file.id))}</p>
+<p class="muted">${h(CITE_COPY.footnote)}</p>`;
+}
+
+export function questionPage(ctx, tool, file, cell) {
+  const { config, matrix } = ctx;
+  const title = QUESTION_COPY.title(tool.name, file.path);
+  const p = questionPath(tool.id, file.id);
+  // The reviewed copy has no wording for `configurable` (COPY-wave1.v2.md Appendix A is not shipped): if that status is
+  // switched on, the page leads with the badge and the note only, and the description opens with the status label.
+  const short = QUESTION_COPY.answer[cell.status] ? QUESTION_COPY.answer[cell.status](tool.name) : '';
+  const opening = QUESTION_COPY.opening[cell.status] || `${STATUS_LABEL[cell.status]}.`;
+  const version = cell.version && !String(cell.note).includes(cell.version) ? ` from v${cell.version}` : '';
+  const answerText = `${short ? `${short} ` : ''}${stripMd(cell.note)}${version}`;
+  const R = QUESTION_COPY.related;
+  const sameFile = matrix.tools.filter((t) => t.id !== tool.id).map((t) => {
+    const c = findCell(matrix, t.id, file.id);
+    return hasQuestion(ctx, t.id, file.id) ? `<li><a href="${questionPath(t.id, file.id)}">${h(t.name)}</a> ${statusBadge(c.status)}</li>` : `<li>${h(t.name)} ${statusBadge(c.status)}</li>`;
+  }).join('');
+  const sameTool = questionCells(ctx).filter((c) => c.tool === tool.id && c.file !== file.id).slice(0, 12).map((c) => {
+    const f = matrix.files.find((x) => x.id === c.file);
+    return `<li><a href="${questionPath(tool.id, f.id)}"><code>${pathBreaks(f.path)}</code></a></li>`;
+  }).join('');
+  const cmps = COMPARISONS.filter((c) => c.files.includes(file.id)).map((c) => `<li><a href="/compare/${c.slug}/">${h(c.title)}</a></li>`).join('');
+  const body = `<h1>${h(title).replace(/\//g, '/<wbr>')}</h1>
+${tool.scope ? `<p class="muted">${h(tool.scope)}</p>\n` : ''}<p class="answer">${statusBadge(cell.status)} ${short ? `${h(short)} ` : ''}${inlineHtml(cell.note)}${h(version)}</p>
+${quoteBlock(cell)}
+<p class="muted">${h(STATUS_HELP[cell.status])}</p>
+<h2 id="related">${h(R.heading)}</h2>
+<ul>
+<li><a href="/files/${h(file.id)}/">${h(R.filePage(file.path))}</a></li>
+<li><a href="/matrix/#${h(cellAnchor(tool.id, file.id))}">${h(R.matrixCell)}</a></li>
+</ul>
+<h3>${h(R.sameFile(file.path))}</h3>
+<ul class="q-list">${sameFile}</ul>
+${sameTool ? `<h3>${h(R.sameTool(tool.name))}</h3>\n<ul class="file-links">${sameTool}</ul>\n` : ''}${cmps ? `<h3>${h(R.compare)}</h3>\n<ul>${cmps}</ul>\n` : ''}<p class="muted">${h(QUESTION_COPY.method)}</p>
+${citeEmbedBlock(config, tool, file, cell, answerText)}
+<h2 id="newsletter">Newsletter</h2>
+${newsletterForm(config)}`;
+  return layout(config, {
+    path: p, title, bareTitle: true, ogType: 'article',
+    description: QUESTION_COPY.description(opening, tool.name, file.path, cell.verifiedOn),
+    body,
+    jsonLd: [
+      { '@type': 'FAQPage', mainEntity: [{ '@type': 'Question', name: title, acceptedAnswer: { '@type': 'Answer', text: `${answerText} Source: ${cell.sourceUrl} (checked ${cell.verifiedOn}).` } }], dateModified: cell.verifiedOn, inLanguage: config.language, license: DATA_LICENSE_URL, isBasedOn: url(config, '/data/matrix.json') },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], [file.path, `/files/${file.id}/`], [tool.name, p]])
+    ]
+  });
+}
+
+/** The computed answer sentence of a comparison, for one file. */
+export function compareSentence(matrix, file) {
+  const A = COMPARE_COPY.answer;
+  const cells = matrix.tools.map((t) => ({ t, c: findCell(matrix, t.id, file.id) }));
+  const of = (st) => cells.filter((x) => x.c.status === st).map((x) => x.t.name);
+  const parts = [A.reads(of('reads').length, matrix.tools.length, file.path, listNames(of('reads')))];
+  for (const st of ['reads-conditionally', 'configurable', 'migration-only', 'not-read']) { const n = of(st); if (n.length) parts.push(A[st](n.length, listNames(n))); }
+  const u = of('unverified').length;
+  if (u > 0) parts.push(A.unverified(u));
+  return parts.join(' ');
+}
+
+export function comparePage(ctx, cmp) {
+  const { config, matrix } = ctx;
+  const files = cmp.files.map((id) => matrix.files.find((f) => f.id === id));
+  const p = `/compare/${cmp.slug}/`;
+  const link = (t, f) => (hasQuestion(ctx, t.id, f.id) ? questionPath(t.id, f.id) : `/matrix/#${cellAnchor(t.id, f.id)}`);
+  const lead = cmp.leadCell ? findCell(matrix, cmp.leadCell[0], cmp.leadCell[1]) : null;
+  const rows = matrix.tools.map((t) => {
+    const cs = files.map((f) => findCell(matrix, t.id, f.id));
+    return `<tr data-tool="${h(t.id)}"><th scope="row">${h(t.name)}</th>${files.map((f, i) => `<td class="cell st-${cs[i].status}"><a href="${link(t, f)}" aria-label="${h(QUESTION_COPY.title(t.name, f.path))}">${statusBadge(cs[i].status)}</a></td>`).join('')}<td class="cell"><time datetime="${h(latestCheck(cs))}">${h(latestCheck(cs))}</time></td></tr>`;
+  }).join('\n');
+  const docs = files.map((f) => {
+    const qs = matrix.tools.map((t) => findCell(matrix, t.id, f.id)).filter((c) => c.status !== 'unverified' && c.quote);
+    return `<h3><code>${pathBreaks(f.path)}</code></h3>\n${qs.map((c) => `<p class="cell-tool">${h(matrix.tools.find((t) => t.id === c.tool).name)} ${statusBadge(c.status)}</p>\n${quoteBlock(c)}`).join('\n')}`;
+  }).join('\n');
+  const others = COMPARISONS.filter((c) => c.slug !== cmp.slug).map((c) => `<li><a href="/compare/${c.slug}/">${h(c.title)}</a></li>`).join('');
+  const sentences = files.map((f) => compareSentence(matrix, f));
+  const cells = comparisonCells(matrix, cmp);
+  const body = `<h1>${h(cmp.title).replace(/\//g, '/<wbr>')}</h1>
+${sentences.map((s) => `<p class="answer">${h(s)}</p>`).join('\n')}
+<p class="lead">${h(COMPARE_COPY.context[cmp.slug])}</p>
+${lead && lead.quote ? quoteBlock(lead) + '\n' : ''}<div class="table-wrap" tabindex="0" role="region" aria-label="${h(cmp.title)}"><table class="matrix ref">
+<thead><tr><th scope="col">Tool</th>${files.map((f) => `<th scope="col"><code>${pathBreaks(f.path)}</code></th>`).join('')}<th scope="col">Checked</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table></div>
+<h2 id="docs">${h(SPEC_LABELS.whatDocsSay)}</h2>
+${docs}
+<h2 id="related">${h(QUESTION_COPY.related.heading)}</h2>
+<ul>${files.map((f) => `<li><a href="/files/${h(f.id)}/">${h(QUESTION_COPY.related.filePage(f.path))}</a></li>`).join('')}<li><a href="/matrix/">Matrix</a></li>${others}</ul>
+${citeBlock(config, matrix)}`;
+  return layout(config, {
+    path: p, title: cmp.title, bareTitle: true, ogType: 'article',
+    description: sentences[0].length <= 155 ? sentences[0] : `${sentences[0].slice(0, 152).replace(/\s+\S*$/, '')}...`,
+    body,
+    jsonLd: [
+      { '@type': 'FAQPage', mainEntity: files.map((f, i) => ({ '@type': 'Question', name: SPEC_LABELS.compareQuestion(f.path), acceptedAnswer: { '@type': 'Answer', text: sentences[i] } })), inLanguage: config.language },
+      { '@type': 'TechArticle', headline: cmp.title, dateModified: latestCheck(cells), inLanguage: config.language, license: DATA_LICENSE_URL, author: publisher(config), publisher: publisher(config), mainEntityOfPage: url(config, p), isBasedOn: url(config, '/data/matrix.json'), citation: [...new Set(cells.map((c) => c.sourceUrl))] },
+      breadcrumb(config, [['Home', '/'], ['Matrix', '/matrix/'], [cmp.title, p]])
+    ]
+  });
+}
