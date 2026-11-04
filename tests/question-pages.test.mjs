@@ -64,10 +64,10 @@ test('2-4. title, H1, answer first, quote and source', () => {
     assert.match(firstP, /^<p class="answer">/, `${c.tool}/${c.file}: the answer comes first`);
     const ans = text(firstP);
     assert.ok(ans.startsWith(`${LABEL[c.status]} ${STARTS[c.status]}`), `${c.tool}/${c.file}: ${ans}`);
-    assert.ok(ans.includes(c.note.replace(/`/g, '')), `${c.tool}/${c.file}: note`);
+    assert.ok(ans.includes(c.note.replace(/`|\*\*/g, '')), `${c.tool}/${c.file}: note`);
     const bq = html.match(new RegExp(`<blockquote cite="${esc(c.sourceUrl).replace(/[.?*+^$()[\]{}|\\]/g, '\\$&')}">([\\s\\S]*?)</blockquote>`));
     assert.ok(bq, `${c.tool}/${c.file}: blockquote`);
-    assert.equal(bq[1], esc(c.quote).replace(/`([^`]*)`/g, '<code>$1</code>'));
+    assert.equal(bq[1], esc(c.quote).replace(/`([^`]*)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'));
     assert.ok(html.includes(`href="${esc(c.sourceUrl)}" rel="noopener"`));
     assert.ok(html.includes(`<time datetime="${c.verifiedOn}">`));
   }

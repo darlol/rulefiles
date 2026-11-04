@@ -19,9 +19,11 @@
     "watch": "node scripts/watch.mjs",
     "watch:offline": "node scripts/watch.mjs --offline tests/fixtures --out /tmp/rulefiles-drafts",
     "preview": "node scripts/preview.mjs",
-    "ci": "npm run validate && npm run build && npm test && npm run check-links"
+    "ci": "npm run validate && npm run build && npm test && npm run check-links",
+    "test:browser": "node --test tests/browser/*.test.mjs"
   },
   "devDependencies": {
+    "playwright": "1.64.1",
     "yaml": "2.9.1"
   }
 }

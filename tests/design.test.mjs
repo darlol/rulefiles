@@ -456,8 +456,8 @@ test('the current page is marked in the main navigation and tables have a captio
   const main = /<nav aria-label="Main">([\s\S]*?)<\/nav>/.exec(html)[1];
   assert.equal((main.match(/aria-current="page"/g) || []).length, 1);
   assert.match(main, /<a href="\/matrix\/" aria-current="page">Matrix<\/a>/);
-  assert.match(html, /<caption class="sr">/);
-  assert.match(html, /<div class="table-wrap matrix-wrap" tabindex="0" role="region" aria-label="Instruction file matrix">/);
+  // The matrix is a grid of divs with table roles (the script turns them into an ARIA grid), named for screen readers.
+  assert.match(html, /<div class="mgrid" id="matrix-grid" role="table" aria-label="Instruction file matrix">/);
   assert.ok(!/<th>/.test(html), 'every th declares a scope');
 });
 
@@ -465,7 +465,7 @@ test('every Source link in the matrix has its own accessible name and a target o
   const html = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
   const matrix = JSON.parse(fs.readFileSync(path.join(root, 'data', 'matrix.json'), 'utf8'));
   const unescape = (x) => x.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-  const links = [...html.matchAll(/<td[^>]*data-tool="([^"]+)" data-file="([^"]+)"[\s\S]*?<a class="src"([^>]*)>([\s\S]*?)<\/a>/g)];
+  const links = [...html.matchAll(/<li [^>]*class="an-cell" data-tool="([^"]+)" data-file="([^"]+)"[\s\S]*?<a class="src"([^>]*)>([\s\S]*?)<\/a>/g)];
   assert.equal(links.length, matrix.cells.length);
   const labels = [];
   for (const [, tool, file, attrs, inner] of links) {
@@ -584,7 +584,7 @@ test('favicon and share image use the same mark and the pages announce both', ()
   assert.match(html, /<meta property="og:image:alt" content="[^"]+: What changed in AI coding tools, with sources\.">/);
 });
 
-// ---------- Home mini-matrix: always 36 visible tiles ----------
+// ---------- Home mini-matrix: every tile visible ----------
 
 // True when a declaration block leaves its element invisible, collapsed or clipped away, in any of the spellings
 // that matter: opacity below 1 (a number, a percentage, a var() or calc(), with or without !important), visibility,
@@ -615,7 +615,7 @@ function hidesContent(props) {
 // Returns what in the stylesheet or the home page would leave the mini-matrix partly or fully hidden.
 function specimenHidingProblems(cssText, html) {
   const problems = [];
-  const tiles = [...html.matchAll(/<span class="tile tile-[a-z-]+ c(\d)">/g)].map((m) => Number(m[1]));
+  const tiles = [...html.matchAll(/<span class="tile tile-[a-z-]+ c(\d+)">/g)].map((m) => Number(m[1]));
   const { tools, files } = loadData(root).matrix;
   if (tiles.length !== tools.length * files.length) problems.push(`${tiles.length} tiles instead of ${tools.length * files.length}`);
   for (let col = 0; col < tools.length; col++) {
@@ -623,8 +623,16 @@ function specimenHidingProblems(cssText, html) {
     if (n !== files.length) problems.push(`column c${col} has ${n} tiles instead of ${files.length}`);
   }
   if (tiles.some((c) => c >= tools.length)) problems.push(`a tile sits outside the ${tools.length} columns`);
-  const cols = cssText.match(/\.specimen-grid \{ grid-template-columns: repeat\((\d+),/);
-  if (!cols || Number(cols[1]) !== tools.length) problems.push(`the grid has ${cols && cols[1]} columns for ${tools.length} tools`);
+  // The column count comes from the markup: one .specimen-row per file, laid out in as many columns as it has tiles.
+  const rows = [...html.matchAll(/<span class="specimen-row">((?:<span class="tile [^>]*>[\s\S]*?<\/svg><\/span>)*)<\/span>/g)];
+  if (rows.length !== files.length) problems.push(`${rows.length} rows for ${files.length} files`);
+  for (const [i, r] of rows.entries()) {
+    const n = (r[1].match(/<span class="tile /g) || []).length;
+    if (n !== tools.length) problems.push(`row ${i + 1} has ${n} tiles for ${tools.length} tools`);
+  }
+  const flow = parseRules(cssText).filter((r) => !r.reduce && r.selectors.includes('.specimen-row'));
+  if (!flow.some((r) => r.props['grid-auto-flow'] === 'column' && /minmax\(0, 1fr\)/.test(r.props['grid-auto-columns'] || ''))) problems.push('.specimen-row does not flow its tiles into equal columns');
+  if (/\.specimen-(grid|row)[^{]*\{[^}]*grid-template-columns:\s*repeat\(\d/.test(cssText)) problems.push('the column count is written in the stylesheet instead of coming from the data');
   const hides = hidesContent;
   const rules = parseRules(cssText).filter((r) => !r.reduce);
   for (const r of rules) {
@@ -665,7 +673,8 @@ test('the mini-matrix check fails when the hiding entry animation comes back', (
     'opacity 0 in the 0% step': [css, '@keyframes tile-in { from {', '@keyframes tile-in { 0% { opacity: 0; } from {'],
     'permanent opacity 0 on the tile': [css, '.tile { display: grid;', '.tile { opacity: 0; display: grid;'],
     'tile hidden by a column rule': [css, '.c1 { animation-delay: 0.07s; }', '.c1 { animation-delay: 0.07s; opacity: 0; }'],
-    'specimen grid hidden': [css, '.specimen-grid {', '.specimen-grid { visibility: hidden;'],
+    'specimen grid hidden': [css, '.specimen-heads, .specimen-grid, .specimen-row {', '.specimen-heads, .specimen-grid, .specimen-row { visibility: hidden;'],
+    'eight columns written back in the stylesheet': [css, '.specimen-heads, .specimen-row {', '.specimen-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }\n.specimen-heads, .specimen-row {'],
     'tile display none': [css, '.tile-reads {', '.tile-reads { display: none;'],
     'opacity 0 !important': [css, '.tile { display: grid;', '.tile { opacity: 0 !important; display: grid;'],
     'opacity 0 percent': [css, '.tile { display: grid;', '.tile { opacity: 0%; display: grid;'],
@@ -679,7 +688,7 @@ test('the mini-matrix check fails when the hiding entry animation comes back', (
     'clip-path on the tile': [css, '.tile { display: grid;', '.tile { clip-path: inset(50%); display: grid;'],
     'height 0 on the tile': [css, 'height: 2.1rem;', 'height: 0;'],
     'height 0px after the real height': [css, 'height: 2.1rem;', 'height: 2.1rem; height: 0px;'],
-    'max-height 0 on the grid': [css, '.specimen-grid {', '.specimen-grid { max-height: 0;'],
+    'max-height 0 on the grid': [css, '.specimen-heads, .specimen-grid, .specimen-row {', '.specimen-heads, .specimen-grid, .specimen-row { max-height: 0;'],
     'width 0 on the specimen': [css, '.specimen {', '.specimen { width: 0;'],
     'parent container hidden': [css, '.hero {', '.hero { opacity: 0;'],
     'keyframes without spaces, hiding step': [css.replace('@keyframes tile-in { from {', '@keyframes tile-in{from {'), '@keyframes tile-in{from {', '@keyframes tile-in{from { opacity: 0;']

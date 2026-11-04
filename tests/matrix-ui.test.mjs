@@ -5,8 +5,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { loadData } from '../scripts/lib/data.mjs';
-import { MATRIX_COPY } from '../scripts/lib/render.mjs';
-import { applyFilters, countMessage, queryWords, notesState } from '../src/js/matrix-filter.js';
+import { MATRIX_COPY, STATUS_LABEL, matrixPage, questionPath } from '../scripts/lib/render.mjs';
+import { MATRIX_GRID_COPY } from '../scripts/lib/copy.mjs';
+import { applyFilters, countMessage, queryWords } from '../src/js/matrix-filter.js';
 import { TEST_DATE } from './helpers/test-date.mjs';
 
 const out = fs.mkdtempSync(path.join(os.tmpdir(), 'matrix-ui-'));
@@ -38,49 +39,89 @@ test('the search keeps the cells whose text holds every word, in any case, and c
   assert.equal(applyFilters(model, { query: '   ' }).active, false, 'a blank query is no filter');
 });
 
-test('matrix page: search field with a label, a notes toggle, a legend above the table and the counts without JavaScript', () => {
+const unescape = (x) => x.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const entries = () => [...html.matchAll(/<li id="cell-([a-z0-9-]+)" class="an-cell" data-tool="([a-z-]+)" data-file="([a-z0-9-]+)" data-status="([a-z-]+)">([\s\S]*?)<\/li>/g)];
+
+test('matrix page: the copy of the compact grid, pasted as reviewed, with N taken from the data', () => {
+  assert.equal(MATRIX_GRID_COPY.help, 'Pick a cell for its note and source.');
+  assert.equal(MATRIX_GRID_COPY.introFold, 'How to read the matrix');
+  assert.equal(MATRIX_GRID_COPY.allNotes(104), 'All 104 notes and sources');
+  assert.equal(MATRIX_GRID_COPY.allNotes(7), 'All 7 notes and sources', 'N is a parameter, never written in');
+  assert.ok(html.includes(`<h1>Which coding agent reads which instruction file</h1>\n<p class="help">${MATRIX_GRID_COPY.help}</p>`));
+  assert.ok(html.includes(`<summary>${MATRIX_GRID_COPY.introFold}</summary>`));
+  assert.ok(html.includes(`<summary>${MATRIX_GRID_COPY.allNotes(matrix.cells.length)}</summary>`));
   assert.ok(html.includes(`<label for="matrix-q">${MATRIX_COPY.searchLabel}</label><input id="matrix-q" type="search"`));
   assert.ok(html.includes(`placeholder="${MATRIX_COPY.searchPlaceholder}"`));
-  assert.ok(html.includes(`<button type="button" class="chip" aria-pressed="false" data-notes>${MATRIX_COPY.notesToggle}</button>`));
-  // The legend carries caveats that are not in the intro, so it is open by default (content review M1).
-  const legendAt = html.indexOf('<details class="legend-box" open><summary>Legend</summary>');
-  assert.ok(legendAt !== -1, 'the legend is an open details element');
-  assert.ok(legendAt < html.indexOf('<table class="matrix">'), 'the legend comes before the table');
-  assert.equal((html.match(/<details class="legend-box"[^>]*>/g) || []).length, 1, 'one legend block');
-  assert.equal((html.match(/<p class="cell-tool">/g) || []).length, matrix.cells.length, 'every cell names its tool for the card view');
   assert.match(html, /<ul class="status-counts" aria-label="Cells by status">/);
-  // The search and the toggle sit in the filter bar, which stays hidden without JavaScript, so nothing is folded away then.
-  const bar = /<div class="filters" id="matrix-filters">([\s\S]*?)\n<\/div>/.exec(html)[1];
-  assert.ok(bar.includes('id="matrix-q"') && bar.includes('data-notes'));
-  assert.doesNotMatch(html, /class="matrix notes-off"/, 'notes are folded only by the script');
 });
 
-test('the stylesheet folds notes only under .notes-off and turns the matrix into cards below 48rem', () => {
-  const css = fs.readFileSync(new URL('../src/static/style.css', import.meta.url), 'utf8');
-  assert.match(css, /\.notes-off \.note \{ display: none; \}/);
-  assert.match(css, /@media \(max-width: 47\.99rem\) \{\n  \.scroll-hint \{ display: none; \}\n  \.table-wrap\.matrix-wrap \{ max-height: none; overflow: visible;/);
-  const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
-  // Notes are visible by default: the class, aria-pressed and disabled all come from notesState, so the button
-  // never says "pressed" while the notes show.
-  assert.match(js, /let hideNotes = false;/);
-  assert.match(js, /const n = notesState\(hideNotes, query\);/);
-  assert.match(js, /table\.classList\.toggle\('notes-off', n\.hidden\);/);
-  assert.match(js, /notes\.setAttribute\('aria-pressed', String\(n\.pressed\)\);/);
-  assert.match(js, /notes\.disabled = n\.disabled;/);
-  assert.doesNotMatch(js, /notes\.getAttribute\('aria-pressed'\)/, 'the script keeps the choice in hideNotes, not in the attribute');
-  assert.equal(MATRIX_COPY.notesToggle, 'Hide notes');
+test('the "All N notes" fold counts the cells of the data, whatever their number', () => {
+  const data = loadData();
+  const keep = new Set(data.matrix.tools.slice(0, 3).map((t) => t.id));
+  data.matrix.tools = data.matrix.tools.filter((t) => keep.has(t.id));
+  data.matrix.cells = data.matrix.cells.filter((c) => keep.has(c.tool));
+  const page = matrixPage({ config: data.config, matrix: data.matrix, digests: [], today: TEST_DATE });
+  assert.notEqual(data.matrix.cells.length, 104);
+  assert.ok(page.includes(`<summary>${MATRIX_GRID_COPY.allNotes(data.matrix.cells.length)}</summary>`), `${data.matrix.cells.length} cells`);
+  assert.equal((page.match(/<li id="cell-/g) || []).length, data.matrix.cells.length);
+  assert.equal((page.match(/<a class="mt /g) || []).length, data.matrix.cells.length);
 });
 
-test('the Hide notes button reports the real state of the notes, including during a search', () => {
-  assert.deepEqual(notesState(false, ''), { hidden: false, pressed: false, disabled: false }, 'default: notes shown, not pressed');
-  assert.deepEqual(notesState(true, ''), { hidden: true, pressed: true, disabled: false }, 'pressed: notes hidden');
-  assert.deepEqual(notesState(true, 'glob'), { hidden: false, pressed: false, disabled: true }, 'a search shows the notes, so the button is not pressed');
-  assert.deepEqual(notesState(false, 'glob'), { hidden: false, pressed: false, disabled: true });
-  assert.deepEqual(notesState(true, '   '), { hidden: true, pressed: true, disabled: false }, 'a blank query is no search');
-  for (const [want, q] of [[false, ''], [true, ''], [true, 'x'], [false, 'x']]) {
-    const n = notesState(want, q);
-    assert.equal(n.pressed, n.hidden, 'aria-pressed always matches whether the notes are hidden');
+test('without JavaScript both folds are open; matrix-fold.js closes only the intro, only on a phone', () => {
+  assert.match(html, /<details class="fold intro-fold" id="matrix-intro" open><summary>/);
+  assert.match(html, /<details class="fold allnotes" id="matrix-notes" open><summary>/);
+  assert.match(html, /<\/details>\n<script src="\/assets\/matrix-fold\.js"><\/script>/, 'the fold script runs right after the intro, before the grid paints');
+  const fold = fs.readFileSync(new URL('../src/static/matrix-fold.js', import.meta.url), 'utf8');
+  assert.match(fold, /matchMedia\('\(max-width: 47\.99rem\)'\)/);
+  assert.match(fold, /getElementById\('matrix-intro'\)/);
+  assert.doesNotMatch(fold, /matrix-notes/);
+});
+
+test('every cell keeps its status, note, quote, source, date, version and answer page in the "All notes" list', () => {
+  const list = entries();
+  assert.equal(list.length, matrix.cells.length);
+  const byKey = new Map(list.map((m) => [`${m[2]}/${m[3]}`, m]));
+  let quotes = 0; let versions = 0;
+  const answers = new Set();
+  for (const c of matrix.cells) {
+    const m = byKey.get(`${c.tool}/${c.file}`);
+    assert.ok(m, `${c.tool}/${c.file}`);
+    const [, id, , , status, body] = m;
+    assert.equal(id, `${c.tool}-${c.file}`);
+    assert.equal(status, c.status);
+    assert.match(body, new RegExp(`<div class="cell" id="d-${c.tool}--${c.file}">`));
+    assert.ok(body.includes(`<strong class="an-tool">${toolOf[c.tool].name.replace(/&/g, '&amp;')}</strong>`), 'names its tool');
+    assert.match(body, new RegExp(`badge-${c.status}"`));
+    assert.match(body, /<p class="note">[^<]/);
+    assert.ok(unescape(body).includes(`href="${c.sourceUrl}"`), 'source');
+    assert.ok(body.includes(`checked <time datetime="${c.verifiedOn}">`), 'date');
+    if (c.quote) { quotes++; assert.match(body, /<blockquote class="quote"/); }
+    if (c.version) { versions++; assert.ok(body.includes(`from v${c.version}`), 'version'); }
+    if (body.includes(`<a href="${questionPath(c.tool, c.file)}"`)) answers.add(questionPath(c.tool, c.file));
   }
+  assert.equal(quotes, matrix.cells.filter((c) => c.quote).length);
+  assert.equal(quotes, 52, 'the 52 quoted cells of the data show their quote');
+  assert.equal(versions, matrix.cells.filter((c) => c.version).length);
+  // Every answer page links back from its cell (33 today), and each one exists in the build.
+  const built = fs.readdirSync(path.join(out, 'does'), { recursive: true }).filter((f) => String(f).endsWith('index.html')).length;
+  assert.equal(answers.size, built);
+  assert.equal(answers.size, 33);
+  // Each tile of the grid points at its entry and names file, tool and status.
+  for (const c of matrix.cells) {
+    const label = `${fileOf[c.file].path} × ${toolOf[c.tool].name}: ${STATUS_LABEL[c.status]}`;
+    assert.ok(unescape(html).includes(`href="#d-${c.tool}--${c.file}" data-tool="${c.tool}" data-file="${c.file}" data-status="${c.status}" aria-label="${label}"`), label);
+  }
+});
+
+test('the "All notes" list is never filtered: the script filters tiles, rows and columns of the grid only', () => {
+  const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(js, /an-cell|an-list|an-file/, 'the script never selects the list entries');
+  assert.match(js, /grid\.querySelectorAll\('\[data-tool\]:not\(a\)'\)/, 'columns are hidden inside the grid only');
+  assert.match(js, /const tiles = \[\.\.\.grid\.querySelectorAll\('a\.mt'\)\]/);
+  assert.match(js, /const rows = \[\.\.\.grid\.querySelectorAll\('\.mrow\[data-file\]'\)\]/);
+  // The list sits outside the grid, so the grid selectors cannot reach it.
+  const gridEnd = html.indexOf('<div class="mx-side">');
+  assert.ok(html.indexOf('id="matrix-notes"') > gridEnd);
 });
 
 // ---------- First render: the filter bar shows at once with JavaScript, never without ----------
@@ -119,7 +160,6 @@ test('without JavaScript the filter bar is hidden by CSS and every note shows; h
   assert.doesNotMatch(html, /<html[^>]*class="[^"]*\bjs\b/, 'the js class is never in the markup');
   assert.equal(matrix.cells.length, matrix.tools.length * matrix.files.length);
   assert.equal((html.match(/<p class="note">/g) || []).length, matrix.cells.length, 'one note per cell in the markup');
-  assert.doesNotMatch(html, /notes-off/, 'nothing folds the notes without the script');
   const js = fs.readFileSync(new URL('../src/static/matrix.js', import.meta.url), 'utf8');
   assert.doesNotMatch(js, /bar\.hidden/, 'the script does not reveal the bar after the first paint');
 });

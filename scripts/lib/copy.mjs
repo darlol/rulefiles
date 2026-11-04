@@ -64,3 +64,10 @@ export const SPEC_LABELS = {
   whatDocsSay: 'What the docs say', // SPEC §5 item 4
   compareQuestion: (path) => `Which coding agents read ${path}?` // SPEC §5 JSON-LD, same as the file page title
 };
+
+// /matrix/ compact grid (job 3, copy review PASS 2026-11-04). Pasted as is; N always comes from the data.
+export const MATRIX_GRID_COPY = {
+  help: 'Pick a cell for its note and source.', // line under the h1
+  introFold: 'How to read the matrix', // fold around the intro, closed on phones when scripts run
+  allNotes: (n) => `All ${n} notes and sources` // fold under the grid, n = matrix.cells.length
+};

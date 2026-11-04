@@ -77,9 +77,10 @@ test('matrix page: filter bar is hidden until the script runs, and every control
   for (const k of Object.keys(STATUS_LABEL)) assert.match(html, new RegExp(`<button type="button" class="chip chip-${k}" aria-pressed="false" data-filter-status="${k}">`));
   assert.match(html, /id="matrix-count" class="muted" role="status" aria-live="polite"/);
   assert.match(html, /<script type="module" src="\/assets\/matrix\.js"><\/script>/);
-  // Without the script the table is complete: no row, column or cell is hidden in the markup.
-  assert.doesNotMatch(html, /<(tr|th|td)\b[^>]*\bhidden\b/);
-  assert.equal((html.match(/<td id="cell-[a-z0-9-]+" class="st-[a-z-]+" data-tool="[a-z-]+" data-file="[a-z0-9-]+" data-status="[a-z-]+">/g) || []).length, data.cells.length);
+  // Without the script the grid and the notes are complete: no row, column, tile or entry is hidden in the markup.
+  assert.doesNotMatch(html, /<(div|span|a|li) [^>]*class="(mrow|mtool|mt|an-cell)[^"]*"[^>]*\bhidden\b/);
+  assert.equal((html.match(/<a class="mt mt-[a-z-]+" href="#d-[a-z0-9-]+--[a-z0-9-]+" data-tool="[a-z-]+" data-file="[a-z0-9-]+" data-status="[a-z-]+"/g) || []).length, data.cells.length);
+  assert.equal((html.match(/<li id="cell-[a-z0-9-]+" class="an-cell" data-tool="[a-z-]+" data-file="[a-z0-9-]+" data-status="[a-z-]+">/g) || []).length, data.cells.length);
 });
 
 test('every status badge carries an icon and the status text, never colour alone', () => {
