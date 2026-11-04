@@ -32,8 +32,14 @@ export function statusBadge(status) {
 export function toolNames(matrix) { return Object.fromEntries(matrix.tools.map((t) => [t.id, t.name])); }
 
 /** Escapes text for HTML, then turns `code` spans into <code>. The escaping runs first, so no markup can get through. */
+// Inline markdown of notes and quotes: `code` and **bold**. The text is escaped first, so the only markup that can
+// come out is <code> and <strong>. Code spans are set aside before the bold pass, so a glob such as `src/**` stays as is.
 export function inlineHtml(text) {
-  return h(text).replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  const code = [];
+  return h(String(text).replace(/\u0000/g, ''))
+    .replace(/`([^`\n]+)`/g, (m, c) => `\u0000${code.push(c) - 1}\u0000`)
+    .replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g, '<strong>$1</strong>')
+    .replace(/\u0000(\d+)\u0000/g, (m, i) => `<code>${code[i]}</code>`);
 }
 
 export function url(config, p) { return config.baseUrl + p; }
@@ -1030,7 +1036,7 @@ export { path, daysBetween };
 export function questionPath(toolId, fileId) { return `/does/${toolId}/read/${fileId}/`; }
 
 /** Backticks out, for text that is not HTML (JSON-LD, meta description). */
-export function stripMd(s) { return String(s).replace(/`/g, ''); }
+export function stripMd(s) { return String(s).replace(/\*\*(?=\S)([^*\n]*?\S)\*\*/g, '$1').replace(/`/g, ''); }
 
 const questionStatuses = (config) => (config.questionPages && config.questionPages.statuses) || [];
 

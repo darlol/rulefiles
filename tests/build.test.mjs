@@ -6,7 +6,7 @@ import path from 'node:path';
 import { build } from '../scripts/build.mjs';
 import { checkInternal } from '../scripts/check-links.mjs';
 import { listFiles, isoWeekId, isoWeekRange } from '../scripts/lib/util.mjs';
-import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, agentsMdSentence } from '../scripts/lib/render.mjs';
+import { renderSitemap, renderRobots, renderLlmsTxt, renderFeed, cspFor, inlineHtml, stripMd, agentsMdSentence } from '../scripts/lib/render.mjs';
 import { matrixStats, validateMatrix, validateConfig } from '../scripts/lib/validate.mjs';
 import { OG_WIDTH, OG_HEIGHT } from '../scripts/lib/ogimage.mjs';
 import { loadData, publishedDigests } from '../scripts/lib/data.mjs';
@@ -529,6 +529,32 @@ test('inlineHtml turns backtick spans into code elements and cannot inject marku
   assert.equal(inlineHtml('unbalanced `tick'), 'unbalanced `tick');
   assert.equal(inlineHtml('` `'), '<code> </code>');
   assert.doesNotMatch(inlineHtml('`x` <b>'), /<b>/);
+});
+
+test('no page shows markdown stars: **bold** in notes and quotes is rendered, only code may hold a literal **', () => {
+  const pages = fs.readdirSync(out, { recursive: true }).map(String).filter((f) => f.endsWith('.html'));
+  assert.ok(pages.length > 30);
+  for (const f of pages) {
+    const body = /<body[\s\S]*<\/body>/.exec(fs.readFileSync(path.join(out, f), 'utf8'))[0]
+      .replace(/<(script|style|code)\b[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ');
+    assert.doesNotMatch(body, /\*\*/, f);
+  }
+  const m = fs.readFileSync(path.join(out, 'matrix', 'index.html'), 'utf8');
+  assert.ok(m.includes('<strong>Not read</strong>: <code>AGENTS.local.md</code>'), 'the Codex quote shows its bold');
+  assert.ok(fs.readFileSync(path.join(out, 'does', 'cline', 'read', 'clinerules', 'index.html'), 'utf8').includes('<strong>Workspace rules</strong>'));
+});
+
+test('inlineHtml turns **bold** into strong after escaping, and leaves stars inside code alone', () => {
+  assert.equal(inlineHtml('**Not read**: `AGENTS.local.md`'), '<strong>Not read</strong>: <code>AGENTS.local.md</code>');
+  assert.equal(inlineHtml('are **not** imported'), 'are <strong>not</strong> imported');
+  assert.equal(inlineHtml('**<script>alert(1)</script>**'), '<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>', 'escaped first, then bold');
+  assert.equal(inlineHtml('**a** and **b**'), '<strong>a</strong> and <strong>b</strong>');
+  assert.equal(inlineHtml('**`x`**'), '<strong><code>x</code></strong>');
+  assert.equal(inlineHtml('glob `src/**/*.ts` and `**`'), 'glob <code>src/**/*.ts</code> and <code>**</code>');
+  assert.equal(inlineHtml('unbalanced **bold'), 'unbalanced **bold');
+  assert.equal(inlineHtml('2 ** 3 ** 4'), '2 ** 3 ** 4', 'stars around spaces are not bold');
+  assert.equal(inlineHtml('a\u00000\u0000 `b`'), 'a0 <code>b</code>', 'a stray placeholder byte cannot pull in a code span');
+  assert.equal(stripMd('**Not read**: `AGENTS.md`'), 'Not read: AGENTS.md');
 });
 
 test('built digest pages show source backticks as code and contain no raw backticks in text', () => {
